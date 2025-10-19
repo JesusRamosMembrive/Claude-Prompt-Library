@@ -33,28 +33,61 @@
 - Phase 7+: ML y análisis avanzado
 - Ver ROADMAP.md para visión completa
 
-## Phase 2.1: Copy Reference Docs ✅ COMPLETO
+# Estado Actual
+
+**Fecha**: 2025-10-18
+**Etapa**: 2 (Estructuración)
+**Sesión**: 5
+
+## Phase 2: Enhanced Docs + Prompt Helper
+
+### Phase 2.1: Copy Reference Docs ✅ COMPLETO
 
 **Implementado:**
-- Copia 4 archivos de referencia a docs/
-  - PROMPT_LIBRARY.md
-  - QUICK_START.md
-  - STAGES_COMPARISON.md
-  - CLAUDE_CODE_REFERENCE.md
-- Skip si archivos ya existen
-- Mensaje claro de qué se copió/skippeó
+- ✅ Copia 4 archivos de referencia a docs/
+  - PROMPT_LIBRARY.md (biblioteca de prompts útiles)
+  - QUICK_START.md (workflow con Claude Code)
+  - STAGES_COMPARISON.md (referencia rápida de etapas)
+  - CLAUDE_CODE_REFERENCE.md (slash commands, MCP, subagents)
+- ✅ Skip si archivos ya existen (no destructivo)
+- ✅ Mensajes claros de progreso
+- ✅ Tests actualizados y pasando
+- ✅ Probado en proyecto real (ChessPlayerAnalyzerV2)
 
-**Bugs corregidos durante implementación:**
-- Path construction (evitar duplicación)
-- Missing comma en lista de archivos
-- Mensaje de success incompleto
+**Código:**
+- ~120 líneas en init_project.py
+- Separación clara: .claude/ (tracking) vs docs/ (referencia)
+- Validación de templates antes de copiar
 
-**Tests:**
-- ✅ Copia a proyecto nuevo
-- ✅ Skip en re-run
-- ✅ Coexiste con archivos existentes
+**Tests pasando:**
+- ✓ Proyecto nuevo: copia todo
+- ✓ Re-run: skip archivos existentes
+- ✓ Coexistencia con Claude Code settings
+- ✓ Placeholders reemplazados
 
-**Próximo:** Phase 2.2 - Prompt Helper Script
+**Próximo:** Phase 2.2 - Script para buscar/copiar prompts fácilmente
+
+### Phase 2.2: Prompt Helper Script 🚧 SIGUIENTE
+
+**Objetivo:** Resolver "copiar prompts de PROMPT_LIBRARY.md es tedioso"
+
+**Features planificadas:**
+- Script CLI simple: prompt_helper.py
+- Listar categorías disponibles
+- Buscar prompts por categoría
+- Mostrar prompt específico
+- Copiar a clipboard (bonus)
+
+**NO en scope:**
+- Interactive UI
+- Edición de prompts
+- Custom prompts del usuario
+- Database o índice
+
+**Restricciones Etapa 2:**
+- UN archivo Python simple
+- Solo stdlib + pyperclip (opcional para clipboard)
+- Sin configuración compleja
 
 ## Decisiones tomadas
 

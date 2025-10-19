@@ -49,6 +49,82 @@ Explícame:
 3. Cómo solucionarlo
 ```
 
+### Performance Issue
+```
+Tengo un problema de rendimiento:
+
+SÍNTOMAS:
+- ¿Qué es lento? [operación específica]
+- ¿Cuánto tarda? [tiempo actual vs esperado]
+- ¿Cuándo ocurre? [siempre/con datos grandes/etc]
+
+CONTEXTO:
+- Archivo/función afectada: [nombre]
+- Tamaño de datos: [cantidad]
+- Recursos del sistema: [CPU/memoria/red]
+
+Necesito:
+1. Identificar el cuello de botella
+2. Medir el impacto real (no prematuramente optimizar)
+3. Solución simple que mejore 80% del problema
+4. Cómo verificar la mejora
+
+NO optimices sin evidencia clara del problema.
+```
+
+### State Management
+```
+Tengo un problema con estado inconsistente:
+
+SÍNTOMAS:
+- ¿Qué dato está mal? [descripción]
+- ¿Cuándo aparece? [secuencia de acciones]
+- ¿Es reproducible? [siempre/a veces/raro]
+
+ESTADO ESPERADO:
+[descripción del estado correcto]
+
+ESTADO ACTUAL:
+[descripción del estado incorrecto]
+
+CÓDIGO RELEVANTE:
+- Dónde se modifica: [archivo:línea]
+- Dónde se lee: [archivo:línea]
+
+Necesito:
+1. Identificar dónde se pierde la sincronización
+2. Detectar race conditions o efectos secundarios
+3. Proponer forma más simple de mantener consistencia
+4. Cómo testear que queda arreglado
+```
+
+### Integration Problem
+```
+Falla la integración con [módulo/API/servicio]:
+
+PROBLEMA:
+- ¿Qué integración? [nombre]
+- ¿Qué falla? [error/comportamiento]
+- ¿Funcionaba antes? [sí/no/no sé]
+
+CONTEXTO:
+- Punto de integración: [archivo:función]
+- Formato esperado: [descripción]
+- Formato recibido: [descripción]
+- Logs/errores:
+```
+[pegar logs]
+```
+
+Necesito:
+1. Verificar que entiendo el contrato de la integración
+2. Identificar dónde está el desajuste
+3. Solución mínima para que funcione
+4. Cómo prevenir que se rompa de nuevo
+
+Si es API externa, considera que puede haber cambiado.
+```
+
 ---
 
 ## REFACTORING
@@ -207,37 +283,6 @@ Si SÍ es momento, confirma y lee las nuevas reglas.
 
 ---
 
-## COMMUNICATION
-
-### Explain Like I'm 5
-```
-Explícame [concepto técnico] como si tuviera 5 años.
-
-Usa:
-- Analogías simples
-- Sin jerga técnica
-- Ejemplos concretos
-- Máximo 5 frases
-
-Luego, explícalo técnicamente pero claro.
-```
-
-### Documentation Request
-```
-Documenta [módulo/función/clase]:
-
-Incluye:
-1. ¿Qué hace? (1 frase)
-2. ¿Por qué existe? (problema que resuelve)
-3. ¿Cómo se usa? (ejemplo mínimo)
-4. ¿Qué NO hace? (limitaciones/scope)
-
-Formato: Docstring en el código.
-Longitud: Concisa, sin obviedades.
-```
-
----
-
 ## EMERGENCY
 
 ### Rollback
@@ -298,7 +343,6 @@ prompts/
 ├── architecture/
 ├── testing/
 ├── planning/
-├── communication/
 └── emergency/
 ```
 
