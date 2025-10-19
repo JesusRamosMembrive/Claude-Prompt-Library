@@ -1,20 +1,60 @@
 # Estado Actual
 
 **Fecha**: 2025-10-18
-**Etapa**: 1 (Prototipado)
-**Sesión**: 3
+**Etapa**: 2 (Estructuración)
+**Sesión**: 4
 
-## Objetivo de Phase 1
-✅ COMPLETADO: Script CLI que copia templates a proyectos nuevos o existentes
+## Phase 1: COMPLETO ✅
 
-## Progreso
-- [x] Crear init_project.py
-- [x] Implementar copy de templates
-- [x] Implementar replace de placeholders
-- [x] Manejar proyectos existentes
-- [x] Coexistir con .claude/ de Claude Code
-- [x] Tests automatizados
-- [x] Probado en proyecto real
+## Phase 2: Enhanced Docs + Prompt Helper
+
+**Objetivo:** Hacer recursos útiles accesibles y resolver "copiar prompts es tedioso"
+
+**Dolor que justifica Phase 2:**
+- Archivos útiles (PROMPT_LIBRARY.md, etc.) no se copian → difícil consultar
+- Copiar prompts manualmente es tedioso → necesita helper
+- Falta referencia rápida de Claude Code slash commands
+
+**Scope Phase 2:**
+- [x] Copiar archivos de referencia a docs/
+- [ ] Script prompt_helper.py para buscar/copiar prompts
+- [ ] Documento CLAUDE_CODE_REFERENCE.md
+
+**NO en Phase 2 (defer a Phase 3+):**
+- ❌ Prompts interactivos (queda para Phase 3)
+- ❌ Análisis automático de código
+- ❌ Sugerencias en tiempo real
+- ❌ Integración profunda con Claude Code
+- ❌ MCP automático
+- ❌ Dashboard o UI
+
+**Visión largo plazo documentada pero NO implementada:**
+- Phase 3-6: Features interactivas
+- Phase 7+: ML y análisis avanzado
+- Ver ROADMAP.md para visión completa
+
+## Phase 2.1: Copy Reference Docs ✅ COMPLETO
+
+**Implementado:**
+- Copia 4 archivos de referencia a docs/
+  - PROMPT_LIBRARY.md
+  - QUICK_START.md
+  - STAGES_COMPARISON.md
+  - CLAUDE_CODE_REFERENCE.md
+- Skip si archivos ya existen
+- Mensaje claro de qué se copió/skippeó
+
+**Bugs corregidos durante implementación:**
+- Path construction (evitar duplicación)
+- Missing comma en lista de archivos
+- Mensaje de success incompleto
+
+**Tests:**
+- ✅ Copia a proyecto nuevo
+- ✅ Skip en re-run
+- ✅ Coexiste con archivos existentes
+
+**Próximo:** Phase 2.2 - Prompt Helper Script
 
 ## Decisiones tomadas
 
@@ -129,3 +169,6 @@ El script hace exactamente lo que necesita:
 **Edge case conocido:**
 - Si quieres REINICIALIZAR templates → borrar manualmente o añadir `--force` en futuro
 - Dolor no experimentado todavía, defer solución
+
+**Decisión:** Implementar solo lo mínimo que resuelve dolor de Phase 2.
+Validar antes de continuar a Phase 3.

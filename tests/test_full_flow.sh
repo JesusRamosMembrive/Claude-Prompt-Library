@@ -1,35 +1,86 @@
-# Actualiza tests/test_full_flow.sh para validar nuevo comportamiento:
-
 #!/bin/bash
 set -e
 
 echo "🧪 Starting Full Flow Test - Claude Prompt Library"
 
-# Test 1: New project
-echo "Test 1: New project creation..."
-python init_project.py test-new
-[ -f "test-new/.claude/00-project-brief.md" ] || exit 1
-echo "  ✓ Passed"
+# Change to project root directory
+cd "$(dirname "$0")/.."
 
-# Test 2: Existing project with Claude Code
-echo "Test 2: Coexistence with Claude Code settings..."
+# =============================================================================
+# PHASE 1 & 2: Template & Docs Copier
+# =============================================================================
+echo "🔹 Testing template and docs copier..."
+
+# Test 1: New project gets everything
+echo "  Test 1: New project creation..."
+python init_project.py test-new
+
+# Check .claude/ files
+if [ ! -f "test-new/.claude/00-project-brief.md" ]; then
+    echo "  ✗ Missing .claude/ templates"
+    exit 1
+fi
+
+# Check docs/ files (NEW)
+if [ ! -f "test-new/docs/PROMPT_LIBRARY.md" ]; then
+    echo "  ✗ Missing docs/PROMPT_LIBRARY.md"
+    exit 1
+fi
+
+if [ ! -f "test-new/docs/QUICK_START.md" ]; then
+    echo "  ✗ Missing docs/QUICK_START.md"
+    exit 1
+fi
+
+if [ ! -f "test-new/docs/STAGES_COMPARISON.md" ]; then
+    echo "  ✗ Missing docs/STAGES_COMPARISON.md"
+    exit 1
+fi
+
+if [ ! -f "test-new/docs/CLAUDE_CODE_REFERENCE.md" ]; then
+    echo "  ✗ Missing docs/CLAUDE_CODE_REFERENCE.md"
+    exit 1
+fi
+
+echo "  ✓ All files copied correctly"
+
+# Test 2: Re-run skips existing
+echo "  Test 2: Skip existing files..."
+python init_project.py test-new 2>&1 | grep -q "Skipped"
+echo "  ✓ Skips existing files correctly"
+
+# Test 3: Placeholders replaced
+echo "  Test 3: Placeholder replacement..."
+if grep -q "{{PROJECT_NAME}}" test-new/.claude/*.md; then
+    echo "  ✗ Placeholders not replaced"
+    exit 1
+fi
+echo "  ✓ Placeholders replaced correctly"
+
+# Test 4: Coexist with Claude Code settings
+echo "  Test 4: Coexistence with Claude Code..."
 mkdir -p test-existing/.claude
 echo '{"permissions": {}}' > test-existing/.claude/settings.local.json
 python init_project.py test-existing
-[ -f "test-existing/.claude/00-project-brief.md" ] || exit 1
-[ -f "test-existing/.claude/settings.local.json" ] || exit 1
-echo "  ✓ Passed"
 
-# Test 3: Re-run on same project (skip existing)
-echo "Test 3: Skip existing files..."
-python init_project.py test-new 2>&1 | grep -q "Skipped"
-echo "  ✓ Passed"
+if [ ! -f "test-existing/.claude/settings.local.json" ]; then
+    echo "  ✗ Claude Code settings deleted!"
+    exit 1
+fi
 
-# Test 4: Placeholders replaced
-echo "Test 4: Placeholder replacement..."
-! grep -q "{{PROJECT_NAME}}" test-new/.claude/*.md || exit 1
-echo "  ✓ Passed"
+if [ ! -f "test-existing/docs/PROMPT_LIBRARY.md" ]; then
+    echo "  ✗ Docs not copied to existing project"
+    exit 1
+fi
 
-# Cleanup
-rm -rf test-new test-existing
+echo "  ✓ Coexists with Claude Code settings"
+
 echo "✅ All tests passed!"
+
+# =============================================================================
+# CLEANUP
+# =============================================================================
+echo "🧹 Cleaning up..."
+rm -rf test-new test-existing
+
+echo "🎉 Phase 1 & 2 tests complete!"

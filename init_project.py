@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Claude Prompt Library - Project Initializer
-Phase 1: Simple template copier
+Phase 2: Enhanced documentation support
 """
 
 import sys
@@ -32,19 +32,27 @@ if __name__ == "__main__":
     # 2. Setup paths
     script_dir = Path(__file__).parent
     template_source = script_dir / "templates" / "basic" / ".claude"
+    template_docs = script_dir / "templates" / "docs"
+
     dest_dir = Path(project_name)
     dest_claude = dest_dir / ".claude"
+    dest_docs = dest_dir / "docs"
 
-    # 3. Validate template exists
+    # 3. Validate templates exist
     if not template_source.exists():
         print(f"Error: Template not found at {template_source}")
         sys.exit(1)
 
-    # 4. Create destination directory if needed
+    if not template_docs.exists():
+        print(f"Error: Docs template not found at {template_docs}")
+        sys.exit(1)
+
+    # 4. Create destination directories if needed
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_claude.mkdir(exist_ok=True)
+    dest_docs.mkdir(exist_ok=True)
 
-    # 5. Copy only missing template files
+    # 5. Copy only missing .claude/ template files
     template_files = [
         "00-project-brief.md",
         "01-current-phase.md",
@@ -83,20 +91,53 @@ if __name__ == "__main__":
 
             dest_file.write_text(content, encoding="utf-8")
 
-    # 7. Success message
+    # 7. Copy reference documentation files
+    reference_files = [
+        "PROMPT_LIBRARY.md",
+        "QUICK_START.md",
+        "STAGES_COMPARISON.md",
+        "CLAUDE_CODE_REFERENCE.md"
+    ]
+
+    ref_files_copied = []
+    ref_files_skipped = []
+
+    for filename in reference_files:
+        source_file = template_docs / filename
+        dest_file = dest_docs / filename
+
+        if dest_file.exists():
+            ref_files_skipped.append(filename)
+        else:
+            shutil.copy2(source_file, dest_file)
+            ref_files_copied.append(filename)
+
+    # 8. Success message
     print(f"✓ Project '{project_name}' initialized!")
     print(f"✓ Claude context files at: {dest_claude}")
+    print(f"✓ Reference docs at: {dest_docs}")
 
     if files_copied:
-        print(f"\nAdded {len(files_copied)} file(s):")
+        print(f"\nAdded {len(files_copied)} .claude/ file(s):")
         for f in files_copied:
             print(f"  + {f}")
 
     if files_skipped:
-        print(f"\nSkipped {len(files_skipped)} existing file(s):")
+        print(f"\nSkipped {len(files_skipped)} existing .claude/ file(s):")
         for f in files_skipped:
+            print(f"  - {f}")
+
+    if ref_files_copied:
+        print(f"\nAdded {len(ref_files_copied)} reference doc(s):")
+        for f in ref_files_copied:
+            print(f"  + {f}")
+
+    if ref_files_skipped:
+        print(f"\nSkipped {len(ref_files_skipped)} existing reference doc(s):")
+        for f in ref_files_skipped:
             print(f"  - {f}")
 
     print(f"\nNext steps:")
     print(f"  cd {project_name}")
+    print(f"  cat docs/QUICK_START.md  # Read this first")
     print(f"  # Open with Claude Code")
