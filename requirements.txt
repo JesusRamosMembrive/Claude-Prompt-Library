@@ -1,0 +1,8 @@
+# Dependencias para Claude-Prompt-Library
+
+# Navegación interactiva en terminal (prompt_helper.py)
+simple-term-menu>=1.6.0
+
+# Copiado al portapapeles (opcional - requiere dependencias del sistema)
+# Ver CONTRIBUTING.md para instrucciones de instalación de dependencias del sistema
+pyperclip>=1.8.0

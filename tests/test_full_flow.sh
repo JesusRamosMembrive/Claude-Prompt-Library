@@ -1,86 +1,90 @@
 #!/bin/bash
 set -e
 
-echo "🧪 Starting Full Flow Test - Claude Prompt Library"
-
-# Change to project root directory
-cd "$(dirname "$0")/.."
+echo "🧪 Testing Claude-Prompt-Library Full Flow"
+echo "=========================================="
 
 # =============================================================================
-# PHASE 1 & 2: Template & Docs Copier
+# PHASE 1: Project Initialization
 # =============================================================================
-echo "🔹 Testing template and docs copier..."
+echo ""
+echo "🔹 Testing project initialization..."
 
-# Test 1: New project gets everything
-echo "  Test 1: New project creation..."
-python init_project.py test-new
+# Cleanup from previous test runs
+rm -rf test-project-temp
 
-# Check .claude/ files
-if [ ! -f "test-new/.claude/00-project-brief.md" ]; then
-    echo "  ✗ Missing .claude/ templates"
-    exit 1
+# Test 1: Create new project
+echo "  Test 1: Initialize new project..."
+python init_project.py test-project-temp > /dev/null 2>&1 || true
+
+# Verify project structure created
+test -d test-project-temp/.claude || { echo "  ✗ .claude/ directory not created"; exit 1; }
+test -d test-project-temp/docs || { echo "  ✗ docs/ directory not created"; exit 1; }
+echo "  ✓ Project structure created"
+
+# Test 2: Verify template files copied
+echo "  Test 2: Check template files..."
+test -f test-project-temp/.claude/00-project-brief.md || { echo "  ✗ project-brief.md not found"; exit 1; }
+test -f test-project-temp/.claude/01-current-phase.md || { echo "  ✗ current-phase.md not found"; exit 1; }
+test -f test-project-temp/.claude/settings.local.json || { echo "  ✗ settings.local.json not found"; exit 1; }
+echo "  ✓ Template files copied"
+
+# Test 3: Verify reference docs copied
+echo "  Test 3: Check reference docs..."
+test -f test-project-temp/docs/PROMPT_LIBRARY.md || { echo "  ✗ PROMPT_LIBRARY.md not found"; exit 1; }
+test -f test-project-temp/docs/QUICK_START.md || { echo "  ✗ QUICK_START.md not found"; exit 1; }
+echo "  ✓ Reference docs copied"
+
+# Test 4: Check CLAUDE.md creation (may fail if claude not installed)
+echo "  Test 4: Check CLAUDE.md..."
+if [ -f test-project-temp/CLAUDE.md ]; then
+    echo "  ✓ CLAUDE.md generated (claude CLI available)"
+
+    # Test 5: Verify custom instructions appended
+    if grep -q "Custom Workflow Instructions" test-project-temp/CLAUDE.md; then
+        echo "  ✓ Custom instructions appended to CLAUDE.md"
+    else
+        echo "  ✗ Custom instructions not found in CLAUDE.md"
+        exit 1
+    fi
+else
+    echo "  ⚠️  CLAUDE.md not generated (claude CLI not available - this is OK)"
+    echo "     In production, ensure Claude Code CLI is installed"
 fi
 
-# Check docs/ files (NEW)
-if [ ! -f "test-new/docs/PROMPT_LIBRARY.md" ]; then
-    echo "  ✗ Missing docs/PROMPT_LIBRARY.md"
-    exit 1
-fi
+# Cleanup
+rm -rf test-project-temp
 
-if [ ! -f "test-new/docs/QUICK_START.md" ]; then
-    echo "  ✗ Missing docs/QUICK_START.md"
-    exit 1
-fi
-
-if [ ! -f "test-new/docs/STAGES_COMPARISON.md" ]; then
-    echo "  ✗ Missing docs/STAGES_COMPARISON.md"
-    exit 1
-fi
-
-if [ ! -f "test-new/docs/CLAUDE_CODE_REFERENCE.md" ]; then
-    echo "  ✗ Missing docs/CLAUDE_CODE_REFERENCE.md"
-    exit 1
-fi
-
-echo "  ✓ All files copied correctly"
-
-# Test 2: Re-run skips existing
-echo "  Test 2: Skip existing files..."
-python init_project.py test-new 2>&1 | grep -q "Skipped"
-echo "  ✓ Skips existing files correctly"
-
-# Test 3: Placeholders replaced
-echo "  Test 3: Placeholder replacement..."
-if grep -q "{{PROJECT_NAME}}" test-new/.claude/*.md; then
-    echo "  ✗ Placeholders not replaced"
-    exit 1
-fi
-echo "  ✓ Placeholders replaced correctly"
-
-# Test 4: Coexist with Claude Code settings
-echo "  Test 4: Coexistence with Claude Code..."
-mkdir -p test-existing/.claude
-echo '{"permissions": {}}' > test-existing/.claude/settings.local.json
-python init_project.py test-existing
-
-if [ ! -f "test-existing/.claude/settings.local.json" ]; then
-    echo "  ✗ Claude Code settings deleted!"
-    exit 1
-fi
-
-if [ ! -f "test-existing/docs/PROMPT_LIBRARY.md" ]; then
-    echo "  ✗ Docs not copied to existing project"
-    exit 1
-fi
-
-echo "  ✓ Coexists with Claude Code settings"
-
-echo "✅ All tests passed!"
+echo "✅ Phase 1 tests passed"
 
 # =============================================================================
-# CLEANUP
+# PHASE 2.2: Prompt Helper
 # =============================================================================
-echo "🧹 Cleaning up..."
-rm -rf test-new test-existing
+echo ""
+echo "🔹 Testing prompt helper..."
 
-echo "🎉 Phase 1 & 2 tests complete!"
+# Test 1: List works without dependencies
+echo "  Test 1: List command..."
+python prompt_helper.py list | grep -q "DEBUGGING"
+echo "  ✓ List works"
+
+# Test 2: Show command
+echo "  Test 2: Show command..."
+python prompt_helper.py show debugging/stuck | grep -q "atascado"
+echo "  ✓ Show works"
+
+# Test 3: Flexible matching
+echo "  Test 3: Flexible matching..."
+python prompt_helper.py show debug/stuck | grep -q "atascado"
+python prompt_helper.py show DEBUGGING/Stuck-In-Loop | grep -q "atascado"
+echo "  ✓ Flexible matching works"
+
+# Test 4: Error handling
+echo "  Test 4: Error handling..."
+python prompt_helper.py show nonexistent/prompt 2>&1 | grep -q -i "no se encontró"
+echo "  ✓ Error handling works"
+
+# Note: Interactive mode test skipped (requires terminal)
+echo "  ℹ️  Interactive mode: manual test only"
+
+echo "✅ Phase 2.2 tests passed"

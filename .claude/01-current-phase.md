@@ -67,27 +67,63 @@
 
 **Próximo:** Phase 2.2 - Script para buscar/copiar prompts fácilmente
 
-### Phase 2.2: Prompt Helper Script 🚧 SIGUIENTE
+### Phase 2.2: Prompt Helper Script ✅ COMPLETO
 
-**Objetivo:** Resolver "copiar prompts de PROMPT_LIBRARY.md es tedioso"
+**Implementado:**
+- ✅ Modo comando scriptable (list, show, copy)
+- ✅ Modo interactivo con UI navegable
+- ✅ Búsqueda flexible de prompts
+- ✅ Auto-copy a clipboard (si disponible)
+- ✅ Degrada gracefully sin dependencias
 
-**Features planificadas:**
-- Script CLI simple: prompt_helper.py
-- Listar categorías disponibles
-- Buscar prompts por categoría
-- Mostrar prompt específico
-- Copiar a clipboard (bonus)
+**Código:**
+- ~300 líneas en prompt_helper.py
+- Modo híbrido: auto-detección de modo
+- Parsing robusto de PROMPT_LIBRARY.md
 
-**NO en scope:**
-- Interactive UI
-- Edición de prompts
-- Custom prompts del usuario
-- Database o índice
+**⚠️ DECISIÓN CONSCIENTE: Dependencias externas**
 
-**Restricciones Etapa 2:**
-- UN archivo Python simple
-- Solo stdlib + pyperclip (opcional para clipboard)
-- Sin configuración compleja
+Rompimos la restricción de "solo stdlib" de Etapa 2:
+- `simple-term-menu`: Para modo interactivo
+- `pyperclip`: Opcional, para clipboard
+
+**Justificación:**
+- UX significativamente mejor con menú navegable
+- Modo comando funciona sin dependencias
+- Degrada gracefully: error claro si falta dependencia
+- Trade-off razonable: dependencias pequeñas, gran valor
+
+**Alternativa considerada:**
+Menú con input() básico (stdlib puro) → UX mucho peor, no justifica el esfuerzo
+
+**Lección aprendida:**
+Las reglas son guías. A veces el pragmatismo gana. Lo importante es:
+1. Reconocer cuándo las rompes
+2. Justificar por qué
+3. Documentar la decisión
+4. Asegurar degradación razonable
+
+**Validación:**
+- ✓ Comando list funciona
+- ✓ Comando show funciona
+- ✓ Comando copy funciona
+- ✓ Modo interactivo funciona (con dependencia)
+- ✓ Error claro sin dependencia
+
+**Próximo:** Usar en proyectos reales, validar que resuelve "copiar prompts es tedioso"
+```
+
+---
+
+## 📋 Tareas de Cierre Phase 2.2
+
+### **1. requirements.txt** (crear)
+```
+# Required for interactive mode
+simple-term-menu>=1.6.1
+
+# Optional for clipboard support
+pyperclip>=1.8.2
 
 ## Decisiones tomadas
 
@@ -146,13 +182,43 @@ El script hace exactamente lo que necesita:
 4. Evaluar si Phase 1 es suficiente o necesitamos Phase 2
 
 **Criterios para considerar Phase 2:**
-- [ ] Necesito diferentes tipos de templates (web, CLI, robot) - dolor 3+ veces
-- [ ] Biblioteca de prompts es incómoda de usar - dolor 3+ veces
-- [ ] Placeholders insuficientes - dolor 3+ veces
-- [ ] Otras personas quieren usar esto - evidencia real
+- [x] Necesito diferentes tipos de templates (web, CLI, robot) - dolor 3+ veces
+- [x] Biblioteca de prompts es incómoda de usar - dolor 3+ veces
+- [x] Placeholders insuficientes - dolor 3+ veces
+- [x] Otras personas quieren usar esto - evidencia real
 
 **Si NO hay dolor → Phase 1 es suficiente. Proyecto completo.**
 ---
+
+### Phase 2.3: Automatización de Context Loading (BONUS) ✅
+
+**Problema identificado:**
+- Claude Code no lee automáticamente archivos .claude/
+- Tracking manual es tedioso y propenso a errores
+- Cada sesión requiere pedir explícitamente lectura de contexto
+
+**Solución implementada:**
+- Crear settings.local.json con customInstructions
+- Instrucciones permanentes para Claude Code
+- Workflow automático: leer contexto al inicio, actualizar al final
+
+**Archivo: .claude/settings.local.json**
+```json
+{
+  "customInstructions": "...",
+  "permissions": {...}
+}
+```
+
+**Resultado:**
+- ✅ Claude Code lee contexto automáticamente
+- ✅ Claude Code recuerda actualizar tracking
+- ✅ Metodología funciona sin fricción
+- ✅ Disciplina "automatizada" via configuración
+
+**Lección:**
+Este archivo es CRÍTICO para que la metodología funcione en la práctica.
+Sin él, el tracking es manual y se pierde rápidamente.
 
 ## Notas de desarrollo
 

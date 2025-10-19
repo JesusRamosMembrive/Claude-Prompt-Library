@@ -1,63 +1,56 @@
-# Claude Prompt Library
+## Installation
 
-CLI tool para inicializar proyectos con metodología estructurada de desarrollo con Claude Code.
-
-## Estado
-
-**Phase 1: COMPLETO** ✅
-
-Script funcional que copia templates de metodología a proyectos nuevos o existentes.
-
-## Instalación
+### Quick start (command mode only)
 ```bash
-git clone [tu-repo]
+git clone [your-repo]
 cd claude-prompt-library
+python prompt_helper.py list
 ```
 
-## Uso
-
-### Crear proyecto nuevo
+### Full install (with interactive mode)
 ```bash
-python init_project.py my-new-project
-cd my-new-project
+pip install -r requirements.txt
+python prompt_helper.py  # Opens interactive menu
 ```
 
-### Añadir metodología a proyecto existente
+### Dependencies
+- **simple-term-menu** (required for interactive mode only)
+  - Command mode works without it
+  - Error message guides you if missing
+- **pyperclip** (optional)
+  - For clipboard support in both modes
+  - Works without it, just shows text
+
+## Usage
+
+### Interactive Mode
 ```bash
-cd my-existing-project
-python /path/to/init_project.py .
+python prompt_helper.py
+# Beautiful terminal menu, arrow keys navigation
 ```
 
-### Coexiste con Claude Code
-Si tu proyecto ya usa Claude Code (tiene `.claude/settings.local.json`), el script:
-- Añade solo los archivos .md de metodología
-- No toca archivos de configuración de Claude Code
-- Ambos sistemas funcionan juntos
+### Command Mode (scriptable)
+```bash
+# List all prompts
+python prompt_helper.py list
 
-## Qué incluye
+# Show specific prompt
+python prompt_helper.py show debugging/stuck-in-loop
 
-Copia 5 archivos a `.claude/`:
-- `00-project-brief.md` - Define qué construyes
-- `01-current-phase.md` - Tracking de progreso
-- `02-stage1-rules.md` - Reglas de prototipado
-- `02-stage2-rules.md` - Reglas de estructuración
-- `02-stage3-rules.md` - Reglas de escalado
+# Copy to clipboard
+python prompt_helper.py copy planning/feature-planning
 
-## Siguiente paso
+# Flexible matching (case insensitive, spaces/dashes)
+python prompt_helper.py show debug/stuck
+python prompt_helper.py show DEBUGGING/Stuck-In-Loop  # Also works
+```
 
-Lee `SETUP_COMPLETE.md` para entender la metodología completa.
+### Examples
+```bash
+# In a script
+PROMPT=$(python prompt_helper.py show debugging/stuck)
+echo "$PROMPT" > my_debug_session.txt
 
-## Desarrollo
-
-Para contribuir o extender:
-1. Lee `.claude/` de este proyecto (ejemplo vivo)
-2. Sigue `QUICK_START.md`
-3. Respeta metodología de 3 etapas
-
-## Roadmap
-
-- [x] Phase 1: CLI básico
-- [ ] Phase 2: TBD (basado en uso real)
-- [ ] Phase 3: TBD
-
-Próximas features se deciden basadas en dolor real, no especulación.
+# Quick reference
+python prompt_helper.py show architecture/design | less
+```

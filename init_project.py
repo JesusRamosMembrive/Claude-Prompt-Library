@@ -8,6 +8,113 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import shutil
+import subprocess
+import os
+
+
+def run_claude_init(project_path):
+    """
+    Execute 'claude -p "/init"' to generate CLAUDE.md in the project directory.
+
+    Args:
+        project_path: Path object pointing to the project directory
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    print("\n🤖 Running Claude Code /init to generate CLAUDE.md...")
+
+    try:
+        # Check if claude command exists
+        result = subprocess.run(
+            ["which", "claude"],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            print("⚠️  Warning: 'claude' command not found in PATH")
+            print("   Please install Claude Code CLI: https://docs.claude.com/")
+            return False
+
+        # Execute claude -p "/init" in the project directory
+        result = subprocess.run(
+            ["claude", "-p", "/init"],
+            cwd=str(project_path),
+            capture_output=True,
+            text=True,
+            timeout=120  # 2 minute timeout
+        )
+
+        # Verify CLAUDE.md was actually created
+        claude_md = project_path / "CLAUDE.md"
+        if claude_md.exists():
+            print("✓ CLAUDE.md generated successfully")
+            return True
+        else:
+            if result.returncode == 0:
+                print("⚠️  Warning: claude /init completed but CLAUDE.md not generated")
+                print("   This usually happens with empty projects. Skipping /init step.")
+            else:
+                print(f"⚠️  Warning: claude /init failed with error:")
+                print(f"   {result.stderr}")
+            return False
+
+    except subprocess.TimeoutExpired:
+        print("⚠️  Warning: claude /init timed out after 2 minutes")
+        return False
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to run claude /init: {e}")
+        return False
+
+
+def append_custom_instructions(claude_md_path, custom_instructions_template):
+    """
+    Append custom workflow instructions to CLAUDE.md.
+
+    Args:
+        claude_md_path: Path object to CLAUDE.md file
+        custom_instructions_template: Path object to CUSTOM_INSTRUCTIONS.md template
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Read custom instructions template
+        if not custom_instructions_template.exists():
+            print(f"⚠️  Warning: Custom instructions template not found at {custom_instructions_template}")
+            return False
+
+        custom_content = custom_instructions_template.read_text(encoding="utf-8")
+
+        # Check if CLAUDE.md exists
+        if not claude_md_path.exists():
+            print(f"⚠️  Warning: CLAUDE.md not found at {claude_md_path}")
+            return False
+
+        # Read current CLAUDE.md content
+        current_content = claude_md_path.read_text(encoding="utf-8")
+
+        # Check if custom instructions already appended
+        if "## Custom Workflow Instructions" in current_content:
+            print("ℹ️  Custom instructions already present in CLAUDE.md, skipping...")
+            return True
+
+        # Append custom instructions with clear separator
+        separator = "\n\n---\n\n# Custom Workflow Instructions\n\n"
+        separator += "<!-- Added by claude-prompt-library init_project.py -->\n\n"
+
+        updated_content = current_content.rstrip() + separator + custom_content
+
+        # Write updated content
+        claude_md_path.write_text(updated_content, encoding="utf-8")
+
+        print("✓ Custom workflow instructions appended to CLAUDE.md")
+        return True
+
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to append custom instructions: {e}")
+        return False
 
 
 def replace_placeholders(dest_path, replacements):
@@ -58,7 +165,8 @@ if __name__ == "__main__":
         "01-current-phase.md",
         "02-stage1-rules.md",
         "02-stage2-rules.md",
-        "02-stage3-rules.md"
+        "02-stage3-rules.md",
+        "settings.local.json"
     ]
 
     files_copied = []
@@ -112,7 +220,45 @@ if __name__ == "__main__":
             shutil.copy2(source_file, dest_file)
             ref_files_copied.append(filename)
 
-    # 8. Success message
+    # 8. Run Claude Code /init and append custom instructions
+    claude_md_path = dest_dir / "CLAUDE.md"
+    custom_instructions_template = template_source / "CUSTOM_INSTRUCTIONS.md"
+
+    # Only run /init if CLAUDE.md doesn't exist
+    if not claude_md_path.exists():
+        init_success = run_claude_init(dest_dir)
+
+        # If /init didn't create CLAUDE.md (empty project), create a basic one
+        if not claude_md_path.exists():
+            print("\nℹ️  Creating basic CLAUDE.md since /init didn't generate one...")
+            basic_content = f"""# {project_name}
+
+This file contains project context and instructions for Claude Code.
+
+## Project Overview
+
+*Add project description here*
+
+## Tech Stack
+
+*Add technologies used here*
+
+## Getting Started
+
+*Add setup instructions here*
+
+"""
+            claude_md_path.write_text(basic_content, encoding="utf-8")
+            print("✓ Basic CLAUDE.md created")
+    else:
+        print(f"\nℹ️  CLAUDE.md already exists at {claude_md_path}")
+        print(f"   Assuming it was generated by /init, proceeding to append custom instructions...")
+
+    # Append custom instructions if CLAUDE.md exists or was just created
+    if claude_md_path.exists():
+        append_custom_instructions(claude_md_path, custom_instructions_template)
+
+    # 9. Success message
     print(f"✓ Project '{project_name}' initialized!")
     print(f"✓ Claude context files at: {dest_claude}")
     print(f"✓ Reference docs at: {dest_docs}")
