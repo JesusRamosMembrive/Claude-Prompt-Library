@@ -35,33 +35,68 @@ if __name__ == "__main__":
     dest_dir = Path(project_name)
     dest_claude = dest_dir / ".claude"
 
-    # 3. Validate destination doesn't exist
-    if dest_dir.exists():
-        print(f"Error: Directory '{project_name}' already exists")
-        sys.exit(1)
-
-    # 4. Validate template exists
+    # 3. Validate template exists
     if not template_source.exists():
         print(f"Error: Template not found at {template_source}")
         sys.exit(1)
 
-    # 5. Copy templates
-    print(f"Creating project '{project_name}'...")
-    dest_dir.mkdir(parents=True)
-    shutil.copytree(template_source, dest_claude)
+    # 4. Create destination directory if needed
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_claude.mkdir(exist_ok=True)
 
-    # 6. Replace placeholders
-    replacements = {
-        "{{PROJECT_NAME}}": project_name,
-        "{{DATE}}": datetime.now().strftime("%Y-%m-%d"),
-        "{{YEAR}}": str(datetime.now().year)
-    }
+    # 5. Copy only missing template files
+    template_files = [
+        "00-project-brief.md",
+        "01-current-phase.md",
+        "02-stage1-rules.md",
+        "02-stage2-rules.md",
+        "02-stage3-rules.md"
+    ]
 
-    replace_placeholders(dest_claude, replacements)
+    files_copied = []
+    files_skipped = []
+
+    for filename in template_files:
+        source_file = template_source / filename
+        dest_file = dest_claude / filename
+
+        if dest_file.exists():
+            files_skipped.append(filename)
+        else:
+            shutil.copy2(source_file, dest_file)
+            files_copied.append(filename)
+
+    # 6. Replace placeholders ONLY in newly copied files
+    if files_copied:
+        replacements = {
+            "{{PROJECT_NAME}}": project_name,
+            "{{DATE}}": datetime.now().strftime("%Y-%m-%d"),
+            "{{YEAR}}": str(datetime.now().year)
+        }
+
+        for filename in files_copied:
+            dest_file = dest_claude / filename
+            content = dest_file.read_text(encoding="utf-8")
+
+            for placeholder, value in replacements.items():
+                content = content.replace(placeholder, value)
+
+            dest_file.write_text(content, encoding="utf-8")
 
     # 7. Success message
-    print(f"✓ Project '{project_name}' created successfully!")
-    print(f"✓ Claude context files available at: {dest_claude}")
+    print(f"✓ Project '{project_name}' initialized!")
+    print(f"✓ Claude context files at: {dest_claude}")
+
+    if files_copied:
+        print(f"\nAdded {len(files_copied)} file(s):")
+        for f in files_copied:
+            print(f"  + {f}")
+
+    if files_skipped:
+        print(f"\nSkipped {len(files_skipped)} existing file(s):")
+        for f in files_skipped:
+            print(f"  - {f}")
+
     print(f"\nNext steps:")
     print(f"  cd {project_name}")
     print(f"  # Open with Claude Code")

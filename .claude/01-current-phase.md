@@ -2,75 +2,83 @@
 
 **Fecha**: 2025-10-18
 **Etapa**: 1 (Prototipado)
-**Sesión**: 1 - Completada
+**Sesión**: 3
 
-## Objetivo de hoy
-Crear script básico que copie templates `.claude/` a un proyecto nuevo.
+## Objetivo de Phase 1
+✅ COMPLETADO: Script CLI que copia templates a proyectos nuevos o existentes
 
 ## Progreso
-- [x] Crear estructura de carpetas del proyecto
-- [x] Crear templates básicos en `templates/basic/.claude/`
-- [x] Implementar `init_project.py` que copie templates
-- [x] Probar creando un proyecto de prueba
-- [x] Crear `test_full_flow.sh`
-
-## Dolor actual
-Ninguno aún (primera iteración).
+- [x] Crear init_project.py
+- [x] Implementar copy de templates
+- [x] Implementar replace de placeholders
+- [x] Manejar proyectos existentes
+- [x] Coexistir con .claude/ de Claude Code
+- [x] Tests automatizados
+- [x] Probado en proyecto real
 
 ## Decisiones tomadas
 
-### Implementación
-- **init_project.py**: 64 líneas, 1 función única (`replace_placeholders()`)
-- **Arquitectura**: Código secuencial en `if __name__ == "__main__"` + 1 función helper
-- **Placeholders**: 3 variables (`{{PROJECT_NAME}}`, `{{DATE}}`, `{{YEAR}}`)
-- **Test suite**: `test_full_flow.sh` con 5 tests automatizados
+### Implementación inicial (2025-10-18)
+- Un solo archivo: init_project.py (~80 líneas)
+- Solo stdlib: pathlib, shutil, sys, datetime
+- Sin clases, solo funciones simples
+- Placeholders: PROJECT_NAME, DATE, YEAR
 
-### Qué funcionó bien
-- ✅ Simplicidad extrema: todo en 1 archivo, fácil de entender
-- ✅ Solo stdlib: cero dependencias externas
-- ✅ Validación mínima pero efectiva (directorio existe, template existe)
-- ✅ Mensajes de error claros y útiles
-- ✅ `pathlib.Path` hace el código portable Windows/Linux/Mac
-- ✅ Tests comprueban comportamiento real (no mocks)
+### Soporte para proyectos existentes (2025-10-18)
+- Script crea directorio si no existe (mkdir exist_ok=True)
+- Permite instalar en proyectos existentes
+- Caso de uso: añadir metodología a proyectos legacy
 
-### Qué NO hicimos (y por qué)
-- ❌ **Validación compleja de inputs**: No necesaria en Phase 1, Python falla naturalmente
-- ❌ **Configuración en archivo**: Hardcoding está OK para prototipo
-- ❌ **Clases**: Una función es suficiente, no justifica OOP
-- ❌ **CLI con click/argparse**: `sys.argv` es suficiente para 1 argumento
-- ❌ **Logging framework**: `print()` es claro y directo
-- ❌ **Try/except complejo**: `set -e` en bash + exit codes son suficientes
-- ❌ **Múltiples tipos de templates**: Solo "basic" por ahora
+### Coexistencia con Claude Code (2025-10-18)
+**Problema encontrado:** Claude Code usa .claude/settings.local.json
+**Solución:** Copiar solo archivos .md que faltan, no tocar otros archivos
+**Resultado:** Coexistencia natural sin conflictos
 
-### Por qué estas decisiones
-Seguimos estrictamente `.claude/02-stage1-rules.md`:
-- **Prioridad**: Validar que la idea funciona
-- **Principio**: Lo más simple que funciona > Arquitectura elegante
-- **Meta**: Usar en 3 proyectos reales antes de optimizar
-- **Aprendizaje**: Detectar qué duele en uso real, no anticipar problemas
+**Lista explícita de archivos template:**
+- 00-project-brief.md
+- 01-current-phase.md
+- 02-stage1-rules.md
+- 02-stage2-rules.md
+- 02-stage3-rules.md
 
-## Próxima sesión
+**Lógica:** Si archivo existe → skip. Si no → copiar y reemplazar placeholders.
 
-### Objetivos
-1. **Probar en 3 proyectos reales**
-   - Crear proyectos con diferentes propósitos (CLI tool, web app, library)
-   - Usar `init_project.py` en cada uno
-   - Documentar qué funciona bien y qué duele
+### Qué NO hicimos (deliberadamente)
+- ❌ Múltiples tipos de templates (web-api, cli-tool, etc.)
+- ❌ Prompts interactivos para rellenar placeholders
+- ❌ Flag --force para reinicializar
+- ❌ Validación compleja de nombres
+- ❌ Configuración persistente
+- ❌ Progress bars o UI fancy
+- ❌ Cambiar nombre a .claude-templates/
 
-2. **Detectar qué duele**
-   - ¿Los templates son útiles o genéricos?
-   - ¿Los placeholders cubren casos reales?
-   - ¿Necesitamos más tipos de templates?
-   - ¿Hay pasos manuales repetitivos después de `init_project.py`?
+**Por qué:** YAGNI - No hay dolor que justifique estas features todavía.
 
-3. **Decidir si necesitamos Phase 2**
-   - Si el script actual es suficiente → quedarnos en Phase 1
-   - Si detectamos 3+ puntos de dolor → planear Phase 2
-   - Actualizar `.claude/01-current-phase.md` con hallazgos
+## Estado de Phase 1
+**COMPLETO Y FUNCIONAL** ✅
 
-### Criterio para pasar a Phase 2
-Solo avanzar si encontramos problemas reales en uso, no por querer "mejorar" el código.
+El script hace exactamente lo que necesita:
+- Copia templates a proyectos nuevos
+- Añade templates a proyectos existentes
+- Coexiste con Claude Code
+- Reemplaza placeholders correctamente
+- Tests pasan
 
+## Próximos pasos
+
+**ANTES de Phase 2:**
+1. Usar init_project.py en 3-5 proyectos MÁS
+2. Seguir metodología .claude/ en esos proyectos
+3. Documentar dolor real (qué falta, qué sobra, qué molesta)
+4. Evaluar si Phase 1 es suficiente o necesitamos Phase 2
+
+**Criterios para considerar Phase 2:**
+- [ ] Necesito diferentes tipos de templates (web, CLI, robot) - dolor 3+ veces
+- [ ] Biblioteca de prompts es incómoda de usar - dolor 3+ veces
+- [ ] Placeholders insuficientes - dolor 3+ veces
+- [ ] Otras personas quieren usar esto - evidencia real
+
+**Si NO hay dolor → Phase 1 es suficiente. Proyecto completo.**
 ---
 
 ## Notas de desarrollo
@@ -89,3 +97,35 @@ Solo avanzar si encontramos problemas reales en uso, no por querer "mejorar" el 
 - ¿Necesitamos más placeholders en uso real?
 - ¿Los templates básicos cubren suficientes casos de uso?
 - ¿El flujo de trabajo es fluido o hay fricciones?
+
+## Decisiones tomadas
+
+### Coexistencia con Claude Code (2025-10-18)
+
+**Problema:** 
+- Claude Code usa `.claude/settings.local.json`
+- Nuestra herramienta usa `.claude/*.md`
+- Inicialmente el script rechazaba si `.claude/` existía
+
+**Solución implementada:**
+- Copiar solo archivos .md que faltan
+- No tocar otros archivos en `.claude/` (como settings.local.json)
+- Permite coexistencia natural
+- Si archivo ya existe → skip (mensaje informativo)
+
+**Código:**
+- ~20 líneas adicionales
+- Lista explícita de archivos template
+- Check de existencia antes de copiar
+- Solo reemplaza placeholders en archivos nuevos
+
+**Por qué esta solución:**
+- ✅ Simple (lógica clara de copy-if-not-exists)
+- ✅ No destructiva (preserva todo lo existente)
+- ✅ Resuelve problema real (coexistir con Claude Code)
+- ✅ No interfiere (archivos .md ≠ settings.json)
+- ✅ Apropiado para Phase 1
+
+**Edge case conocido:**
+- Si quieres REINICIALIZAR templates → borrar manualmente o añadir `--force` en futuro
+- Dolor no experimentado todavía, defer solución
