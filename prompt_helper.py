@@ -26,9 +26,95 @@ def clear_screen():
     os.system('clear' if os.name != 'nt' else 'cls')
 
 
+def parse_markdown_files(prompts_dir):
+    """
+    Parsea estructura de directorios con archivos individuales de prompts.
+
+    Estructura esperada:
+    prompts/
+      debugging/
+        stuck-in-loop.md
+        error-oscuro.md
+      refactoring/
+        ...
+
+    Retorna un diccionario:
+    {
+      "DEBUGGING": {
+        "Stuck in Loop": "contenido del snippet...",
+        "Error Oscuro": "contenido...",
+      },
+      ...
+    }
+    """
+    from pathlib import Path
+
+    library = {}
+    prompts_path = Path(prompts_dir)
+
+    if not prompts_path.exists():
+        return library
+
+    # Escanear directorios (categorías)
+    for category_dir in sorted(prompts_path.iterdir()):
+        if not category_dir.is_dir():
+            continue
+
+        category_name = category_dir.name.upper()
+        library[category_name] = {}
+
+        # Escanear archivos .md en cada categoría
+        for prompt_file in sorted(category_dir.glob('*.md')):
+            with open(prompt_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            # Extraer nombre del prompt (# Título)
+            prompt_name = None
+            for line in lines:
+                if line.startswith('# '):
+                    prompt_name = line.strip('#').strip()
+                    break
+
+            if not prompt_name:
+                # Fallback: usar nombre del archivo
+                prompt_name = prompt_file.stem.replace('-', ' ').title()
+
+            # Extraer contenido del bloque ## Prompt
+            content_lines = []
+            in_prompt_section = False
+            in_code_block = False
+
+            for line in lines:
+                # Detectar sección ## Prompt
+                if line.startswith('## Prompt'):
+                    in_prompt_section = True
+                    continue
+
+                # Salir si encontramos otra sección ##
+                if in_prompt_section and line.startswith('## ') and not line.startswith('## Prompt'):
+                    break
+
+                # Procesar líneas dentro de la sección Prompt
+                if in_prompt_section:
+                    if line.strip().startswith('```'):
+                        if not in_code_block:
+                            in_code_block = True
+                            continue  # Skip opening ```
+                        else:
+                            break  # End of code block
+                    elif in_code_block:
+                        content_lines.append(line.rstrip('\n'))
+
+            if content_lines:
+                library[category_name][prompt_name] = '\n'.join(content_lines).strip()
+
+    return library
+
+
 def parse_markdown(file_path):
     """
     Parsea el archivo PROMPT_LIBRARY.md y extrae categorías y snippets.
+    (Mantenido para backwards compatibility)
 
     Retorna un diccionario:
     {
@@ -322,19 +408,25 @@ Ejemplos:
 
     args = parser.parse_args()
 
-    # Ruta al archivo PROMPT_LIBRARY.md
+    # Determinar ruta a los prompts
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    library_path = os.path.join(script_dir, 'templates', 'docs', 'PROMPT_LIBRARY.md')
+    prompts_dir = os.path.join(script_dir, 'templates', 'docs', 'prompts')
+    library_file = os.path.join(script_dir, 'templates', 'docs', 'PROMPT_LIBRARY.md')
 
-    if not os.path.exists(library_path):
-        print(f"Error: No se encuentra el archivo {library_path}")
-        sys.exit(1)
+    # Intentar cargar desde estructura de directorios primero (nueva estructura)
+    library = None
+    if os.path.exists(prompts_dir) and os.path.isdir(prompts_dir):
+        library = parse_markdown_files(prompts_dir)
 
-    # Parsear la biblioteca
-    library = parse_markdown(library_path)
+    # Fallback: cargar desde archivo único (backwards compatibility)
+    if not library and os.path.exists(library_file):
+        library = parse_markdown(library_file)
 
     if not library:
         print("Error: No se pudieron cargar los prompts.")
+        print(f"Buscado en:")
+        print(f"  - {prompts_dir} (estructura de directorios)")
+        print(f"  - {library_file} (archivo único)")
         sys.exit(1)
 
     # Ejecutar según el comando
