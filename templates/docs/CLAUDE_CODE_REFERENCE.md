@@ -1,161 +1,251 @@
-# .claude/CLAUDE_CODE_REFERENCE.md
+# Claude Code Quick Reference
 
-Quick reference de comandos útiles de Claude Code:
-
-## Slash Commands Esenciales
-- `/add` - Añadir archivos al contexto
-- `/drop` - Remover archivos del contexto
-- `/debug` - Modo debug
-- etc.
-
-## Cuándo usar subagentes
-- [criterios]
-
-## Cuándo considerar MCP
-- [criterios]
-
-(Referencia, no implementación)
-```
-
-**Por qué:**
-- ✅ Documentación de referencia rápida
-- ✅ Sienta bases para features futuras
-- ✅ No implementa nada complejo
-
-**Total Phase 2:** ~1 día de trabajo
+Guía rápida de comandos y conceptos de Claude Code.
 
 ---
 
-## 🗺️ Roadmap Completo (Tu "Fase 11")
+## 📋 Slash Commands Esenciales
 
-Ahora definimos el **camino completo** sin implementar todo:
+### Context Management
+- `/add <file>` - Add file to context
+- `/add <pattern>` - Add files matching pattern (e.g., `*.py`, `src/**/*.js`)
+- `/drop <file>` - Remove specific file from context
+- `/drop *` - Remove all files from context
+- `/clear` - Clear conversation but keep file context
+- `/new` - Start completely fresh (clears conversation AND files, re-reads CLAUDE.md)
 
-### **Phase 1: Template Copier** ✅ COMPLETO
-- CLI básico
-- Copia templates
-- Coexiste con Claude Code
+### Workflow
+- `/debug` - Enable debug mode for verbose output
+- `/test` - Run project tests
+- `/fix` - Attempt to fix errors in last output
+- `/undo` - Undo last tool use
+- `/help` - Show help and available commands
 
-### **Phase 2: Enhanced Docs + Prompt Helper** ← SIGUIENTE
-- Copia archivos de referencia
-- Script para buscar/copiar prompts
-- Referencia de slash commands
-
-### **Phase 3: Interactive Prompt Assistant** (futuro)
-- Prompts interactivos para placeholders
-- Sugerencias basadas en contexto
-- Template selector (web-api, cli-tool, robot)
-
-### **Phase 4: Claude Code Integration** (futuro)
-- Detectar contexto de Claude Code
-- Sugerir slash commands relevantes
-- Warnings sobre over-engineering en tiempo real
-
-### **Phase 5: Subagent Advisor** (futuro)
-- Analizar complejidad de tarea
-- Sugerir cuándo crear subagente
-- Templates para task delegation
-
-### **Phase 6: MCP Integration** (futuro)
-- Detectar oportunidades para MCP
-- Sugerir servidores MCP relevantes
-- Ayuda con configuración
-
-### **Phase 7-11: Advanced Features** (muy futuro)
-- Machine learning para sugerencias
-- Análisis de código para detectar patterns
-- Dashboard de métricas de desarrollo
-- etc.
-
-**Pero NO implementamos nada después de Phase 2 hasta validar que Phase 2 funciona.**
+### Tasks & Agents
+- `/task <description>` - Create a subagent for a specific task
+- `/tasks` - List active subagents
+- `/cancel` - Cancel current operation
 
 ---
 
-## 📋 Phase 2 Detailed Plan
+## 🤖 Cuándo Usar Subagentes
 
-Vamos a hacer esto **bien** siguiendo la metodología.
+### ✅ Usa Subagentes Cuando:
 
-### **Estructura de archivos después de Phase 2:**
-```
-mi-proyecto/
-├── .claude/                          # Tracking y metodología
-│   ├── 00-project-brief.md
-│   ├── 01-current-phase.md
-│   ├── 02-stage1-rules.md
-│   ├── 02-stage2-rules.md
-│   ├── 02-stage3-rules.md
-│   └── CLAUDE_CODE_REFERENCE.md     # NUEVO
-│
-├── docs/                             # NUEVO - Referencias
-│   ├── PROMPT_LIBRARY.md
-│   ├── QUICK_START.md
-│   └── STAGES_COMPARISON.md
-│
-└── README.md
-```
+1. **Tarea bien definida e independiente**
+   - "Implementar función de parse de JSON"
+   - "Escribir tests para módulo X"
+   - "Refactorizar clase Y según nuevos requerimientos"
 
-### **Nuevos scripts en claude-prompt-library:**
-```
-claude-prompt-library/
-├── init_project.py                   # Existente, mejorado
-├── prompt_helper.py                  # NUEVO
-├── templates/
-│   ├── basic/.claude/               # Existente
-│   └── docs/                        # NUEVO
-│       ├── PROMPT_LIBRARY.md
-│       ├── QUICK_START.md
-│       ├── STAGES_COMPARISON.md
-│       └── CLAUDE_CODE_REFERENCE.md
-└── ...
+2. **Necesitas trabajo en paralelo**
+   - Dos features independientes
+   - Testing mientras desarrollas
+   - Documentación mientras codeas
+
+3. **Contexto diferente requerido**
+   - Subagente solo necesita ver 2-3 archivos
+   - Tú trabajas en otros archivos
+   - Evitas contaminar contexto principal
+
+4. **Tarea repetitiva**
+   - Aplicar mismo patrón en múltiples archivos
+   - Generar código boilerplate similar
+
+### ❌ NO Uses Subagentes Cuando:
+
+1. **Tarea simple** - Más overhead que valor
+2. **Alto acoplamiento** - Requiere mucha coordinación
+3. **Requerimientos poco claros** - Iteración es clave
+4. **Debugging activo** - Necesitas ver todo el contexto
+
+### 💡 Tips:
+```bash
+# Crear subagente con contexto específico
+/task "Implementar parse_json() en utils.py siguiendo el patrón de parse_xml()"
+
+# Dar instrucciones claras
+/task "Escribir unit tests para Calculator class.
+Test todas las operaciones: add, subtract, multiply, divide.
+Incluir edge cases: división por cero, números negativos.
+Usar pytest. Archivo: tests/test_calculator.py"
 ```
 
 ---
 
-## 🎯 Phase 2 Implementation Plan
+## 🔌 Model Context Protocol (MCP)
 
-### **Sesión 1: Copiar archivos de referencia** (1 hora)
+### ¿Qué es MCP?
 
-**Tareas:**
-1. Crear `templates/docs/` con archivos de referencia
-2. Actualizar `init_project.py` para copiar `docs/`
-3. Actualizar tests
-4. Probar en proyecto nuevo
+Sistema para extender capacidades de Claude con herramientas externas:
+- Bases de datos
+- APIs
+- Herramientas de desarrollo
+- Servicios externos
 
-**Prompt inicial para Claude Code:**
+### Cuándo Considerar MCP:
+
+1. **Acceso frecuente a fuentes externas**
+   - Consultas a DB específica
+   - API de empresa interna
+   - Documentación custom
+
+2. **Herramientas especializadas**
+   - Linting custom
+   - Testing frameworks propios
+   - CI/CD internal tools
+
+3. **Integración repetitiva**
+   - Mismas acciones en cada proyecto
+   - Workflow específico de empresa
+   - Standards enforcement
+
+### Cuándo NO Usar MCP:
+
+- ❌ Para una única tarea
+- ❌ Cuando Claude ya tiene la capacidad built-in
+- ❌ Setup complejo para beneficio marginal
+
+### 💡 MCP Servers Útiles:
+
+- **@context7** - Documentación actualizada de librerías
+- **filesystem** - Operaciones de archivos avanzadas
+- **git** - Operaciones git complejas
+- **database** - Queries a bases de datos
+
+*(Consulta docs oficiales para setup: https://docs.claude.com/en/docs/mcp)*
+
+---
+
+## 🎯 Workflow Óptimo con Claude Code
+
+### Inicio de Sesión:
+```bash
+# Si es nueva sesión o cambio mayor de contexto:
+/new
+
+# Claude lee CLAUDE.md automáticamente
+# Luego confirma:
+"Leí CLAUDE.md. Estamos en Phase X, Stage Y.
+Trabajando en: [descripción].
+¿Correcto?"
 ```
-Vamos a implementar Phase 2.1: Copiar archivos de referencia.
 
-Lee:
-1. .claude/00-project-brief.md
-2. .claude/01-current-phase.md
-3. .claude/02-stage2-rules.md (ahora estamos en Etapa 2)
+### Durante Desarrollo:
+```bash
+# Añadir archivos relevantes
+/add src/main.py tests/test_main.py
 
-Objetivo: Modificar init_project.py para copiar también:
-- PROMPT_LIBRARY.md
-- QUICK_START.md  
-- STAGES_COMPARISON.md
-- Nuevo: CLAUDE_CODE_REFERENCE.md
+# Si contexto se llena (Claude olvida cosas):
+/drop archivos-no-necesarios.py
 
-a docs/ del proyecto destino.
-
-Propón estructura y cambios. NO implementes todavía.
+# Crear subagente para tarea independiente:
+/task "Escribir docstrings para todas las funciones en utils.py"
 ```
 
-### **Sesión 2: Prompt Helper Script** (2-3 horas)
+### Fin de Sesión:
+```bash
+# Antes de cerrar:
+"Actualiza .claude/01-current-phase.md con el progreso de hoy"
 
-**Prompt para Claude Code:**
+# Claude actualiza tracking automáticamente
 ```
-Ahora vamos a crear prompt_helper.py
 
-Objetivo: Script CLI simple para:
-1. Listar categorías de prompts
-2. Buscar prompts por categoría
-3. Mostrar prompt específico
-4. Copiar a clipboard (bonus si fácil)
+---
 
-Restricciones Etapa 2:
-- UN archivo: prompt_helper.py
-- Solo stdlib + pyperclip (para clipboard)
-- Sin UI compleja
-- Sin base de datos
+## 📊 Cuándo Usar `/new`
 
-Propón estructura. NO implementes todavía.
+### ✅ Usa `/new` Cuando:
+
+- Nueva feature independiente
+- Cambio de phase/stage
+- Sesión larga (2+ horas)
+- Claude confundido/en loop
+- Nuevo día de trabajo
+- Contexto corrupto
+
+### ❌ NO Uses `/new` Cuando:
+
+- Iterando sobre mismo código
+- Bug fixing reciente
+- En medio de implementación
+- Decisiones recientes son valiosas
+
+**Regla de oro:** Feature nueva = `/new` | Refinamiento = NO `/new`
+
+---
+
+## 🔍 Debugging Tips
+
+### Claude No Entiende el Contexto:
+```bash
+# Verificar qué archivos tiene en contexto:
+/list
+
+# Asegurar que tiene los archivos correctos:
+/drop *
+/add .claude/00-project-brief.md
+/add .claude/01-current-phase.md
+/add .claude/02-stageX-rules.md
+/add src/archivo-relevante.py
+```
+
+### Claude Propone Soluciones Incorrectas:
+```bash
+# Resetear y empezar limpio:
+/new
+
+# Luego:
+"Lee .claude/00-project-brief.md y .claude/02-stageX-rules.md.
+Estamos en Stage X, así que [restricciones específicas].
+Propón solución siguiendo esas reglas."
+```
+
+### Claude Olvida Decisiones Recientes:
+```bash
+# NO uses /new
+# En su lugar, recuérdale:
+"Hace 10 minutos decidimos usar X en lugar de Y porque [razón].
+Continúa con esa decisión."
+```
+
+---
+
+## 💡 Pro Tips
+
+1. **Keep Context Lean**
+   - Solo añade archivos que necesitas AHORA
+   - Usa `/drop` frecuentemente
+   - Menos contexto = respuestas más focused
+
+2. **Use Stage Rules**
+   - Siempre referencia el stage actual
+   - "Estamos en Stage 1, mantén simple"
+   - Ayuda a Claude a auto-corregir
+
+3. **Document Decisions**
+   - Update `.claude/01-current-phase.md` regularmente
+   - Es tu memoria persistente
+   - CLAUDE.md = configuración, 01-current-phase.md = estado
+
+4. **Batch Similar Tasks**
+   - Feature A → commit → `/new` → Feature B
+   - Límites naturales entre features
+
+5. **When Stuck**
+   - Consulta `docs/PROMPT_LIBRARY.md`
+   - Hay templates para situaciones comunes
+   - Copy-paste y personaliza
+
+---
+
+## 📚 Recursos
+
+- **Claude Code Docs:** https://docs.claude.com/en/docs/claude-code
+- **MCP Documentation:** https://docs.claude.com/en/docs/mcp
+- **Prompt Library:** `docs/PROMPT_LIBRARY.md` (en este proyecto)
+- **Workflow Guide:** `docs/QUICK_START.md` (en este proyecto)
+
+---
+
+*Generated by Claude Prompt Library*
+*Keep this file updated as you discover new patterns and workflows*

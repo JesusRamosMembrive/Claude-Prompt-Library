@@ -271,3 +271,175 @@ Sin él, el tracking es manual y se pierde rápidamente.
 
 **Decisión:** Implementar solo lo mínimo que resuelve dolor de Phase 2.
 Validar antes de continuar a Phase 3.
+
+# Estado Actual
+
+**Fecha**: 2025-10-19
+**Etapa**: 2 (Estructuración)
+**Phase**: 2 - COMPLETO ✅
+
+---
+
+## ✅ PHASE 2 COMPLETADO
+
+### Objetivo
+Hacer recursos útiles accesibles y resolver "copiar prompts es tedioso"
+
+### Implementado
+
+#### Phase 2.1: Copy Reference Docs ✅
+- Copia 4 archivos de referencia a `docs/`
+- PROMPT_LIBRARY.md, QUICK_START.md, STAGES_COMPARISON.md, CLAUDE_CODE_REFERENCE.md
+- Skip si ya existen (no destructivo)
+
+#### Phase 2.2: Prompt Helper ✅
+- Script híbrido: modo comando + modo interactivo
+- Búsqueda flexible de prompts
+- Auto-copy a clipboard
+- ~300 líneas, limpio y funcional
+
+#### Phase 2.3: CLAUDE.md Integration ✅
+- Ejecuta `claude /init` automáticamente
+- Genera contexto real del proyecto
+- Appends custom workflow instructions
+- Fallback si /init falla
+- Sistema oficial de Claude Code
+
+### Decisiones Clave
+
+**Dependencias externas (Phase 2.2):**
+- `simple-term-menu` para modo interactivo
+- `pyperclip` opcional para clipboard
+- Trade-off consciente: mejor UX vale la dependencia
+- Modo comando funciona sin dependencias
+
+**CLAUDE.md approach (Phase 2.3):**
+- Usar `claude /init` > template estático
+- Claude Code detecta tech stack automáticamente
+- Custom instructions se añaden como apéndice
+- Mejor que mi sugerencia original (usuario propuso mejora)
+
+**Qué NO implementamos:**
+- ❌ Múltiples templates (web-api, cli-tool) - YAGNI
+- ❌ Prompts interactivos para placeholders - defer
+- ❌ Búsqueda avanzada de prompts - simple es suficiente
+- ❌ UI gráfica - CLI es apropiado
+- ❌ Configuración global - un directorio es suficiente
+
+### Código Final
+
+**Archivos principales:**
+- `init_project.py` (~200 líneas) - Inicialización completa
+- `prompt_helper.py` (~300 líneas) - Helper de prompts
+- `templates/basic/.claude/` (6 archivos) - Templates base
+- `templates/basic/CUSTOM_INSTRUCTIONS.md` - Workflow
+- `templates/docs/` (4 archivos) - Referencias
+
+**Tests:**
+- `test_full_flow.sh` cubre Phase 1 y 2
+- Todos los tests pasan
+- Validado en proyectos reales
+
+### Lecciones Aprendidas
+
+1. **Validación es crítica**
+   - Usuario encontró que customInstructions no es oficial
+   - Migración a CLAUDE.md (método oficial)
+   - Preguntar directamente a Claude Code > asumir
+
+2. **Iteración funciona**
+   - Empezamos con idea
+   - Encontramos problemas al usar
+   - Corregimos basados en evidencia
+   - Resultado: herramienta funcional
+
+3. **Trade-offs conscientes**
+   - Documentamos cuando rompemos reglas
+   - Justificamos decisiones
+   - Mejor UX puede valer dependencias
+
+4. **Simplicidad gana**
+   - CLI > UI para este caso
+   - Modo híbrido > solo uno
+   - Un archivo > arquitectura compleja
+
+---
+
+## 🎯 SIGUIENTE FASE: VALIDACIÓN (NO Phase 3)
+
+### Objetivo: Usar Phase 2 en Real
+
+**ANTES de implementar Phase 3, necesitamos:**
+
+1. **Usar en 5+ proyectos reales** (días/semanas)
+   - Proyectos nuevos
+   - Proyectos existentes
+   - Diferentes tipos (web, CLI, scripts)
+   
+2. **Documentar experiencia** (continuo)
+   - Qué funciona bien
+   - Qué es incómodo
+   - Qué falta
+   - Qué sobra
+
+3. **Evaluar dolores reales** (después de uso)
+   - ¿Los templates son suficientes?
+   - ¿prompt_helper.py resuelve el dolor?
+   - ¿CLAUDE.md workflow funciona?
+   - ¿Qué duele que NO anticipamos?
+
+### Criterios para Phase 3
+
+**Solo implementar Phase 3 si:**
+- [ ] Dolor recurrente (3+ veces)
+- [ ] No solucionable con Phase 2
+- [ ] Solución clara
+- [ ] Vale el esfuerzo de desarrollo
+
+**Posibles dolores que justificarían Phase 3:**
+- Necesito diferentes tipos de templates (web vs CLI vs robot)
+- Placeholders son insuficientes (muchos proyectos tienen mismos campos)
+- Workflow de inicialización es tedioso (quiero interactividad)
+- Otras personas quieren usar (necesita mejor onboarding)
+
+**Si NO hay dolor significativo → Phase 2 es suficiente. FIN.**
+
+### Tracking de Uso
+
+Crear archivo: `USAGE_LOG.md`
+```markdown
+# Usage Log - Claude Prompt Library
+
+## Project 1: [Nombre]
+**Date:** YYYY-MM-DD
+**Type:** New/Existing
+**Duration:** X días
+
+**Qué funcionó:**
+- [lista]
+
+**Qué fue incómodo:**
+- [lista]
+
+**Qué faltó:**
+- [lista]
+
+**Rating:** X/10
+**¿Lo usaría de nuevo?** Sí/No
+
+---
+
+## Project 2: [Nombre]
+...
+```
+
+### Próxima Sesión de Desarrollo
+
+**Solo después de 5+ usos reales:**
+
+1. Revisar USAGE_LOG.md
+2. Identificar patrones de dolor
+3. Decidir: ¿Phase 3 o suficiente?
+4. Si Phase 3: definir scope mínimo
+
+**No implementar por "sería cool" - solo por dolor real.**

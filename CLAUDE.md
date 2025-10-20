@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+# ⚠️ CRITICAL: START-OF-SESSION PROTOCOL
+
+**YOU MUST follow this protocol at the start of EVERY session, without exception:**
+
+1. **ALWAYS read these files first** (use Read tool in parallel):
+   ```
+   .claude/00-project-brief.md
+   .claude/01-current-phase.md
+   .claude/02-stage[X]-rules.md  (current stage)
+   ```
+
+2. **ALWAYS confirm to user** you've read the context:
+   - State current phase/stage
+   - Summarize what was last done
+   - Ask for clarification if anything is unclear
+
+3. **ONLY THEN** respond to the user's request
+
+**This applies EVEN IF the user's first message is a simple question.**
+
+Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
+
+---
+
 ## Project Overview
 
 Claude-Prompt-Library is a methodology and toolset for structured software development with Claude Code. It provides:
@@ -214,3 +240,62 @@ Tests are minimal and functional (bash script):
 - Tests document expected behavior
 
 Add tests only when bugs appear, not preemptively.
+
+---
+
+# Custom Workflow Instructions
+
+<!-- Added by claude-prompt-library init_project.py -->
+
+## 🎯 PROJECT CONTEXT
+
+Before ANY work, read in this order:
+1. .claude/00-project-brief.md - Project scope and constraints
+2. .claude/01-current-phase.md - Current state and progress
+3. .claude/02-stage[X]-rules.md - Rules for current stage
+
+## 📝 SESSION WORKFLOW
+
+⚠️ MANDATORY: At the START of EVERY session, BEFORE responding to user:
+
+1. **ALWAYS read these files first** (use Read tool in parallel):
+   - .claude/00-project-brief.md - Project scope and constraints
+   - .claude/01-current-phase.md - Current state and progress
+   - .claude/02-stage[X]-rules.md - Rules for current stage
+
+2. **ALWAYS confirm to user** you've read the context:
+   - State current phase/stage
+   - Summarize what was last done
+   - Ask for clarification if anything is unclear
+
+3. **ONLY THEN** respond to the user's request
+
+**This applies EVEN IF the user's first message is a simple question.**
+Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
+
+During WORK:
+- Follow stage-specific rules strictly
+- Propose plans before implementing
+- Get approval for architectural decisions
+
+At END of session:
+- Update .claude/01-current-phase.md with:
+  * What was implemented (with file names)
+  * Decisions made and why
+  * What was NOT done (deferred)
+  * Next steps for next session
+- Keep 01-current-phase.md concise and scannable
+
+## ⚠️ CRITICAL RULES
+
+- Never implement without reading current context
+- Never skip updating progress at end of session
+- Never assume you remember from previous sessions
+- Always check current stage rules before proposing solutions
+
+## 🚫 NEVER
+
+- Over-engineer beyond current stage
+- Implement features not in project brief
+- Skip the "propose then implement" workflow
+- Forget to update tracking
