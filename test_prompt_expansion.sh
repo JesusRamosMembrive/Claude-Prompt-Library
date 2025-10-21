@@ -33,15 +33,15 @@ fi
 
 # Test 3: Count prompt files
 PROMPT_COUNT=$(find "$PROJECT_NAME/docs/prompts" -name "*.md" ! -name "README.md" | wc -l)
-if [ "$PROMPT_COUNT" -eq 30 ]; then
-    echo "✓ Found 30 prompt files"
+if [ "$PROMPT_COUNT" -eq 35 ]; then
+    echo "✓ Found 35 prompt files"
 else
-    echo "✗ Expected 30 prompts, found $PROMPT_COUNT"
+    echo "✗ Expected 35 prompts, found $PROMPT_COUNT"
     exit 1
 fi
 
 # Test 4: Verify categories exist
-EXPECTED_CATEGORIES="debugging refactoring architecture testing planning emergency"
+EXPECTED_CATEGORIES="debugging refactoring architecture testing planning emergency evolution"
 for category in $EXPECTED_CATEGORIES; do
     if [ -d "$PROJECT_NAME/docs/prompts/$category" ]; then
         echo "✓ Category '$category' exists"
@@ -54,10 +54,10 @@ done
 # Test 5: Test prompt_helper.py list
 echo "Test 5: Test prompt_helper list..."
 LISTED_PROMPTS=$(python prompt_helper.py list | grep -c "^  -" || true)
-if [ "$LISTED_PROMPTS" -eq 30 ]; then
-    echo "✓ prompt_helper lists 30 prompts"
+if [ "$LISTED_PROMPTS" -eq 35 ]; then
+    echo "✓ prompt_helper lists 35 prompts"
 else
-    echo "✗ Expected 30 prompts, listed $LISTED_PROMPTS"
+    echo "✗ Expected 35 prompts, listed $LISTED_PROMPTS"
     exit 1
 fi
 

@@ -78,6 +78,15 @@ Respuesta rápida a incidentes.
 - **Security Incident** - Respuesta inicial a incidentes de seguridad
 - **Data Corruption Recovery** - Plan para recuperar datos corruptos o perdidos
 
+### 🔄 EVOLUTION (5 prompts)
+Evolucionar de soluciones simples a complejas cuando el dolor lo justifica.
+
+- **Subprocess to Background Jobs** - De subprocess bloqueante a threading/celery con tracking
+- **File Storage to Database** - De archivos JSON/CSV a base de datos real
+- **Sync to Async** - De código síncrono a asíncrono (cuándo vale la pena)
+- **Script to API** - De script CLI a API REST sin perder funcionalidad
+- **In-Memory to Distributed** - De cache local a Redis/soluciones distribuidas
+
 ## Estructura de Archivos
 
 ```
@@ -113,12 +122,18 @@ prompts/
 │   ├── technical-debt-assessment.md
 │   ├── sprint-planning.md
 │   └── risk-analysis.md
-└── emergency/
-    ├── rollback.md
-    ├── production-bug.md
-    ├── memory-leak-detection.md
-    ├── security-incident.md
-    └── data-corruption-recovery.md
+├── emergency/
+│   ├── rollback.md
+│   ├── production-bug.md
+│   ├── memory-leak-detection.md
+│   ├── security-incident.md
+│   └── data-corruption-recovery.md
+└── evolution/
+    ├── subprocess-to-background-jobs.md
+    ├── file-storage-to-database.md
+    ├── sync-to-async.md
+    ├── script-to-api.md
+    └── in-memory-to-distributed.md
 ```
 
 ## Formato de Cada Prompt
