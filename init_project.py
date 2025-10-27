@@ -165,8 +165,7 @@ if __name__ == "__main__":
         "01-current-phase.md",
         "02-stage1-rules.md",
         "02-stage2-rules.md",
-        "02-stage3-rules.md",
-        "settings.local.json"
+        "02-stage3-rules.md"
     ]
 
     files_copied = []
@@ -201,9 +200,10 @@ if __name__ == "__main__":
 
     # 7. Copy reference documentation files
     reference_files = [
-        "PROMPT_LIBRARY.md",
         "QUICK_START.md",
         "STAGES_COMPARISON.md",
+        "STAGE_CRITERIA.md",
+        "GUIDE.md",
         "CLAUDE_CODE_REFERENCE.md"
     ]
 
@@ -219,28 +219,6 @@ if __name__ == "__main__":
         else:
             shutil.copy2(source_file, dest_file)
             ref_files_copied.append(filename)
-
-    # 7.1 Copy prompts directory structure
-    prompts_source = template_docs / "prompts"
-    prompts_dest = dest_docs / "prompts"
-    prompts_copied = False
-
-    if prompts_source.exists():
-        if not prompts_dest.exists():
-            shutil.copytree(prompts_source, prompts_dest)
-            prompts_copied = True
-            print(f"✓ Copied prompts/ directory with all prompts")
-        else:
-            # Directory exists, copy individual files that don't exist
-            for category_dir in prompts_source.iterdir():
-                if category_dir.is_dir():
-                    dest_category = prompts_dest / category_dir.name
-                    dest_category.mkdir(exist_ok=True)
-                    for prompt_file in category_dir.glob("*.md"):
-                        dest_prompt = dest_category / prompt_file.name
-                        if not dest_prompt.exists():
-                            shutil.copy2(prompt_file, dest_prompt)
-            print(f"ℹ️  prompts/ directory exists, updated with new prompts only")
 
     # 8. Run Claude Code /init and append custom instructions
     claude_md_path = dest_dir / "CLAUDE.md"

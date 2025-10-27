@@ -26,12 +26,12 @@ echo "  ✓ Project structure created"
 echo "  Test 2: Check template files..."
 test -f test-project-temp/.claude/00-project-brief.md || { echo "  ✗ project-brief.md not found"; exit 1; }
 test -f test-project-temp/.claude/01-current-phase.md || { echo "  ✗ current-phase.md not found"; exit 1; }
-test -f test-project-temp/.claude/settings.local.json || { echo "  ✗ settings.local.json not found"; exit 1; }
+test -f test-project-temp/.claude/02-stage1-rules.md || { echo "  ✗ stage1-rules.md not found"; exit 1; }
 echo "  ✓ Template files copied"
 
 # Test 3: Verify reference docs copied
 echo "  Test 3: Check reference docs..."
-test -f test-project-temp/docs/PROMPT_LIBRARY.md || { echo "  ✗ PROMPT_LIBRARY.md not found"; exit 1; }
+test -f test-project-temp/docs/STAGES_COMPARISON.md || { echo "  ✗ STAGES_COMPARISON.md not found"; exit 1; }
 test -f test-project-temp/docs/QUICK_START.md || { echo "  ✗ QUICK_START.md not found"; exit 1; }
 echo "  ✓ Reference docs copied"
 
@@ -55,36 +55,11 @@ fi
 # Cleanup
 rm -rf test-project-temp
 
-echo "✅ Phase 1 tests passed"
-
-# =============================================================================
-# PHASE 2.2: Prompt Helper
-# =============================================================================
+echo "✅ Project initialization tests passed"
 echo ""
-echo "🔹 Testing prompt helper..."
-
-# Test 1: List works without dependencies
-echo "  Test 1: List command..."
-python prompt_helper.py list | grep -q "DEBUGGING"
-echo "  ✓ List works"
-
-# Test 2: Show command
-echo "  Test 2: Show command..."
-python prompt_helper.py show debugging/stuck | grep -q "atascado"
-echo "  ✓ Show works"
-
-# Test 3: Flexible matching
-echo "  Test 3: Flexible matching..."
-python prompt_helper.py show debug/stuck | grep -q "atascado"
-python prompt_helper.py show DEBUGGING/Stuck-In-Loop | grep -q "atascado"
-echo "  ✓ Flexible matching works"
-
-# Test 4: Error handling
-echo "  Test 4: Error handling..."
-python prompt_helper.py show nonexistent/prompt 2>&1 | grep -q -i "no se encontró"
-echo "  ✓ Error handling works"
-
-# Note: Interactive mode test skipped (requires terminal)
-echo "  ℹ️  Interactive mode: manual test only"
-
-echo "✅ Phase 2.2 tests passed"
+echo "🎉 All tests passed!"
+echo ""
+echo "Next steps:"
+echo "  - Run: python init_project.py <your-project-name>"
+echo "  - Use assess_stage.py to detect project stage"
+echo "  - Leverage stage-aware subagents in .claude/subagents/"

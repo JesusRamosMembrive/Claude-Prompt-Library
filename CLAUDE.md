@@ -30,25 +30,26 @@ Do NOT skip this protocol to "be helpful faster" - reading context IS being help
 
 ## Project Overview
 
-Claude-Prompt-Library is a methodology and toolset for structured software development with Claude Code. It provides:
+**Stage-Aware Development Framework** - A methodology and toolset for evolutionary software development with Claude Code. It provides:
 
-1. **Project templates** - Pre-configured `.claude/` context files and reference documentation
-2. **Prompt library** - Collection of useful prompts for common development scenarios
-3. **Stage-based workflow** - Progressive methodology (Stage 1: Scaffolding, Stage 2: Structure, Stage 3: Production)
+1. **Automatic stage detection** - Analyzes your codebase to determine maturity level (Stage 1/2/3)
+2. **Project templates** - Pre-configured `.claude/` context files with stage-specific rules
+3. **Stage-aware subagents** - Specialized agents (architect, implementer, code-reviewer) that understand project context
+4. **Anti-over-engineering enforcement** - Prevents premature complexity through strict stage rules
 
-**Core Philosophy**: Start minimal, add complexity only when pain is felt. Track context and decisions in `.claude/` files for session continuity.
+**Core Philosophy**: Start minimal, add complexity only when pain is felt. The framework automatically configures Claude Code to work within appropriate constraints for your project's current stage.
 
 ## Commands
 
 ### Development & Testing
 
 ```bash
-# Test the full flow (initialization + prompt helper)
+# Test the full flow
 bash tests/test_full_flow.sh
 
 # Run Python scripts (no build step needed)
 python init_project.py <project-name>
-python prompt_helper.py [command] [args]
+python assess_stage.py <project-path>
 ```
 
 ### Using the Tools
@@ -60,19 +61,18 @@ cd my-new-project
 cat docs/QUICK_START.md
 ```
 
-**Browse prompts (interactive mode):**
+**Assess project stage (existing projects):**
 ```bash
-python prompt_helper.py
-# Requires: simple-term-menu
-# Optional: pyperclip for clipboard support
+python assess_stage.py .
+# Analyzes file count, LOC, patterns, architecture
+# Recommends Stage 1, 2, or 3 with confidence level
 ```
 
-**Browse prompts (command mode - no dependencies):**
-```bash
-python prompt_helper.py list                          # List all prompts
-python prompt_helper.py show debugging/stuck          # Display a prompt
-python prompt_helper.py copy planning/feature         # Copy to clipboard
-```
+**Use stage-aware subagents:**
+Claude Code will automatically have access to:
+- `.claude/subagents/architect.md` - For architecture decisions
+- `.claude/subagents/implementer.md` - For stage-appropriate implementation
+- `.claude/subagents/code-reviewer.md` - For complexity validation
 
 ### Testing Individual Components
 
@@ -80,17 +80,11 @@ python prompt_helper.py copy planning/feature         # Copy to clipboard
 # Test project initialization
 python init_project.py test-project
 ls -la test-project/.claude/
+ls -la test-project/.claude/subagents/
 ls -la test-project/docs/
 
-# Test prompt helper list command
-python prompt_helper.py list | grep -q "DEBUGGING"
-
-# Test prompt helper show command
-python prompt_helper.py show debugging/stuck
-
-# Test flexible matching
-python prompt_helper.py show debug/stuck           # Case insensitive
-python prompt_helper.py show DEBUGGING/Stuck-In-Loop  # Dash/space flexible
+# Test stage assessment
+python assess_stage.py test-project
 ```
 
 ## Architecture
@@ -102,18 +96,19 @@ python prompt_helper.py show DEBUGGING/Stuck-In-Loop  # Dash/space flexible
 - Non-destructive: skips existing files
 - Placeholder replacement: `{{PROJECT_NAME}}`, `{{DATE}}`, `{{YEAR}}`
 
-**Phase 2: Enhanced Docs + Prompt Helper** ✅ Complete
+**Phase 2: Stage-Aware Framework** ✅ Transformed
 - Phase 2.1: Copy reference docs to `docs/` (integrated into `init_project.py`)
-- Phase 2.2: `prompt_helper.py` for browsing/copying prompts
-- Phase 2.3: Auto-context loading via `settings.local.json`
+- Phase 2.2: Removed prompt library → Focus on stage guard
+- Phase 2.3: Integrated `assess_stage.py` for automatic stage detection
+- Phase 2.4: Added stage-aware subagents
 
 ### Directory Structure
 
 ```
-claude-prompt-library/
+stage-keeper/
 ├── init_project.py           # Main CLI - initializes projects
-├── prompt_helper.py          # Prompt browser/copier
-├── requirements.txt          # Dependencies (simple-term-menu, pyperclip)
+├── assess_stage.py           # Automatic stage detection
+├── claude_assess.py          # Deep analysis helper
 ├── templates/
 │   ├── basic/.claude/        # Template files copied to projects
 │   │   ├── 00-project-brief.md
@@ -121,12 +116,17 @@ claude-prompt-library/
 │   │   ├── 02-stage1-rules.md
 │   │   ├── 02-stage2-rules.md
 │   │   ├── 02-stage3-rules.md
-│   │   └── settings.local.json
+│   │   ├── settings.local.json
+│   │   └── subagents/        # Stage-aware subagents
+│   │       ├── architect.md
+│   │       ├── implementer.md
+│   │       ├── code-reviewer.md
+│   │       └── stage-keeper-architecture.md
 │   └── docs/                 # Reference docs copied to projects
-│       ├── PROMPT_LIBRARY.md
-│       ├── QUICK_START.md
 │       ├── STAGES_COMPARISON.md
-│       └── CLAUDE_CODE_REFERENCE.md
+│       ├── STAGE_CRITERIA.md
+│       ├── QUICK_START.md
+│       └── GUIDE.md
 └── .claude/                  # This project's own tracking
     └── 01-current-phase.md   # Development progress
 ```
@@ -139,17 +139,11 @@ claude-prompt-library/
 - Allows adding methodology to existing projects
 - Files skipped vs. copied are reported separately
 
-**Graceful Degradation** (prompt_helper.py:11-22)
-- Command mode works without dependencies (list, show, copy)
-- Interactive mode requires `simple-term-menu`
-- Clipboard support optional with `pyperclip`
-- Clear error messages guide installation if needed
-
-**Flexible Prompt Matching** (prompt_helper.py:149-183)
-- Case-insensitive search
-- Dashes/spaces/underscores normalized
-- Partial matching: `debug/stuck` finds `DEBUGGING/Stuck in Loop`
-- Format: `category/snippet-name`
+**Automatic Stage Detection** (assess_stage.py)
+- Analyzes file count, LOC, directory structure, patterns
+- Detects common design patterns (Factory, Repository, Service, etc.)
+- Provides confidence level (high/medium/low)
+- Recommends stage with detailed reasoning
 
 **Placeholder System** (init_project.py:78-93)
 - Simple `str.replace()` approach
@@ -171,11 +165,17 @@ claude-prompt-library/
 - Prevents context loss between sessions
 - Lives in `.claude/` of each project (not this repo)
 
-**`prompt_helper.py` parser** (lines 30-92)
-- Extracts prompts from `PROMPT_LIBRARY.md`
-- Detects categories (`## HEADING`), snippets (`### NAME`), code blocks
-- Stops at non-prompt sections (`## NOTAS DE USO`)
-- Returns nested dict: `{category: {snippet_name: content}}`
+**`assess_stage.py`** - Automatic stage detection
+- Analyzes existing codebase metrics
+- Detects architectural patterns and complexity
+- Recommends appropriate development stage
+- Provides actionable reasoning for recommendation
+
+**Stage-aware subagents** - Specialized behavior per stage
+- `architect.md` - Evolutionary architecture design
+- `implementer.md` - Stage-appropriate code implementation
+- `code-reviewer.md` - Complexity validation
+- All understand and enforce stage rules automatically
 
 ## Stage-Based Development
 
@@ -191,11 +191,12 @@ The stage rules are in `templates/basic/.claude/02-stage[1-3]-rules.md` and get 
 
 ## Working with This Repository
 
-### Adding New Prompts
+### Adding New Subagents
 
-1. Edit `templates/docs/PROMPT_LIBRARY.md`
-2. Follow format: `## CATEGORY` then `### Snippet Name` with code block
-3. Test: `python prompt_helper.py show category/snippet-name`
+1. Create markdown file in `templates/basic/.claude/subagents/`
+2. Follow frontmatter format with name, description, tools
+3. Document when and how to use the subagent
+4. Test with new project initialization
 
 ### Adding New Template Files
 
@@ -221,15 +222,14 @@ This project extensively documents **why** decisions were made:
 
 ## Dependencies
 
-**Runtime (optional):**
-- `simple-term-menu>=1.6.0` - For interactive mode only
-- `pyperclip>=1.8.0` - For clipboard support (optional)
+**Runtime:**
+- Python 3.10+ (uses f-strings, pathlib, type hints)
+- Standard library only: `pathlib`, `shutil`, `sys`, `datetime`, `subprocess`
+- No external dependencies required
 
-**Development:**
-- Python 3.6+ (uses f-strings, pathlib)
-- Standard library: `pathlib`, `shutil`, `sys`, `datetime`, `os`, `re`, `argparse`
-
-Install with: `pip install -r requirements.txt`
+**Optional:**
+- Claude Code CLI (`claude`) - For automatic CLAUDE.md generation
+- `tree` command - For project structure visualization
 
 ## Testing Philosophy
 
