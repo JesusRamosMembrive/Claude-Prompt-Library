@@ -130,7 +130,7 @@ python assess_stage.py <project-path>
 #### **What It Analyzes**
 
 1. **Code metrics:**
-   - File count (`.py`, `.js`, `.ts`, `.java`, `.go`, etc.)
+   - File count (Python, JavaScript/TypeScript, Java, Go, Rust, Ruby, PHP, C/C++)
    - Lines of code (LOC)
    - Directory structure complexity
 
@@ -358,7 +358,7 @@ Changes apply immediately to Claude Code in next session.
 **Symptoms:** `assess_stage.py` returns error or empty result
 
 **Solutions:**
-1. Check project has code files (.py, .js, .ts, etc.)
+1. Check project has code files (supported: Python, JS/TS, Java, Go, Rust, Ruby, PHP, C/C++)
 2. Verify path is correct
 3. Check file permissions
 4. Run with verbose output: Add debug prints to assess_stage.py

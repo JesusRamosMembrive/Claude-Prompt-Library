@@ -393,7 +393,7 @@ A: Manual override: edit `01-current-phase.md` directly.
 A: Yes. The framework works with any AI assistant or human development.
 
 **Q: What about non-Python projects?**
-A: Fully supported. Detection works for .js, .ts, .java, .go, .rs, etc.
+A: Fully supported. Detection works for Python, JavaScript/TypeScript, Java, Go, Rust, Ruby, PHP, C/C++, and more.
 
 ---
 

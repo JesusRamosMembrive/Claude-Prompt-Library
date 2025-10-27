@@ -19,6 +19,8 @@ IGNORE_DIRS = {
     '.idea', '.vscode',
     'target',  # Rust/Java
     'bin', 'obj',  # C#
+    'CMakeFiles', 'cmake-build-debug', 'cmake-build-release',  # CMake
+    '.qmake.stash',  # Qt
 }
 
 
@@ -128,7 +130,17 @@ def assess_stage(project_path):
         return None
 
     # Gather metrics
-    code_extensions = ['.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rs', '.rb', '.php']
+    code_extensions = [
+        '.py',                                    # Python
+        '.js', '.ts', '.jsx', '.tsx',            # JavaScript/TypeScript
+        '.java',                                  # Java
+        '.go',                                    # Go
+        '.rs',                                    # Rust
+        '.rb',                                    # Ruby
+        '.php',                                   # PHP
+        '.cpp', '.cc', '.cxx', '.c',             # C/C++
+        '.h', '.hpp', '.hxx',                     # C/C++ Headers
+    ]
 
     file_count = count_files_by_extension(root, code_extensions)
     loc = count_lines_of_code(root, code_extensions)
