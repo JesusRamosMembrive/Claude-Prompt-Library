@@ -198,6 +198,28 @@ if __name__ == "__main__":
 
             dest_file.write_text(content, encoding="utf-8")
 
+    # 6.5. Copy subagents directory
+    subagents_source = template_source / "subagents"
+    subagents_dest = dest_claude / "subagents"
+
+    if subagents_source.exists():
+        if not subagents_dest.exists():
+            shutil.copytree(subagents_source, subagents_dest)
+            print(f"✓ Copied subagents/ directory with {len(list(subagents_source.glob('*.md')))} subagent(s)")
+        else:
+            # Directory exists, copy individual files that don't exist
+            subagents_dest.mkdir(exist_ok=True)
+            copied_count = 0
+            for subagent_file in subagents_source.glob("*.md"):
+                dest_subagent = subagents_dest / subagent_file.name
+                if not dest_subagent.exists():
+                    shutil.copy2(subagent_file, dest_subagent)
+                    copied_count += 1
+            if copied_count > 0:
+                print(f"✓ Updated subagents/ with {copied_count} new subagent(s)")
+            else:
+                print(f"ℹ️  subagents/ directory up to date")
+
     # 7. Copy reference documentation files
     reference_files = [
         "QUICK_START.md",

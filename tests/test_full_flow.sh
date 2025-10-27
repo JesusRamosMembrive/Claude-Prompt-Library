@@ -29,18 +29,27 @@ test -f test-project-temp/.claude/01-current-phase.md || { echo "  ✗ current-p
 test -f test-project-temp/.claude/02-stage1-rules.md || { echo "  ✗ stage1-rules.md not found"; exit 1; }
 echo "  ✓ Template files copied"
 
-# Test 3: Verify reference docs copied
-echo "  Test 3: Check reference docs..."
+# Test 3: Verify subagents copied
+echo "  Test 3: Check subagents..."
+test -d test-project-temp/.claude/subagents || { echo "  ✗ subagents/ directory not created"; exit 1; }
+test -f test-project-temp/.claude/subagents/architect-generic.md || { echo "  ✗ architect subagent not found"; exit 1; }
+test -f test-project-temp/.claude/subagents/implementer.md || { echo "  ✗ implementer subagent not found"; exit 1; }
+test -f test-project-temp/.claude/subagents/code-reviewer-optimized.md || { echo "  ✗ code-reviewer subagent not found"; exit 1; }
+test -f test-project-temp/.claude/subagents/stage-keeper-architecture.md || { echo "  ✗ stage-keeper subagent not found"; exit 1; }
+echo "  ✓ Subagents copied (4 subagents)"
+
+# Test 4: Verify reference docs copied
+echo "  Test 4: Check reference docs..."
 test -f test-project-temp/docs/STAGES_COMPARISON.md || { echo "  ✗ STAGES_COMPARISON.md not found"; exit 1; }
 test -f test-project-temp/docs/QUICK_START.md || { echo "  ✗ QUICK_START.md not found"; exit 1; }
 echo "  ✓ Reference docs copied"
 
-# Test 4: Check CLAUDE.md creation (may fail if claude not installed)
-echo "  Test 4: Check CLAUDE.md..."
+# Test 5: Check CLAUDE.md creation (may fail if claude not installed)
+echo "  Test 5: Check CLAUDE.md..."
 if [ -f test-project-temp/CLAUDE.md ]; then
     echo "  ✓ CLAUDE.md generated (claude CLI available)"
 
-    # Test 5: Verify custom instructions appended
+    # Test 6: Verify custom instructions appended
     if grep -q "Custom Workflow Instructions" test-project-temp/CLAUDE.md; then
         echo "  ✓ Custom instructions appended to CLAUDE.md"
     else
