@@ -1,24 +1,25 @@
 # Motor de análisis: diseño inicial
 
 ## Objetivos y responsabilidades
-- Escanear todos los archivos `.py` dentro de una ruta raíz definida por el usuario desde la UI.
+- Escanear todos los archivos relevantes (actualmente `.py`, `.js`, `.jsx`, `.ts`, `.tsx`, `.html`) dentro de una ruta raíz definida por el usuario desde la UI.
 - Respetar una lista de exclusiones por defecto (`__pycache__`, `.venv`, carpetas ocultas comunes, configurables a futuro).
-- Obtener símbolos de primer nivel (funciones libres) y símbolos declarados dentro de clases (métodos) con su metadata esencial.
+- Obtener símbolos de primer nivel (funciones libres) y símbolos declarados dentro de clases (métodos) con su metadata esencial en archivos Python, JavaScript y TypeScript; para HTML se recoge metadata básica (elementos con `id`, componentes personalizados, enlaces).
 - Servir datos estructurados listos para API/UI sin lógica de presentación.
 - Mantener un estado consistente y actualizado gracias a un watcher activo que reprocese archivos modificados.
 
 ## Suposiciones iniciales
 - El proyecto se encuentra en un filesystem accesible para el backend (no remoto).
 - El código Python es compatible con la versión del intérprete que ejecuta el analizador.
+- Las dependencias opcionales `esprima` y `tree_sitter_languages` habilitan la extracción de símbolos para JS/TS. En ausencia de las mismas, los archivos se indexan sin símbolos.
 - Cuando un archivo tiene errores de sintaxis, se registrará el problema y se continuará con el resto, marcando el archivo como inválido.
 - No se requiere información sobre docstrings ni anotaciones de tipos en esta iteración, pero la arquitectura debe permitir añadirlos.
 - Los resultados sólo se consumen desde la UI, no hay exportación externa.
+- Dependencias opcionales: `esprima` (JS), `tree_sitter_languages` (TS/TSX) y `beautifulsoup4` (HTML). Cuando no estén disponibles el motor degrada la extracción de símbolos a modo plano.
 
 ## Arquitectura propuesta
 
-### Componentes principales
-- `ProjectScanner`: coordina recorridos completos a partir de una ruta raíz, aplicando reglas de exclusión. Produce una colección de descriptores de archivo.
-- `FileAnalyzer`: encapsula la lógica basada en `ast` para extraer símbolos de un archivo individual. Recibe rutas y devuelve un objeto `FileSummary`.
+- `HtmlAnalyzer`: produce símbolos `ELEMENT` para elementos relevantes (`id`, `custom elements`) y expone un primer resumen de links.
+- `JsAnalyzer` y `TsAnalyzer`: extraen funciones/clases de módulos JavaScript/TypeScript utilizando `esprima` y `tree_sitter_languages` respectivamente.
 - `SymbolIndex`: almacena los resultados en memoria (y opcionalmente en disco) para consumo rápido por la API. Ofrece métodos para consultar por ruta, por símbolo y para construir la jerarquía carpeta → archivo → símbolos.
 - `ChangeScheduler`: orquesta reanálisis incremental cuando el watcher emite eventos. Gestiona una cola simple de archivos pendientes y evita duplicados.
 
@@ -42,10 +43,10 @@
 
 ### Flujo general
 1. La UI envía la ruta raíz al backend.
-2. El backend inicializa `ProjectScanner` con esa ruta, exclusiones y referencias a `FileAnalyzer` y `SymbolIndex`.
+2. El backend inicializa `ProjectScanner` con esa ruta, exclusiones y referencias a los analizadores registrados (Python usa `FileAnalyzer`, otros lenguajes usan analizadores planos).
 3. Se ejecuta un escaneo completo:
-   - `ProjectScanner` recorre recursivamente con `Path.rglob("*.py")`, filtrando excluidos.
-   - Para cada archivo válido, invoca `FileAnalyzer.parse`.
+   - `ProjectScanner` recorre recursivamente filtrando extensiones soportadas.
+   - Para cada archivo válido, invoca el analizador asociado a su extensión (Python, JS, TS, HTML).
    - Los resultados se entregan a `SymbolIndex` para que construya el árbol y los índices auxiliares.
 4. La API expone los datos a la UI.
 5. El watcher alimenta `ChangeScheduler`, que vuelve a llamar a `FileAnalyzer` y refresca las entradas impactadas en `SymbolIndex`.
@@ -53,7 +54,7 @@
 ## Actualizaciones incrementales y manejo de errores
 - `WatcherService` (basado en `watchdog`) detecta eventos `created`, `modified`, `deleted`, `moved` dentro de la ruta raíz filtrando exclusiones.
 - `ChangeScheduler` normaliza los eventos:
-  - Encolamos rutas de archivos `.py` afectados.
+  - Encolamos rutas de archivos soportados afectados.
   - Aplicamos `debounce` ligero (p.ej. 250 ms) para agrupar ráfagas de cambios.
   - Si un archivo se elimina, se remueve del `SymbolIndex`.
   - Para modificaciones/creaciones movidas, se reejecuta `FileAnalyzer.parse` y se actualiza el índice.

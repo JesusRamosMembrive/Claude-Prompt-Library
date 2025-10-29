@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import AsyncIterator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse
 
 from ..state import AppState
 from .schemas import (
@@ -22,9 +22,11 @@ from .schemas import (
     SettingsResponse,
     SettingsUpdateRequest,
     SettingsUpdateResponse,
+    StatusResponse,
     TreeNodeSchema,
     serialize_search_results,
     serialize_settings,
+    serialize_status,
     serialize_summary,
     serialize_tree,
 )
@@ -110,6 +112,38 @@ async def update_settings(
         updated=updated,
         settings=serialize_settings(state),
     )
+
+
+@router.get("/status", response_model=StatusResponse)
+async def get_status(state: AppState = Depends(get_app_state)) -> StatusResponse:
+    return serialize_status(state)
+
+
+@router.get("/preview")
+async def preview_file(
+    path: str = Query(..., description="Ruta relativa al root configurado."),
+    state: AppState = Depends(get_app_state),
+) -> PlainTextResponse:
+    try:
+        target_path = state.resolve_path(path)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    if not target_path.exists() or not target_path.is_file():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado.")
+
+    try:
+        content = target_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    content_type = (
+        "text/html; charset=utf-8"
+        if target_path.suffix.lower() in {".html", ".htm"}
+        else "text/plain; charset=utf-8"
+    )
+
+    return PlainTextResponse(content, media_type=content_type)
 
 
 async def _event_stream(state: AppState) -> AsyncIterator[bytes]:

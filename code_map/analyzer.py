@@ -13,6 +13,13 @@ from typing import Iterable, List, Optional, Union
 
 from .models import AnalysisError, FileSummary, SymbolInfo, SymbolKind
 
+
+def get_modified_time(path: Path) -> Optional[datetime]:
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    except OSError:
+        return None
+
 AstFunction = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
 
@@ -39,7 +46,7 @@ class FileAnalyzer:
                 path=abs_path,
                 symbols=[],
                 errors=[error],
-                modified_at=self._modification_time(abs_path),
+                modified_at=get_modified_time(abs_path),
             )
         except OSError as exc:
             error = AnalysisError(message=f"No se pudo leer el archivo: {exc}")
@@ -57,7 +64,7 @@ class FileAnalyzer:
         return FileSummary(
             path=abs_path,
             symbols=symbols,
-            modified_at=self._modification_time(abs_path),
+            modified_at=get_modified_time(abs_path),
         )
 
     def _read_source(self, path: Path) -> str:
@@ -107,10 +114,3 @@ class FileAnalyzer:
     @staticmethod
     def _is_function(node: ast.AST) -> bool:
         return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-
-    @staticmethod
-    def _modification_time(path: Path) -> Optional[datetime]:
-        try:
-            return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
-        except OSError:
-            return None

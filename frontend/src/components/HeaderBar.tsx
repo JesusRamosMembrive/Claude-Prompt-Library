@@ -4,12 +4,19 @@ export function HeaderBar({
   onOpenSettings,
   watcherActive = true,
   rootPath,
+  lastFullScan,
+  filesIndexed,
 }: {
   onOpenSettings: () => void;
   watcherActive?: boolean;
   rootPath?: string;
+  lastFullScan?: string | null;
+  filesIndexed?: number;
 }): JSX.Element {
   const rootLabel = rootPath ?? "CODE_MAP_ROOT";
+  const description = lastFullScan
+    ? `Último escaneo: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} archivos`
+    : `${filesIndexed ?? 0} archivos indexados`;
 
   return (
     <header className="header-bar">
@@ -17,7 +24,7 @@ export function HeaderBar({
         <div className="brand-logo">&lt;/&gt;</div>
         <div className="brand-copy">
           <h1>Code Map</h1>
-          <p>Explora las clases y funciones de tu proyecto en tiempo real.</p>
+          <p>{description}</p>
         </div>
       </div>
 

@@ -58,7 +58,3 @@ class ChangeBatch:
             elif event.event_type is ChangeEventType.MOVED and event.dest_path:
                 batch.moved.append((event.src_path, event.dest_path))
         return batch
-
-
-def is_python_file(path: Path) -> bool:
-    return path.suffix == ".py"

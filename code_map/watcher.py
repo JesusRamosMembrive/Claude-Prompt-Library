@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Iterable, Optional, Set
 
-from .events import ChangeEventType, is_python_file
+from .events import ChangeEventType
 from .scheduler import ChangeScheduler
 
 try:
@@ -45,10 +45,12 @@ class _EventHandler(FileSystemEventHandler):
         root: Path,
         scheduler: ChangeScheduler,
         exclude_dirs: Set[str],
+        extensions: Set[str],
     ) -> None:
         self.root = root
         self.scheduler = scheduler
         self.exclude_dirs = exclude_dirs
+        self.extensions = extensions
 
     def on_created(self, event: FileSystemEvent) -> None:
         self._dispatch(ChangeEventType.CREATED, event)
@@ -86,15 +88,11 @@ class _EventHandler(FileSystemEventHandler):
             )
             return
 
-        if not is_python_file(src_path):
-            return
-
         self.scheduler.enqueue(event_type, src_path)
 
     def _should_track(self, path: Path) -> bool:
-        if not path.exists() and path.suffix != ".py":
-            # Si es un delete/move, puede que el archivo ya no exista.
-            return False
+        if not path.exists():
+            return path.suffix.lower() in self.extensions
 
         if not self._within_root(path):
             return False
@@ -102,7 +100,7 @@ class _EventHandler(FileSystemEventHandler):
         if self._is_excluded(path):
             return False
 
-        if not is_python_file(path):
+        if path.suffix.lower() not in self.extensions:
             return False
 
         return True
@@ -130,12 +128,17 @@ class WatcherService:
         scheduler: ChangeScheduler,
         *,
         exclude_dirs: Optional[Iterable[str]] = None,
+        extensions: Optional[Iterable[str]] = None,
     ) -> None:
         self.root = Path(root).expanduser().resolve()
         self.scheduler = scheduler
         self.exclude_dirs: Set[str] = set(EXCLUDED_DEFAULT)
         if exclude_dirs:
             self.exclude_dirs.update(exclude_dirs)
+        self.extensions: Set[str] = {
+            ext if ext.startswith(".") else f".{ext}"
+            for ext in (extensions or [".py"])
+        }
         self._observer: Optional[Observer] = None
 
     @property
@@ -150,7 +153,7 @@ class WatcherService:
         if self.is_running:
             return True
 
-        handler = _EventHandler(self.root, self.scheduler, self.exclude_dirs)
+        handler = _EventHandler(self.root, self.scheduler, self.exclude_dirs, self.extensions)
         observer = Observer()
         observer.schedule(handler, str(self.root), recursive=True)
         observer.start()

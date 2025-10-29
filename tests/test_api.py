@@ -118,3 +118,22 @@ def test_update_settings_toggle_docstrings(api_client: TestClient) -> None:
 def test_update_settings_invalid_root_returns_400(api_client: TestClient) -> None:
     response = api_client.put("/settings", json={"root_path": "/path/that/does/not/exist"})
     assert response.status_code == 400
+
+
+def test_status_endpoint_returns_metrics(api_client: TestClient) -> None:
+    response = api_client.get("/status")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["files_indexed"] >= 1
+    assert "symbols_indexed" in payload
+    assert payload["watcher_active"] in {True, False}
+
+
+def test_preview_endpoint_returns_html(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    html_path = write_file(tmp_path, "page/index.html", "<html><body>Hi</body></html>")
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "page/index.html"})
+        assert response.status_code == 200
+        assert response.text.strip() == "<html><body>Hi</body></html>"
+        assert "text/html" in response.headers.get("content-type", "")

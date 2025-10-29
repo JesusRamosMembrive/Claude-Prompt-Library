@@ -49,3 +49,15 @@ export interface SettingsUpdatePayload {
   root_path?: string;
   include_docstrings?: boolean;
 }
+
+export interface StatusPayload {
+  root_path: string;
+  absolute_root: string;
+  watcher_active: boolean;
+  include_docstrings: boolean;
+  last_full_scan: string | null;
+  last_event_batch: string | null;
+  files_indexed: number;
+  symbols_indexed: number;
+  pending_events: number;
+}

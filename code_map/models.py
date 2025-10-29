@@ -18,6 +18,7 @@ class SymbolKind(str, Enum):
     FUNCTION = "function"
     CLASS = "class"
     METHOD = "method"
+    ELEMENT = "element"
 
 
 @dataclass(slots=True)

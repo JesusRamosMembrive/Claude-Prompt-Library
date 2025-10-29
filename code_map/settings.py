@@ -15,10 +15,18 @@ from .scanner import DEFAULT_EXCLUDED_DIRS
 SETTINGS_FILENAME = "code-map-settings.json"
 
 
-def _default_exclusions(additional: Iterable[str] | None = None) -> List[str]:
+def _normalize_exclusions(additional: Iterable[str] | None = None) -> List[str]:
     base = set(DEFAULT_EXCLUDED_DIRS)
     if additional:
-        base.update(additional)
+        for item in additional:
+            if not item:
+                continue
+            normalized = item.strip()
+            if not normalized:
+                continue
+            if normalized.startswith("/"):
+                continue
+            base.add(normalized)
     return sorted(base)
 
 
@@ -45,7 +53,7 @@ class AppSettings:
     ) -> "AppSettings":
         return AppSettings(
             root_path=(root_path or self.root_path).expanduser().resolve(),
-            exclude_dirs=list(exclude_dirs) if exclude_dirs is not None else self.exclude_dirs,
+            exclude_dirs=_normalize_exclusions(exclude_dirs) if exclude_dirs is not None else self.exclude_dirs,
             include_docstrings=(
                 include_docstrings
                 if include_docstrings is not None
@@ -70,7 +78,7 @@ def load_settings(
     if not path.exists():
         return AppSettings(
             root_path=default_root,
-            exclude_dirs=_default_exclusions(),
+            exclude_dirs=_normalize_exclusions(),
             include_docstrings=default_include_docstrings,
         )
 
@@ -79,7 +87,7 @@ def load_settings(
     except json.JSONDecodeError:
         return AppSettings(
             root_path=default_root,
-            exclude_dirs=_default_exclusions(),
+            exclude_dirs=_normalize_exclusions(),
             include_docstrings=default_include_docstrings,
         )
 
@@ -89,7 +97,7 @@ def load_settings(
 
     return AppSettings(
         root_path=stored_root if stored_root.exists() else default_root,
-        exclude_dirs=_default_exclusions(exclude_dirs),
+        exclude_dirs=_normalize_exclusions(exclude_dirs),
         include_docstrings=bool(include_docstrings),
     )
 

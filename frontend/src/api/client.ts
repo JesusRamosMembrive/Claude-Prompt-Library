@@ -4,6 +4,7 @@ import type {
   ProjectTreeNode,
   SettingsPayload,
   SettingsUpdatePayload,
+  StatusPayload,
   SymbolInfo,
 } from "./types";
 
@@ -72,4 +73,19 @@ export function updateSettings(payload: SettingsUpdatePayload): Promise<{
     method: "PUT",
     body: JSON.stringify(payload),
   });
+}
+
+export function getStatus(): Promise<StatusPayload> {
+  return fetchJson<StatusPayload>("/status");
+}
+
+export async function getPreview(path: string): Promise<{ content: string; contentType: string }> {
+  const response = await fetch(buildUrl(`/preview?path=${encodeURIComponent(path)}`));
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`Preview request failed (${response.status}): ${detail || "Unknown error"}`);
+  }
+  const content = await response.text();
+  const contentType = response.headers.get("Content-Type") ?? "text/plain";
+  return { content, contentType };
 }

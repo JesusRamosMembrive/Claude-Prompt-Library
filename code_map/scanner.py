@@ -7,10 +7,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Set
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Set
 
-from .analyzer import FileAnalyzer
-from .events import ChangeBatch, is_python_file
+from .analyzer import FileAnalyzer, get_modified_time
+from .events import ChangeBatch
+from .js_analyzer import JsAnalyzer
+from .ts_analyzer import TsAnalyzer
+from .html_analyzer import HtmlAnalyzer
 from .models import FileSummary
 
 if TYPE_CHECKING:
@@ -33,6 +36,27 @@ DEFAULT_EXCLUDED_DIRS: Set[str] = {
     "venv",
 }
 
+DEFAULT_EXTENSIONS: Set[str] = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".html",
+}
+
+JS_ANALYZER_EXTENSIONS = {".js", ".jsx"}
+
+
+class PlainTextAnalyzer:
+    def parse(self, path: Path) -> FileSummary:
+        abs_path = path.resolve()
+        return FileSummary(
+            path=abs_path,
+            symbols=[],
+            errors=[],
+            modified_at=get_modified_time(abs_path),
+        )
 
 class ProjectScanner:
     """Coordina los escaneos completos de una ruta raíz."""
@@ -42,8 +66,10 @@ class ProjectScanner:
         root: Path,
         *,
         analyzer: Optional[FileAnalyzer] = None,
+        analyzers: Optional[Mapping[str, PlainTextAnalyzer]] = None,
         exclude_dirs: Optional[Sequence[str]] = None,
         include_docstrings: bool = False,
+        extensions: Optional[Sequence[str]] = None,
     ) -> None:
         self.root = Path(root).expanduser().resolve()
         if not self.root.exists():
@@ -55,13 +81,46 @@ class ProjectScanner:
         if exclude_dirs:
             self.exclude_dirs.update(exclude_dirs)
 
-        self.analyzer = analyzer or FileAnalyzer(include_docstrings=include_docstrings)
+        base_extensions = DEFAULT_EXTENSIONS.copy()
+        if extensions:
+            base_extensions.update(
+                ext if ext.startswith(".") else f".{ext}"
+                for ext in extensions
+            )
+        self.extensions: Set[str] = {ext.lower() for ext in base_extensions}
+
+        self.analyzers: Dict[str, Any] = {}
+        if analyzers:
+            for ext, custom_analyzer in analyzers.items():
+                key = ext if ext.startswith(".") else f".{ext}"
+                self.analyzers[key.lower()] = custom_analyzer
+
+        python_analyzer = analyzer or FileAnalyzer(include_docstrings=include_docstrings)
+        self.analyzers.setdefault(".py", python_analyzer)
+        js_analyzer = JsAnalyzer(include_docstrings=include_docstrings)
+        ts_analyzer = TsAnalyzer(include_docstrings=include_docstrings)
+        tsx_analyzer = TsAnalyzer(include_docstrings=include_docstrings, is_tsx=True)
+        html_analyzer = HtmlAnalyzer()
+        for ext in self.extensions:
+            if ext in JS_ANALYZER_EXTENSIONS:
+                self.analyzers.setdefault(ext, js_analyzer)
+            elif ext == ".ts":
+                self.analyzers.setdefault(ext, ts_analyzer)
+            elif ext == ".tsx":
+                self.analyzers.setdefault(ext, tsx_analyzer)
+            elif ext == ".html":
+                self.analyzers.setdefault(ext, html_analyzer)
+            else:
+                self.analyzers.setdefault(ext, PlainTextAnalyzer())
 
     def scan(self) -> List[FileSummary]:
         """Ejecuta un recorrido completo del árbol y devuelve resúmenes por archivo."""
         summaries: List[FileSummary] = []
-        for path in self._iter_python_files():
-            summaries.append(self.analyzer.parse(path))
+        for path in self._iter_supported_files():
+            analyzer = self.analyzers.get(path.suffix.lower())
+            if not analyzer:
+                continue
+            summaries.append(analyzer.parse(path))
         return summaries
 
     def scan_and_update_index(
@@ -120,9 +179,12 @@ class ProjectScanner:
         for path in to_refresh:
             if not path.exists():
                 continue
-            if not is_python_file(path):
+            if path.suffix.lower() not in self.extensions:
                 continue
-            summary = self.analyzer.parse(path)
+            analyzer = self.analyzers.get(path.suffix.lower())
+            if not analyzer:
+                continue
+            summary = analyzer.parse(path)
             index.update_file(summary)
             updated.append(path)
 
@@ -136,14 +198,15 @@ class ProjectScanner:
 
         return {"updated": updated, "deleted": deleted}
 
-    def _iter_python_files(self) -> Iterator[Path]:
-        """Genera rutas absolutas a cada archivo `.py` válido."""
+    def _iter_supported_files(self) -> Iterator[Path]:
+        """Genera rutas absolutas a cada archivo con extensión soportada."""
         for dirpath, dirnames, filenames in os.walk(self.root, followlinks=False):
             dirnames[:] = [
                 d for d in dirnames if not self._should_exclude(Path(dirpath) / d)
             ]
             for filename in filenames:
-                if not filename.endswith(".py"):
+                suffix = Path(filename).suffix.lower()
+                if suffix not in self.extensions:
                     continue
                 full_path = Path(dirpath, filename)
                 if full_path.is_file():

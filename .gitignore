@@ -124,5 +124,6 @@ dmypy.json
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+frontend/.vite/
 # Pyre type checker
 .pyre/

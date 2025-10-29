@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -29,6 +30,8 @@ class AppState:
     index: SymbolIndex = field(init=False)
     snapshot_store: SnapshotStore = field(init=False)
     watcher: Optional[WatcherService] = field(init=False, default=None)
+    last_full_scan: Optional[datetime] = field(init=False, default=None)
+    last_event_batch: Optional[datetime] = field(init=False, default=None)
 
     def __post_init__(self) -> None:
         self.event_queue: "asyncio.Queue[Dict[str, Any]]" = asyncio.Queue()
@@ -43,12 +46,14 @@ class AppState:
             self.index,
             store=self.snapshot_store,
         )
-        await asyncio.to_thread(
+        summaries = await asyncio.to_thread(
             self.scanner.scan_and_update_index,
             self.index,
             persist=True,
             store=self.snapshot_store,
         )
+        if summaries:
+            self.last_full_scan = datetime.now(timezone.utc)
         if self.watcher:
             started = await asyncio.to_thread(self.watcher.start)
             if not started:
@@ -76,6 +81,7 @@ class AppState:
                 )
                 payload = self._serialize_changes(changes)
                 if payload["updated"] or payload["deleted"]:
+                    self.last_event_batch = datetime.now(timezone.utc)
                     await self.event_queue.put(payload)
             await asyncio.sleep(self.scheduler.debounce_seconds)
 
@@ -96,7 +102,9 @@ class AppState:
             "deleted": [],
         }
         if payload["updated"]:
+            self.last_event_batch = datetime.now(timezone.utc)
             await self.event_queue.put(payload)
+        self.last_full_scan = datetime.now(timezone.utc)
         return len(summaries)
 
     def to_relative(self, path: Path) -> str:
@@ -131,15 +139,37 @@ class AppState:
             "absolute_root": str(self.settings.root_path),
         }
 
+    def get_status_payload(self) -> Dict[str, Any]:
+        summaries = self.index.get_all()
+        total_files = len(summaries)
+        total_symbols = sum(len(summary.symbols) for summary in summaries)
+        return {
+            "root_path": self.settings.root_path.as_posix(),
+            "absolute_root": str(self.settings.root_path),
+            "watcher_active": self.is_watcher_running(),
+            "include_docstrings": self.settings.include_docstrings,
+            "last_full_scan": self.last_full_scan.isoformat()
+            if self.last_full_scan
+            else None,
+            "last_event_batch": self.last_event_batch.isoformat()
+            if self.last_event_batch
+            else None,
+            "files_indexed": total_files,
+            "symbols_indexed": total_symbols,
+            "pending_events": self.event_queue.qsize(),
+        }
+
     async def update_settings(
         self,
         *,
         root_path: Optional[Path] = None,
         include_docstrings: Optional[bool] = None,
+        exclude_dirs: Optional[Iterable[str]] = None,
     ) -> List[str]:
         new_settings = self.settings.with_updates(
             root_path=root_path,
             include_docstrings=include_docstrings,
+            exclude_dirs=exclude_dirs,
         )
         updated_fields: List[str] = []
         if new_settings.root_path != self.settings.root_path:
@@ -148,6 +178,8 @@ class AppState:
             updated_fields.append("root_path")
         if new_settings.include_docstrings != self.settings.include_docstrings:
             updated_fields.append("include_docstrings")
+        if new_settings.exclude_dirs != self.settings.exclude_dirs:
+            updated_fields.append("exclude_dirs")
 
         if not updated_fields:
             return []
@@ -164,7 +196,12 @@ class AppState:
         )
         self.index = SymbolIndex(self.settings.root_path)
         self.snapshot_store = SnapshotStore(self.settings.root_path)
-        self.watcher = WatcherService(self.settings.root_path, self.scheduler)
+        self.watcher = WatcherService(
+            self.settings.root_path,
+            self.scheduler,
+            exclude_dirs=self.settings.exclude_dirs,
+            extensions=self.scanner.extensions,
+        )
 
     async def _apply_settings(self, new_settings: AppSettings) -> None:
         if self.watcher and self.watcher.is_running:
@@ -194,11 +231,14 @@ class AppState:
             store=self.snapshot_store,
         )
 
+        self.last_full_scan = datetime.now(timezone.utc)
+
         if summaries:
             payload = {
                 "updated": [self.to_relative(summary.path) for summary in summaries],
                 "deleted": [],
             }
+            self.last_event_batch = datetime.now(timezone.utc)
             await self.event_queue.put(payload)
 
         if self.watcher:

@@ -84,6 +84,23 @@ class SettingsUpdateResponse(BaseModel):
     settings: SettingsResponse
 
 
+class StatusResponse(BaseModel):
+    root_path: str
+    absolute_root: str
+    watcher_active: bool
+    include_docstrings: bool
+    last_full_scan: Optional[datetime]
+    last_event_batch: Optional[datetime]
+    files_indexed: int
+    symbols_indexed: int
+    pending_events: int
+
+
+class PreviewResponse(BaseModel):
+    content: str
+    content_type: str
+
+
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:
     path = state.to_relative(symbol.path) if include_path else None
     return SymbolSchema(
@@ -147,3 +164,8 @@ def serialize_search_results(symbols: Iterable[SymbolInfo], state: AppState) -> 
 def serialize_settings(state: AppState) -> SettingsResponse:
     payload = state.get_settings_payload()
     return SettingsResponse(**payload)
+
+
+def serialize_status(state: AppState) -> StatusResponse:
+    payload = state.get_status_payload()
+    return StatusResponse(**payload)

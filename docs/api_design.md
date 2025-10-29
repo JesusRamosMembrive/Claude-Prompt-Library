@@ -79,6 +79,38 @@
 - **Descripción**: Fuerza un escaneo completo, actualiza índice y snapshot, retorna resumen `{ "files": N }`.
 - **Uso**: Herramienta administrativa/manual; podría requerir autenticación básica en futuro.
 
+### `GET /status` *(nuevo)*
+- **Descripción**: Devuelve información resumida del motor para mostrar en UI y diagnosticar estados.
+- **Respuesta**:
+  ```json
+  {
+    "root_path": "relative/path",
+    "absolute_root": "/abs/path",
+    "watcher_active": true,
+    "include_docstrings": true,
+    "last_full_scan": "2025-02-14T12:34:56Z",
+    "last_event_batch": "2025-02-14T12:35:12Z",
+    "files_indexed": 128,
+    "symbols_indexed": 642,
+    "pending_events": 0
+  }
+  ```
+- `last_full_scan`: se actualiza cuando `perform_full_scan` termina correctamente.
+- `last_event_batch`: timestamp del último batch aplicado por `ChangeScheduler`.
+- `files_indexed` y `symbols_indexed`: recuento rápido (`len(index.get_all())` y suma de símbolos).
+- `pending_events`: tamaño actual de la cola de eventos SSE (para detectar cuellos de botella).
+- Uso previsto: alimentar badge del header, mostrar tooltips y permitir diagnósticos rápidos.
+
+### `GET /preview`
+- **Descripción**: Devuelve el contenido bruto de un archivo para previsualización (especialmente HTML).
+- **Parámetros**:
+  - `path` (query): ruta relativa al root. Se valida que apunte a un archivo existente.
+- **Comportamiento**:
+  - Para HTML devuelve `Content-Type: text/html; charset=utf-8`. Se recomienda que la UI lo renderice en `iframe` con `sandbox` para evitar scripts.
+  - Para otras extensiones se puede devolver como texto plano (future work).
+- **Errores**:
+  - 404 si la ruta no existe o está fuera del root.
+
 ## Gestión del root y dependencias
 - La ruta raíz se pasa vía configuración (env var `CODE_MAP_ROOT` o archivo `.env`) o se gestiona en memoria cuando la UI la establece.
 - Para este MVP, se lanza el backend apuntando a un root fijo; más adelante añadimos endpoint/config para cambiarlo en caliente.

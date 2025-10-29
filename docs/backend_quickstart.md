@@ -8,6 +8,9 @@ Guía rápida para poner en marcha el backend, validar que el watcher funciona y
    python -m venv .venv
    .venv/bin/pip install -r requirements.txt  # o pip install -e .
    .venv/bin/pip install watchdog            # necesario para el watcher en vivo
+   .venv/bin/pip install esprima             # habilita análisis de JS/TS
+   .venv/bin/pip install tree_sitter_languages  # soporte TypeScript/TSX
+   .venv/bin/pip install beautifulsoup4      # extracción básica en HTML
    ```
 2. Elegir un directorio de trabajo que actuarà como proyecto a analizar. En los ejemplos usamos `/tmp/code-map-playground/project`.
 
