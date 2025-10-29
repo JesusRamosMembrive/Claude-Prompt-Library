@@ -6,7 +6,8 @@ Rutas principales del API FastAPI.
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncIterator
+from pathlib import Path
+from typing import AsyncIterator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -18,8 +19,12 @@ from .schemas import (
     HealthResponse,
     RescanResponse,
     SearchResultsSchema,
+    SettingsResponse,
+    SettingsUpdateRequest,
+    SettingsUpdateResponse,
     TreeNodeSchema,
     serialize_search_results,
+    serialize_settings,
     serialize_summary,
     serialize_tree,
 )
@@ -72,6 +77,39 @@ async def search(
 ) -> SearchResultsSchema:
     symbols = state.index.search(q)
     return serialize_search_results(symbols, state)
+
+
+@router.get("/settings", response_model=SettingsResponse)
+async def get_settings(state: AppState = Depends(get_app_state)) -> SettingsResponse:
+    return serialize_settings(state)
+
+
+@router.put("/settings", response_model=SettingsUpdateResponse)
+async def update_settings(
+    payload: SettingsUpdateRequest,
+    state: AppState = Depends(get_app_state),
+) -> SettingsUpdateResponse:
+    root_path: Optional[Path] = None
+    if payload.root_path is not None:
+        candidate = Path(payload.root_path).expanduser()
+        if not candidate.is_absolute():
+            candidate = (state.settings.root_path / candidate).resolve()
+        else:
+            candidate = candidate.resolve()
+        root_path = candidate
+
+    try:
+        updated = await state.update_settings(
+            root_path=root_path,
+            include_docstrings=payload.include_docstrings,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return SettingsUpdateResponse(
+        updated=updated,
+        settings=serialize_settings(state),
+    )
 
 
 async def _event_stream(state: AppState) -> AsyncIterator[bytes]:

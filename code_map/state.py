@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -16,28 +16,28 @@ from .index import SymbolIndex
 from .scanner import ProjectScanner
 from .scheduler import ChangeScheduler
 from .watcher import WatcherService
+from .settings import AppSettings, save_settings
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class AppState:
-    root: Path
-    scanner: ProjectScanner
-    index: SymbolIndex
-    snapshot_store: SnapshotStore
+    settings: AppSettings
     scheduler: ChangeScheduler
-    watcher: Optional[WatcherService]
-    include_docstrings: bool = False
+    scanner: ProjectScanner = field(init=False)
+    index: SymbolIndex = field(init=False)
+    snapshot_store: SnapshotStore = field(init=False)
+    watcher: Optional[WatcherService] = field(init=False, default=None)
 
     def __post_init__(self) -> None:
-        self.root = self.root.expanduser().resolve()
         self.event_queue: "asyncio.Queue[Dict[str, Any]]" = asyncio.Queue()
         self._stop_event = asyncio.Event()
         self._scheduler_task: Optional[asyncio.Task[None]] = None
+        self._build_components()
 
     async def startup(self) -> None:
-        logger.info("Inicializando estado de la app para %s", self.root)
+        logger.info("Inicializando estado de la app para %s", self.settings.root_path)
         await asyncio.to_thread(
             self.scanner.hydrate_index_from_snapshot,
             self.index,
@@ -101,20 +101,110 @@ class AppState:
 
     def to_relative(self, path: Path) -> str:
         try:
-            rel = path.resolve().relative_to(self.root)
+            rel = path.resolve().relative_to(self.settings.root_path)
             return rel.as_posix()
         except ValueError:
             return path.resolve().as_posix()
 
     def resolve_path(self, relative: str) -> Path:
-        candidate = (self.root / relative).resolve()
+        candidate = (self.settings.root_path / relative).resolve()
         if not self._within_root(candidate):
             raise ValueError(f"Ruta fuera del root configurado: {relative}")
         return candidate
 
     def _within_root(self, path: Path) -> bool:
         try:
-            path.resolve().relative_to(self.root)
+            path.resolve().relative_to(self.settings.root_path)
             return True
         except ValueError:
             return False
+
+    def is_watcher_running(self) -> bool:
+        return bool(self.watcher and self.watcher.is_running)
+
+    def get_settings_payload(self) -> Dict[str, Any]:
+        return {
+            "root_path": self.settings.root_path.as_posix(),
+            "exclude_dirs": self.settings.exclude_dirs,
+            "include_docstrings": self.settings.include_docstrings,
+            "watcher_active": self.is_watcher_running(),
+            "absolute_root": str(self.settings.root_path),
+        }
+
+    async def update_settings(
+        self,
+        *,
+        root_path: Optional[Path] = None,
+        include_docstrings: Optional[bool] = None,
+    ) -> List[str]:
+        new_settings = self.settings.with_updates(
+            root_path=root_path,
+            include_docstrings=include_docstrings,
+        )
+        updated_fields: List[str] = []
+        if new_settings.root_path != self.settings.root_path:
+            if not new_settings.root_path.exists() or not new_settings.root_path.is_dir():
+                raise ValueError("La nueva ruta raíz no es válida o no existe.")
+            updated_fields.append("root_path")
+        if new_settings.include_docstrings != self.settings.include_docstrings:
+            updated_fields.append("include_docstrings")
+
+        if not updated_fields:
+            return []
+
+        await self._apply_settings(new_settings)
+        save_settings(self.settings)
+        return updated_fields
+
+    def _build_components(self) -> None:
+        self.scanner = ProjectScanner(
+            self.settings.root_path,
+            include_docstrings=self.settings.include_docstrings,
+            exclude_dirs=self.settings.exclude_dirs,
+        )
+        self.index = SymbolIndex(self.settings.root_path)
+        self.snapshot_store = SnapshotStore(self.settings.root_path)
+        self.watcher = WatcherService(self.settings.root_path, self.scheduler)
+
+    async def _apply_settings(self, new_settings: AppSettings) -> None:
+        if self.watcher and self.watcher.is_running:
+            await asyncio.to_thread(self.watcher.stop)
+
+        self.scheduler.clear()
+
+        self.settings = new_settings
+        self._build_components()
+
+        # Vaciar cola de eventos para evitar notificaciones obsoletas
+        try:
+            while True:
+                self.event_queue.get_nowait()
+        except asyncio.QueueEmpty:
+            pass
+
+        await asyncio.to_thread(
+            self.scanner.hydrate_index_from_snapshot,
+            self.index,
+            store=self.snapshot_store,
+        )
+        summaries = await asyncio.to_thread(
+            self.scanner.scan_and_update_index,
+            self.index,
+            persist=True,
+            store=self.snapshot_store,
+        )
+
+        if summaries:
+            payload = {
+                "updated": [self.to_relative(summary.path) for summary in summaries],
+                "deleted": [],
+            }
+            await self.event_queue.put(payload)
+
+        if self.watcher:
+            started = await asyncio.to_thread(self.watcher.start)
+            if not started:
+                logger.warning(
+                    "Watcher no iniciado tras actualizar settings para %s",
+                    self.settings.root_path,
+                )

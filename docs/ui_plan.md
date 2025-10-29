@@ -5,6 +5,6 @@
 - [x] Establecer estrategia de almacenamiento y caché: decidir formato (JSON) y política de actualización incremental para resultados del escaneo.
 - [x] Integrar sistema de observación de cambios (`watchdog`): detectar modificaciones en archivos `.py` y disparar resincronizaciones parciales mediante `WatcherService`, `ChangeScheduler` y procesamiento incremental en `ProjectScanner`.
 - [x] Implementar API con FastAPI: endpoints para árbol de archivos, detalle por archivo y búsqueda básica de símbolos, stream SSE y rescan administrativo.
-- [ ] Prototipar interfaz React/Vite: árbol lateral, panel de detalles de símbolos y controles de filtrado/búsqueda.
-- [ ] Añadir canal de actualizaciones en tiempo real (SSE/WebSocket) entre el servidor y la UI para reflejar cambios detectados por el watcher.
+- [x] Prototipar interfaz React/Vite: árbol lateral, panel de detalles de símbolos y controles de filtrado/búsqueda.
+- [x] Añadir canal de actualizaciones en tiempo real (SSE/WebSocket) entre el servidor y la UI para reflejar cambios detectados por el watcher.
 - [ ] Preparar pruebas automatizadas y herramientas de desarrollo: tests para el parser y la API, pruebas de componentes clave y scripts de arranque.

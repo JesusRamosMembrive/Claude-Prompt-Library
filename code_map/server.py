@@ -13,13 +13,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .cache import SnapshotStore
 from .scheduler import ChangeScheduler
-from .scanner import ProjectScanner
-from .index import SymbolIndex
 from .state import AppState
-from .watcher import WatcherService
+from .settings import load_settings, save_settings
 from .api.routes import router as api_router
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def create_app(root: Optional[str | Path] = None) -> FastAPI:
@@ -29,19 +33,14 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
         or Path.cwd()
     ).expanduser().resolve()
 
-    scanner = ProjectScanner(root_path)
-    index = SymbolIndex(root_path)
-    snapshot_store = SnapshotStore(root_path)
+    include_docstrings = _env_flag("CODE_MAP_INCLUDE_DOCSTRINGS", True)
+
+    settings = load_settings(root_path, default_include_docstrings=include_docstrings)
     scheduler = ChangeScheduler()
-    watcher = WatcherService(root_path, scheduler)
 
     state = AppState(
-        root=root_path,
-        scanner=scanner,
-        index=index,
-        snapshot_store=snapshot_store,
+        settings=settings,
         scheduler=scheduler,
-        watcher=watcher,
     )
 
     @asynccontextmanager
@@ -51,6 +50,9 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
             yield
         finally:
             await state.shutdown()
+
+    # Guardar settings al arranque por si se generaron con valores por defecto.
+    save_settings(state.settings)
 
     app = FastAPI(title="Code Map API", lifespan=lifespan)
     app.include_router(api_router)

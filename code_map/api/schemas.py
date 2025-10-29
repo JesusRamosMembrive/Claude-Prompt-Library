@@ -6,7 +6,6 @@ Esquemas Pydantic para serializar respuestas de la API.
 from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 from typing import Iterable, List, Optional
 
 from pydantic import BaseModel, Field
@@ -67,6 +66,24 @@ class ChangeNotification(BaseModel):
     deleted: List[str]
 
 
+class SettingsResponse(BaseModel):
+    root_path: str
+    absolute_root: str
+    exclude_dirs: List[str]
+    include_docstrings: bool
+    watcher_active: bool
+
+
+class SettingsUpdateRequest(BaseModel):
+    root_path: Optional[str] = None
+    include_docstrings: Optional[bool] = None
+
+
+class SettingsUpdateResponse(BaseModel):
+    updated: List[str]
+    settings: SettingsResponse
+
+
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:
     path = state.to_relative(symbol.path) if include_path else None
     return SymbolSchema(
@@ -125,3 +142,8 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
 
 def serialize_search_results(symbols: Iterable[SymbolInfo], state: AppState) -> SearchResultsSchema:
     return SearchResultsSchema(results=[serialize_symbol(symbol, state) for symbol in symbols])
+
+
+def serialize_settings(state: AppState) -> SettingsResponse:
+    payload = state.get_settings_payload()
+    return SettingsResponse(**payload)

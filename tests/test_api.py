@@ -7,14 +7,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from code_map import (
-    AppState,
-    ChangeScheduler,
-    ProjectScanner,
-    SnapshotStore,
-    SymbolIndex,
-)
+from code_map import ChangeScheduler
 from code_map.api.routes import router
+from code_map.settings import load_settings, save_settings
+from code_map.state import AppState
 
 
 def write_file(root: Path, relative: str, content: str) -> Path:
@@ -25,18 +21,10 @@ def write_file(root: Path, relative: str, content: str) -> Path:
 
 
 def create_test_app(root: Path) -> tuple[FastAPI, AppState]:
-    scanner = ProjectScanner(root)
-    index = SymbolIndex(root)
-    snapshot_store = SnapshotStore(root)
+    settings = load_settings(root)
     scheduler = ChangeScheduler()
-    state = AppState(
-        root=root,
-        scanner=scanner,
-        index=index,
-        snapshot_store=snapshot_store,
-        scheduler=scheduler,
-        watcher=None,
-    )
+    state = AppState(settings=settings, scheduler=scheduler)
+    save_settings(state.settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -107,3 +95,26 @@ def test_rescan_endpoint_triggers_scan(api_client: TestClient, tmp_path: Path) -
     response = api_client.post("/rescan")
     assert response.status_code == 200
     assert response.json()["files"] >= 1
+
+
+def test_get_settings_endpoint(api_client: TestClient) -> None:
+    response = api_client.get("/settings")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["root_path"]
+    assert payload["absolute_root"].startswith("/")
+    assert payload["include_docstrings"] is True
+    assert "exclude_dirs" in payload
+
+
+def test_update_settings_toggle_docstrings(api_client: TestClient) -> None:
+    response = api_client.put("/settings", json={"include_docstrings": False})
+    assert response.status_code == 200
+    body = response.json()
+    assert "include_docstrings" in body["updated"]
+    assert body["settings"]["include_docstrings"] is False
+
+
+def test_update_settings_invalid_root_returns_400(api_client: TestClient) -> None:
+    response = api_client.put("/settings", json={"root_path": "/path/that/does/not/exist"})
+    assert response.status_code == 400
