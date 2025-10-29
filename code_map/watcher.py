@@ -1,0 +1,168 @@
+# SPDX-License-Identifier: MIT
+"""
+Servicio de watcher basado en watchdog para detectar cambios en proyectos Python.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Iterable, Optional, Set
+
+from .events import ChangeEventType, is_python_file
+from .scheduler import ChangeScheduler
+
+try:
+    from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileMovedEvent
+    from watchdog.observers import Observer
+except ImportError:  # pragma: no cover - dependerá de entorno
+    FileSystemEventHandler = object  # type: ignore[assignment]
+    FileSystemEvent = object  # type: ignore[assignment]
+    FileMovedEvent = object  # type: ignore[assignment]
+    Observer = None  # type: ignore[assignment]
+
+logger = logging.getLogger(__name__)
+
+EXCLUDED_DEFAULT: Set[str] = {
+    "__pycache__",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "env",
+    "node_modules",
+    "venv",
+}
+
+
+class _EventHandler(FileSystemEventHandler):
+    def __init__(
+        self,
+        root: Path,
+        scheduler: ChangeScheduler,
+        exclude_dirs: Set[str],
+    ) -> None:
+        self.root = root
+        self.scheduler = scheduler
+        self.exclude_dirs = exclude_dirs
+
+    def on_created(self, event: FileSystemEvent) -> None:
+        self._dispatch(ChangeEventType.CREATED, event)
+
+    def on_modified(self, event: FileSystemEvent) -> None:
+        self._dispatch(ChangeEventType.MODIFIED, event)
+
+    def on_deleted(self, event: FileSystemEvent) -> None:
+        self._dispatch(ChangeEventType.DELETED, event)
+
+    def on_moved(self, event: FileMovedEvent) -> None:
+        self._dispatch(ChangeEventType.MOVED, event)
+
+    def _dispatch(
+        self,
+        event_type: ChangeEventType,
+        event: FileSystemEvent,
+    ) -> None:
+        if getattr(event, "is_directory", False):
+            return
+
+        src_path = Path(getattr(event, "src_path", "")).resolve()
+        if not self._should_track(src_path):
+            return
+
+        if event_type is ChangeEventType.MOVED:
+            dest_path_raw = getattr(event, "dest_path", None)
+            dest_path = Path(dest_path_raw).resolve() if dest_path_raw else None
+            if dest_path and not self._should_track(dest_path):
+                dest_path = None
+            self.scheduler.enqueue(
+                ChangeEventType.MOVED,
+                src_path,
+                dest_path=dest_path,
+            )
+            return
+
+        if not is_python_file(src_path):
+            return
+
+        self.scheduler.enqueue(event_type, src_path)
+
+    def _should_track(self, path: Path) -> bool:
+        if not path.exists() and path.suffix != ".py":
+            # Si es un delete/move, puede que el archivo ya no exista.
+            return False
+
+        if not self._within_root(path):
+            return False
+
+        if self._is_excluded(path):
+            return False
+
+        if not is_python_file(path):
+            return False
+
+        return True
+
+    def _within_root(self, path: Path) -> bool:
+        try:
+            path.resolve().relative_to(self.root)
+            return True
+        except ValueError:
+            return False
+
+    def _is_excluded(self, path: Path) -> bool:
+        for part in path.parts:
+            if part in self.exclude_dirs:
+                return True
+            if part.startswith(".") and part != self.root.name:
+                return True
+        return False
+
+
+class WatcherService:
+    def __init__(
+        self,
+        root: Path,
+        scheduler: ChangeScheduler,
+        *,
+        exclude_dirs: Optional[Iterable[str]] = None,
+    ) -> None:
+        self.root = Path(root).expanduser().resolve()
+        self.scheduler = scheduler
+        self.exclude_dirs: Set[str] = set(EXCLUDED_DEFAULT)
+        if exclude_dirs:
+            self.exclude_dirs.update(exclude_dirs)
+        self._observer: Optional[Observer] = None
+
+    @property
+    def is_running(self) -> bool:
+        return self._observer is not None
+
+    def start(self) -> bool:
+        if Observer is None:
+            logger.warning("watchdog no está disponible; watcher deshabilitado")
+            return False
+
+        if self.is_running:
+            return True
+
+        handler = _EventHandler(self.root, self.scheduler, self.exclude_dirs)
+        observer = Observer()
+        observer.schedule(handler, str(self.root), recursive=True)
+        observer.start()
+        self._observer = observer
+        logger.info("Watcher iniciado en %s", self.root)
+        return True
+
+    def stop(self) -> None:
+        observer = self._observer
+        if not observer:
+            return
+        observer.stop()
+        observer.join()
+        self._observer = None
+        logger.info("Watcher detenido en %s", self.root)

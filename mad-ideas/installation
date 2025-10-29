@@ -1,0 +1,12 @@
+# 1) Crear entorno
+python -m venv .venv
+# Linux/macOS:
+source .venv/bin/activate
+# Windows PowerShell:
+# .\.venv\Scripts\Activate.ps1
+
+# 2) Actualizar pip y montar dependencias de desarrollo
+python -m pip install -U pip
+pip install pytest pytest-cov ruff black isort mypy radon xenon
+# (Opcional) herramientas de automatización:
+# pip install pre-commit tox nox

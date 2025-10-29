@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Claude Prompt Library - Project Initializer
-Phase 2: Enhanced documentation support
+Stage-Aware Development Framework - Project Initializer
+Phase 3: Automatic stage detection integration
 """
 
 import sys
@@ -10,6 +10,7 @@ from datetime import datetime
 import shutil
 import subprocess
 import os
+import argparse
 
 
 def run_claude_init(project_path):
@@ -128,20 +129,125 @@ def replace_placeholders(dest_path, replacements):
         md_file.write_text(content, encoding="utf-8")
 
 
+def detect_project_stage(project_path):
+    """
+    Import and run stage detection from assess_stage.py
+    Returns assessment dict or None if detection fails
+    """
+    try:
+        # Import assess_stage function dynamically
+        import assess_stage
+        assessment = assess_stage.assess_stage(project_path)
+        return assessment
+    except Exception as e:
+        print(f"⚠️  Warning: Could not detect stage: {e}")
+        return None
+
+
+def update_current_phase_with_stage(current_phase_file, assessment):
+    """
+    Update 01-current-phase.md with detected stage information
+    """
+    if not assessment:
+        return False
+
+    try:
+        content = current_phase_file.read_text(encoding="utf-8")
+
+        # Build stage detection section
+        stage = assessment['recommended_stage']
+        confidence = assessment['confidence']
+        reasons = assessment['reasons']
+
+        stage_section = f"\n\n## 🎯 Detected Stage: Stage {stage} ({confidence.title()} Confidence)\n\n"
+        stage_section += f"**Auto-detected on:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+        stage_section += "**Detection reasoning:**\n"
+        for reason in reasons[:5]:  # First 5 reasons
+            stage_section += f"- {reason}\n"
+
+        stage_section += f"\n**Metrics:**\n"
+        stage_section += f"- Files: {assessment['metrics']['file_count']}\n"
+        stage_section += f"- LOC: ~{assessment['metrics']['lines_of_code']}\n"
+        stage_section += f"- Patterns: {', '.join(assessment['metrics']['patterns_found'][:3]) if assessment['metrics']['patterns_found'] else 'None'}\n"
+
+        stage_section += f"\n**Recommended actions:**\n"
+        stage_section += f"- Follow rules in `.claude/02-stage{stage}-rules.md`\n"
+        stage_section += f"- Use stage-aware subagents for guidance\n"
+        stage_section += f"- Re-assess stage after significant changes\n"
+
+        # Check if stage section already exists
+        if "## 🎯 Detected Stage:" in content:
+            # Replace existing section
+            import re
+            pattern = r"## 🎯 Detected Stage:.*?(?=\n##|\Z)"
+            content = re.sub(pattern, stage_section.strip(), content, flags=re.DOTALL)
+        else:
+            # Append new section
+            content = content.rstrip() + stage_section
+
+        current_phase_file.write_text(content, encoding="utf-8")
+        return True
+
+    except Exception as e:
+        print(f"⚠️  Warning: Could not update current-phase.md: {e}")
+        return False
+
+
 if __name__ == "__main__":
     # 1. Parse arguments
-    if len(sys.argv) != 2:
-        print("Usage: python init_project.py <project-name>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Stage-Aware Development Framework - Initialize projects with automatic stage detection"
+    )
+    parser.add_argument(
+        "project_path",
+        help="Project name (for new projects) or path (for existing projects with --existing)"
+    )
+    parser.add_argument(
+        "--existing",
+        action="store_true",
+        help="Add framework to existing project and auto-detect stage"
+    )
+    parser.add_argument(
+        "--detect-only",
+        action="store_true",
+        help="Only detect and display stage, don't initialize framework"
+    )
 
-    project_name = sys.argv[1]
+    args = parser.parse_args()
+
+    # Handle detect-only mode
+    if args.detect_only:
+        print(f"🔍 Detecting stage for: {args.project_path}")
+        assessment = detect_project_stage(args.project_path)
+        if assessment:
+            import assess_stage
+            assess_stage.print_assessment(assessment)
+        else:
+            print("❌ Could not detect project stage")
+        sys.exit(0)
 
     # 2. Setup paths
     script_dir = Path(__file__).parent
     template_source = script_dir / "templates" / "basic" / ".claude"
     template_docs = script_dir / "templates" / "docs"
 
-    dest_dir = Path(project_name)
+    if args.existing:
+        # Existing project mode
+        dest_dir = Path(args.project_path).resolve()
+        project_name = dest_dir.name
+
+        if not dest_dir.exists():
+            print(f"❌ Error: Project directory not found: {dest_dir}")
+            sys.exit(1)
+
+        print(f"📦 Adding Stage-Aware Framework to existing project: {project_name}")
+        print(f"   at: {dest_dir}")
+    else:
+        # New project mode
+        project_name = args.project_path
+        dest_dir = Path(project_name)
+        print(f"🆕 Creating new project: {project_name}")
+
     dest_claude = dest_dir / ".claude"
     dest_docs = dest_dir / "docs"
 
@@ -165,8 +271,7 @@ if __name__ == "__main__":
         "01-current-phase.md",
         "02-stage1-rules.md",
         "02-stage2-rules.md",
-        "02-stage3-rules.md",
-        "settings.local.json"
+        "02-stage3-rules.md"
     ]
 
     files_copied = []
@@ -199,11 +304,34 @@ if __name__ == "__main__":
 
             dest_file.write_text(content, encoding="utf-8")
 
+    # 6.5. Copy subagents directory
+    subagents_source = template_source / "subagents"
+    subagents_dest = dest_claude / "subagents"
+
+    if subagents_source.exists():
+        if not subagents_dest.exists():
+            shutil.copytree(subagents_source, subagents_dest)
+            print(f"✓ Copied subagents/ directory with {len(list(subagents_source.glob('*.md')))} subagent(s)")
+        else:
+            # Directory exists, copy individual files that don't exist
+            subagents_dest.mkdir(exist_ok=True)
+            copied_count = 0
+            for subagent_file in subagents_source.glob("*.md"):
+                dest_subagent = subagents_dest / subagent_file.name
+                if not dest_subagent.exists():
+                    shutil.copy2(subagent_file, dest_subagent)
+                    copied_count += 1
+            if copied_count > 0:
+                print(f"✓ Updated subagents/ with {copied_count} new subagent(s)")
+            else:
+                print(f"ℹ️  subagents/ directory up to date")
+
     # 7. Copy reference documentation files
     reference_files = [
-        "PROMPT_LIBRARY.md",
         "QUICK_START.md",
         "STAGES_COMPARISON.md",
+        "STAGE_CRITERIA.md",
+        "GUIDE.md",
         "CLAUDE_CODE_REFERENCE.md"
     ]
 
@@ -257,6 +385,26 @@ This file contains project context and instructions for Claude Code.
     # Append custom instructions if CLAUDE.md exists or was just created
     if claude_md_path.exists():
         append_custom_instructions(claude_md_path, custom_instructions_template)
+
+    # 8.5. Auto-detect stage for existing projects
+    if args.existing:
+        print("\n🔍 Detecting project stage...")
+        assessment = detect_project_stage(dest_dir)
+
+        if assessment:
+            stage = assessment['recommended_stage']
+            confidence = assessment['confidence']
+            print(f"✓ Detected Stage {stage} ({confidence} confidence)")
+
+            # Update 01-current-phase.md with detection results
+            current_phase_file = dest_claude / "01-current-phase.md"
+            if current_phase_file.exists():
+                if update_current_phase_with_stage(current_phase_file, assessment):
+                    print(f"✓ Updated 01-current-phase.md with stage detection")
+                    print(f"   View full report: python assess_stage.py {dest_dir}")
+        else:
+            print("⚠️  Could not detect stage automatically")
+            print("   Run manually: python assess_stage.py <project-path>")
 
     # 9. Success message
     print(f"✓ Project '{project_name}' initialized!")
