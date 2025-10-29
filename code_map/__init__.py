@@ -12,7 +12,10 @@ from .index import SymbolIndex
 from .cache import SnapshotStore
 from .watcher import WatcherService
 from .state import AppState
-from .server import create_app
+try:
+    from .server import create_app
+except ImportError:  # pragma: no cover - dependencia opcional
+    create_app = None  # type: ignore
 
 __all__ = [
     "FileSummary",
@@ -28,5 +31,7 @@ __all__ = [
     "SnapshotStore",
     "WatcherService",
     "AppState",
-    "create_app",
 ]
+
+if create_app is not None:
+    __all__.append("create_app")

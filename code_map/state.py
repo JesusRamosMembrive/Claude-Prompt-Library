@@ -18,6 +18,7 @@ from .scanner import ProjectScanner
 from .scheduler import ChangeScheduler
 from .watcher import WatcherService
 from .settings import AppSettings, save_settings
+from .state_reporter import StateReporter
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class AppState:
     watcher: Optional[WatcherService] = field(init=False, default=None)
     last_full_scan: Optional[datetime] = field(init=False, default=None)
     last_event_batch: Optional[datetime] = field(init=False, default=None)
+    reporter: StateReporter = field(init=False)
 
     def __post_init__(self) -> None:
         self.event_queue: "asyncio.Queue[Dict[str, Any]]" = asyncio.Queue()
@@ -131,33 +133,15 @@ class AppState:
         return bool(self.watcher and self.watcher.is_running)
 
     def get_settings_payload(self) -> Dict[str, Any]:
-        return {
-            "root_path": self.settings.root_path.as_posix(),
-            "exclude_dirs": self.settings.exclude_dirs,
-            "include_docstrings": self.settings.include_docstrings,
-            "watcher_active": self.is_watcher_running(),
-            "absolute_root": str(self.settings.root_path),
-        }
+        return self.reporter.settings_payload(watcher_active=self.is_watcher_running())
 
     def get_status_payload(self) -> Dict[str, Any]:
-        summaries = self.index.get_all()
-        total_files = len(summaries)
-        total_symbols = sum(len(summary.symbols) for summary in summaries)
-        return {
-            "root_path": self.settings.root_path.as_posix(),
-            "absolute_root": str(self.settings.root_path),
-            "watcher_active": self.is_watcher_running(),
-            "include_docstrings": self.settings.include_docstrings,
-            "last_full_scan": self.last_full_scan.isoformat()
-            if self.last_full_scan
-            else None,
-            "last_event_batch": self.last_event_batch.isoformat()
-            if self.last_event_batch
-            else None,
-            "files_indexed": total_files,
-            "symbols_indexed": total_symbols,
-            "pending_events": self.event_queue.qsize(),
-        }
+        return self.reporter.status_payload(
+            watcher_active=self.is_watcher_running(),
+            last_full_scan=self.last_full_scan,
+            last_event_batch=self.last_event_batch,
+            pending_events=self.event_queue.qsize(),
+        )
 
     async def update_settings(
         self,
@@ -196,6 +180,11 @@ class AppState:
         )
         self.index = SymbolIndex(self.settings.root_path)
         self.snapshot_store = SnapshotStore(self.settings.root_path)
+        self.reporter = StateReporter(
+            settings=self.settings,
+            scanner=self.scanner,
+            index=self.index,
+        )
         self.watcher = WatcherService(
             self.settings.root_path,
             self.scheduler,

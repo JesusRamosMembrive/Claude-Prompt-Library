@@ -8,16 +8,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
-try:
-    from bs4 import BeautifulSoup  # type: ignore
-except ImportError:  # pragma: no cover - dependencia opcional
-    BeautifulSoup = None  # type: ignore
-
 from .analyzer import get_modified_time
+from .dependencies import optional_dependencies
 from .models import FileSummary, SymbolInfo, SymbolKind
 
 
 class HtmlAnalyzer:
+    def __init__(self) -> None:
+        module = optional_dependencies.require("beautifulsoup4", module="bs4")
+        self._beautiful_soup = getattr(module, "BeautifulSoup", None) if module else None
+        status = optional_dependencies.status("beautifulsoup4")[0]
+        self.available = bool(status.available and self._beautiful_soup)
+
     def parse(self, path: Path) -> FileSummary:
         abs_path = path.resolve()
         try:
@@ -25,7 +27,7 @@ class HtmlAnalyzer:
         except OSError:
             return FileSummary(path=abs_path)
 
-        if BeautifulSoup is None:
+        if not self._beautiful_soup:
             return FileSummary(
                 path=abs_path,
                 symbols=[],
@@ -33,7 +35,7 @@ class HtmlAnalyzer:
                 modified_at=get_modified_time(abs_path),
             )
 
-        soup = BeautifulSoup(content, "html.parser")
+        soup = self._beautiful_soup(content, "html.parser")
         symbols: List[SymbolInfo] = []
 
         for element in soup.find_all(True):

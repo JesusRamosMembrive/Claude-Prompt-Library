@@ -10,12 +10,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .analyzer import get_modified_time
+from .dependencies import optional_dependencies
 from .models import FileSummary, SymbolInfo, SymbolKind
-
-try:
-    import esprima  # type: ignore[import]
-except ImportError:  # pragma: no cover - opcional
-    esprima = None
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +19,13 @@ logger = logging.getLogger(__name__)
 class JsAnalyzer:
     def __init__(self, *, include_docstrings: bool = True) -> None:
         self.include_docstrings = include_docstrings
-        if esprima is None:  # pragma: no cover - dependiente del entorno
-            logger.warning(
-                "La librería 'esprima' no está instalada; el análisis de JS/TS se degradará."
-            )
+        self._module = optional_dependencies.require("esprima")
+        status = optional_dependencies.status("esprima")[0]
+        self.available = status.available
 
     def parse(self, path: Path) -> FileSummary:
         abs_path = path.resolve()
-        if esprima is None:
+        if not self._module:
             return FileSummary(
                 path=abs_path,
                 symbols=[],
@@ -49,7 +44,7 @@ class JsAnalyzer:
             )
 
         try:
-            module = esprima.parseModule(
+            module = self._module.parseModule(  # type: ignore[attr-defined]
                 source, comment=True, range=True, loc=True, tolerant=True
             )
         except Exception as exc:  # pragma: no cover - errores de parseo

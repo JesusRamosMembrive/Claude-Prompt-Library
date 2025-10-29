@@ -1,0 +1,14 @@
+export const DEFAULT_EXCLUDED_DIRS: readonly string[] = [
+  "__pycache__",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "env",
+  "node_modules",
+  "venv",
+];

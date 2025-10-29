@@ -1,31 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-
-import { getSettings, getStatus } from "./api/client";
-import { queryKeys } from "./api/queryKeys";
 import { HeaderBar } from "./components/HeaderBar";
 import { Dashboard } from "./components/Dashboard";
 import { SettingsView } from "./components/SettingsView";
+import { useAppQueries } from "./hooks/useAppQueries";
 import { useEventStream } from "./hooks/useEventStream";
-import "./styles.css";
+import "./styles/index.css";
 
 export function App(): JSX.Element {
   const [view, setView] = useState<"dashboard" | "settings">("dashboard");
-  const settingsQuery = useQuery({
-    queryKey: queryKeys.settings,
-    queryFn: getSettings,
-    staleTime: 30_000,
-  });
-  const statusQuery = useQuery({
-    queryKey: queryKeys.status,
-    queryFn: getStatus,
-    refetchInterval: 10_000,
-    staleTime: 5_000,
-  });
+  const { settingsQuery, statusQuery, summary } = useAppQueries();
   useEventStream();
-
-  const watcherActive = statusQuery.data?.watcher_active ?? true;
-  const rootPath = statusQuery.data?.root_path ?? settingsQuery.data?.root_path;
 
   return (
     <div className="app-root">
@@ -33,8 +17,8 @@ export function App(): JSX.Element {
         <>
           <HeaderBar
             onOpenSettings={() => setView("settings")}
-            watcherActive={watcherActive}
-            rootPath={rootPath}
+            watcherActive={summary.watcherActive}
+            rootPath={summary.rootPath}
             lastFullScan={statusQuery.data?.last_full_scan}
             filesIndexed={statusQuery.data?.files_indexed}
           />

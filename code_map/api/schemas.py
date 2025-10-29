@@ -77,11 +77,22 @@ class SettingsResponse(BaseModel):
 class SettingsUpdateRequest(BaseModel):
     root_path: Optional[str] = None
     include_docstrings: Optional[bool] = None
+    exclude_dirs: Optional[List[str]] = None
 
 
 class SettingsUpdateResponse(BaseModel):
     updated: List[str]
     settings: SettingsResponse
+
+
+class AnalyzerCapabilitySchema(BaseModel):
+    key: str
+    description: str
+    extensions: List[str]
+    available: bool
+    dependency: Optional[str] = None
+    error: Optional[str] = None
+    degraded_extensions: List[str] = Field(default_factory=list)
 
 
 class StatusResponse(BaseModel):
@@ -94,6 +105,7 @@ class StatusResponse(BaseModel):
     files_indexed: int
     symbols_indexed: int
     pending_events: int
+    capabilities: List[AnalyzerCapabilitySchema] = Field(default_factory=list)
 
 
 class PreviewResponse(BaseModel):

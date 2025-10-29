@@ -48,6 +48,17 @@ export interface SettingsPayload {
 export interface SettingsUpdatePayload {
   root_path?: string;
   include_docstrings?: boolean;
+  exclude_dirs?: string[];
+}
+
+export interface AnalyzerCapability {
+  key: string;
+  description: string;
+  extensions: string[];
+  available: boolean;
+  dependency?: string | null;
+  error?: string | null;
+  degraded_extensions: string[];
 }
 
 export interface StatusPayload {
@@ -60,4 +71,5 @@ export interface StatusPayload {
   files_indexed: number;
   symbols_indexed: number;
   pending_events: number;
+  capabilities: AnalyzerCapability[];
 }

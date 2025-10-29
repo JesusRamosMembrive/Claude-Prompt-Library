@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { StatusPayload } from "../api/types";
+import type { AnalyzerCapability, StatusPayload } from "../api/types";
 
 function formatRelative(timestamp: string | null | undefined): string {
   if (!timestamp) {
@@ -73,6 +73,47 @@ export function StatusPanel({
           <dd>{status.pending_events}</dd>
         </div>
       </dl>
+
+      <CapabilitySummary capabilities={status.capabilities} />
+    </div>
+  );
+}
+
+function CapabilitySummary({ capabilities }: { capabilities: AnalyzerCapability[] }): JSX.Element {
+  if (!capabilities || capabilities.length === 0) {
+    return (
+      <div className="capability-summary">
+        <p className="capability-helper">Sin información de dependencias opcionales.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="capability-summary">
+      <h3>Analizadores</h3>
+      <ul>
+        {capabilities.map((cap) => {
+          const downgraded = !cap.available;
+          const badge = downgraded ? "Degradado" : "Activo";
+          return (
+            <li key={cap.key}>
+              <div>
+                <strong>{cap.description}</strong>
+                <span>{cap.extensions.join(", ")}</span>
+              </div>
+              <span className={`capability-badge ${downgraded ? "capability-badge--warn" : ""}`}>
+                {badge}
+              </span>
+              {downgraded && (
+                <p className="capability-warning">
+                  {cap.dependency ? `Instala ${cap.dependency}` : "Dependencia faltante"}
+                  {cap.error ? ` · ${cap.error}` : ""}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

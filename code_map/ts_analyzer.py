@@ -7,30 +7,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
-
-try:
-    from tree_sitter import Node, Parser  # type: ignore
-    from tree_sitter_languages import get_language  # type: ignore
-except ImportError:  # pragma: no cover - dependiente del entorno
-    Parser = None  # type: ignore
-    Node = object  # type: ignore
-    get_language = None  # type: ignore
+from typing import Any, Dict, Iterable, List, Optional
 
 from .analyzer import get_modified_time
+from .dependencies import optional_dependencies
 from .models import FileSummary, SymbolInfo, SymbolKind
 
 
 @dataclass
 class _TsParser:
-    parser: Parser
+    parser: Any
 
     @classmethod
-    def for_language(cls, name: str) -> "_TsParser":
-        if get_language is None or Parser is None:
+    def for_language(cls, modules: Dict[str, Any], name: str) -> "_TsParser":
+        parser_cls = getattr(modules.get("tree_sitter"), "Parser", None)
+        get_language = getattr(modules.get("tree_sitter_languages"), "get_language", None)
+        if parser_cls is None or get_language is None:
             raise RuntimeError("tree_sitter_languages no disponible")
         language = get_language(name)
-        parser = Parser()
+        parser = parser_cls()
         parser.set_language(language)
         return cls(parser=parser)
 
@@ -38,12 +33,18 @@ class _TsParser:
 class TsAnalyzer:
     def __init__(self, *, include_docstrings: bool = False, is_tsx: bool = False) -> None:
         self.include_docstrings = include_docstrings
+        self._modules = optional_dependencies.load("tree_sitter_languages")
+        status = optional_dependencies.status("tree_sitter_languages")[0]
         self.parser_wrapper = None
-        if Parser is not None and get_language is not None:
+        if self._modules:
             try:
-                self.parser_wrapper = _TsParser.for_language("tsx" if is_tsx else "typescript")
+                self.parser_wrapper = _TsParser.for_language(
+                    self._modules,
+                    "tsx" if is_tsx else "typescript",
+                )
             except Exception:  # pragma: no cover
                 self.parser_wrapper = None
+        self.available = bool(status.available and self.parser_wrapper)
 
     def parse(self, path: Path) -> FileSummary:
         abs_path = path.resolve()
@@ -74,7 +75,7 @@ class TsAnalyzer:
 
     def _collect_from_children(
         self,
-        node: Node,
+        node: Any,
         file_path: Path,
         symbols: List[SymbolInfo],
         lines: List[str],
@@ -129,7 +130,7 @@ class TsAnalyzer:
 
             self._collect_from_children(child, file_path, symbols, lines, parent)
 
-    def _extract_identifier(self, node: Node) -> Optional[str]:
+    def _extract_identifier(self, node: Any) -> Optional[str]:
         ident = self._find_child(node, "identifier")
         if ident:
             return ident.text.decode("utf-8")
@@ -138,7 +139,7 @@ class TsAnalyzer:
             return name.text.decode("utf-8")
         return None
 
-    def _find_child(self, node: Node, type_name: str) -> Optional[Node]:
+    def _find_child(self, node: Any, type_name: str) -> Optional[Any]:
         for child in node.children:
             if child.type == type_name:
                 return child
@@ -146,7 +147,7 @@ class TsAnalyzer:
 
     def _handle_lexical_declaration(
         self,
-        node: Node,
+        node: Any,
         file_path: Path,
         symbols: List[SymbolInfo],
         lines: List[str],
@@ -177,7 +178,7 @@ class TsAnalyzer:
                         )
                     )
 
-    def _find_leading_comment(self, node: Node, lines: List[str]) -> Optional[str]:
+    def _find_leading_comment(self, node: Any, lines: List[str]) -> Optional[str]:
         start_line = node.start_point[0]
         for offset in range(1, 4):
             index = start_line - offset

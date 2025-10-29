@@ -1,5 +1,4 @@
 import type {
-  ChangeNotification,
   FileSummary,
   ProjectTreeNode,
   SettingsPayload,

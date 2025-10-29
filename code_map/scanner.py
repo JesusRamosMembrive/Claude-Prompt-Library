@@ -9,11 +9,9 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Set
 
-from .analyzer import FileAnalyzer, get_modified_time
+from .analyzer import FileAnalyzer
+from .analyzer_registry import AnalyzerRegistry
 from .events import ChangeBatch
-from .js_analyzer import JsAnalyzer
-from .ts_analyzer import TsAnalyzer
-from .html_analyzer import HtmlAnalyzer
 from .models import FileSummary
 
 if TYPE_CHECKING:
@@ -45,19 +43,6 @@ DEFAULT_EXTENSIONS: Set[str] = {
     ".html",
 }
 
-JS_ANALYZER_EXTENSIONS = {".js", ".jsx"}
-
-
-class PlainTextAnalyzer:
-    def parse(self, path: Path) -> FileSummary:
-        abs_path = path.resolve()
-        return FileSummary(
-            path=abs_path,
-            symbols=[],
-            errors=[],
-            modified_at=get_modified_time(abs_path),
-        )
-
 class ProjectScanner:
     """Coordina los escaneos completos de una ruta raíz."""
 
@@ -66,7 +51,7 @@ class ProjectScanner:
         root: Path,
         *,
         analyzer: Optional[FileAnalyzer] = None,
-        analyzers: Optional[Mapping[str, PlainTextAnalyzer]] = None,
+        analyzers: Optional[Mapping[str, Any]] = None,
         exclude_dirs: Optional[Sequence[str]] = None,
         include_docstrings: bool = False,
         extensions: Optional[Sequence[str]] = None,
@@ -89,29 +74,21 @@ class ProjectScanner:
             )
         self.extensions: Set[str] = {ext.lower() for ext in base_extensions}
 
-        self.analyzers: Dict[str, Any] = {}
+        overrides: Dict[str, Any] = {}
         if analyzers:
             for ext, custom_analyzer in analyzers.items():
                 key = ext if ext.startswith(".") else f".{ext}"
-                self.analyzers[key.lower()] = custom_analyzer
+                overrides[key.lower()] = custom_analyzer
 
-        python_analyzer = analyzer or FileAnalyzer(include_docstrings=include_docstrings)
-        self.analyzers.setdefault(".py", python_analyzer)
-        js_analyzer = JsAnalyzer(include_docstrings=include_docstrings)
-        ts_analyzer = TsAnalyzer(include_docstrings=include_docstrings)
-        tsx_analyzer = TsAnalyzer(include_docstrings=include_docstrings, is_tsx=True)
-        html_analyzer = HtmlAnalyzer()
-        for ext in self.extensions:
-            if ext in JS_ANALYZER_EXTENSIONS:
-                self.analyzers.setdefault(ext, js_analyzer)
-            elif ext == ".ts":
-                self.analyzers.setdefault(ext, ts_analyzer)
-            elif ext == ".tsx":
-                self.analyzers.setdefault(ext, tsx_analyzer)
-            elif ext == ".html":
-                self.analyzers.setdefault(ext, html_analyzer)
-            else:
-                self.analyzers.setdefault(ext, PlainTextAnalyzer())
+        if analyzer:
+            overrides[".py"] = analyzer
+
+        self.registry = AnalyzerRegistry(
+            include_docstrings=include_docstrings,
+            extensions=self.extensions,
+            overrides=overrides or None,
+        )
+        self.analyzers = self.registry.analyzers
 
     def scan(self) -> List[FileSummary]:
         """Ejecuta un recorrido completo del árbol y devuelve resúmenes por archivo."""

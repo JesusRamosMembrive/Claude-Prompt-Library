@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { getFileSummary, getPreview } from "../api/client";
+import { getFileSummary } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import type { SymbolInfo } from "../api/types";
 import { useSelectionStore } from "../state/useSelectionStore";
+import { PreviewPane } from "./PreviewPane";
 
 interface ClassWithMethods {
   symbol: SymbolInfo;
@@ -23,15 +24,6 @@ export function DetailPanel(): JSX.Element {
     queryKey: queryKeys.file(selectedPath ?? ""),
     queryFn: () => getFileSummary(selectedPath!),
     enabled: Boolean(selectedPath),
-  });
-
-  const isHtml =
-    typeof selectedPath === "string" &&
-    selectedPath.toLowerCase().endsWith(".html");
-  const previewQuery = useQuery({
-    queryKey: queryKeys.preview(selectedPath ?? ""),
-    queryFn: () => getPreview(selectedPath!),
-    enabled: Boolean(selectedPath && isHtml),
   });
 
   const grouped = useMemo<GroupedSymbols>(() => {
@@ -199,27 +191,12 @@ export function DetailPanel(): JSX.Element {
         </div>
       )}
 
-      {isHtml && (
+      {selectedPath && (
         <div className="preview-container">
           <h3 style={{ margin: "0 0 8px", color: "#7f869d", fontSize: "13px" }}>
-            Previsualización HTML
+            Previsualización
           </h3>
-          {previewQuery.isPending && (
-            <p style={{ color: "#7f869d", fontSize: "13px" }}>Cargando vista previa…</p>
-          )}
-          {previewQuery.isError && (
-            <div className="error-banner">
-              No se pudo cargar la previsualización: {String(previewQuery.error)}
-            </div>
-          )}
-          {previewQuery.data && (
-            <iframe
-              className="preview-frame"
-              sandbox=""
-              srcDoc={previewQuery.data.content}
-              title={`Vista previa de ${selectedPath}`}
-            />
-          )}
+          <PreviewPane path={selectedPath} />
         </div>
       )}
     </section>

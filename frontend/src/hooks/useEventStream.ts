@@ -21,10 +21,12 @@ export function useEventStream(): void {
 
         payload.updated?.forEach((path) => {
           queryClient.invalidateQueries({ queryKey: queryKeys.file(path) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.preview(path) });
         });
 
         payload.deleted?.forEach((path) => {
           queryClient.removeQueries({ queryKey: queryKeys.file(path) });
+          queryClient.removeQueries({ queryKey: queryKeys.preview(path) });
         });
 
         const timestamp = Date.now();

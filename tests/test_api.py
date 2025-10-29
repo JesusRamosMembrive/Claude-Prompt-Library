@@ -115,6 +115,16 @@ def test_update_settings_toggle_docstrings(api_client: TestClient) -> None:
     assert body["settings"]["include_docstrings"] is False
 
 
+def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
+    response = api_client.put("/settings", json={"exclude_dirs": ["build", "dist"]})
+    assert response.status_code == 200
+    body = response.json()
+    assert "exclude_dirs" in body["updated"]
+    excludes = body["settings"]["exclude_dirs"]
+    assert "build" in excludes
+    assert "dist" in excludes
+
+
 def test_update_settings_invalid_root_returns_400(api_client: TestClient) -> None:
     response = api_client.put("/settings", json={"root_path": "/path/that/does/not/exist"})
     assert response.status_code == 400
@@ -127,13 +137,31 @@ def test_status_endpoint_returns_metrics(api_client: TestClient) -> None:
     assert payload["files_indexed"] >= 1
     assert "symbols_indexed" in payload
     assert payload["watcher_active"] in {True, False}
+    assert isinstance(payload["capabilities"], list)
 
 
 def test_preview_endpoint_returns_html(tmp_path: Path) -> None:
     app, _state = create_test_app(tmp_path)
-    html_path = write_file(tmp_path, "page/index.html", "<html><body>Hi</body></html>")
+    write_file(tmp_path, "page/index.html", "<html><body>Hi</body></html>")
     with TestClient(app) as client:
         response = client.get("/preview", params={"path": "page/index.html"})
         assert response.status_code == 200
         assert response.text.strip() == "<html><body>Hi</body></html>"
         assert "text/html" in response.headers.get("content-type", "")
+
+
+def test_preview_endpoint_returns_plain_text(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    write_file(tmp_path, "notes/info.txt", "Just text content")
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "notes/info.txt"})
+        assert response.status_code == 200
+        assert response.text.strip() == "Just text content"
+        assert response.headers.get("content-type") == "text/plain; charset=utf-8"
+
+
+def test_preview_endpoint_missing_file_returns_404(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "unknown/file.md"})
+        assert response.status_code == 404
