@@ -2,13 +2,18 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { HeaderBar } from "./components/HeaderBar";
 import { Dashboard } from "./components/Dashboard";
 import { SettingsView } from "./components/SettingsView";
-import { useAppQueries } from "./hooks/useAppQueries";
 import { useEventStream } from "./hooks/useEventStream";
+import { useSettingsQuery } from "./hooks/useSettingsQuery";
+import { useStatusQuery } from "./hooks/useStatusQuery";
 import "./styles/index.css";
 
 export function App(): JSX.Element {
-  const { settingsQuery, statusQuery, summary } = useAppQueries();
+  const settingsQuery = useSettingsQuery();
+  const statusQuery = useStatusQuery();
   useEventStream();
+
+  const rootPath = statusQuery.data?.root_path ?? settingsQuery.data?.root_path ?? "";
+  const watcherActive = statusQuery.data?.watcher_active ?? false;
 
   return (
     <BrowserRouter>
@@ -19,8 +24,8 @@ export function App(): JSX.Element {
             element={
               <>
                 <HeaderBar
-                  watcherActive={summary.watcherActive}
-                  rootPath={summary.rootPath}
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
                   lastFullScan={statusQuery.data?.last_full_scan}
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
