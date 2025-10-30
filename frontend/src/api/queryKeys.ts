@@ -5,4 +5,5 @@ export const queryKeys = {
   settings: ["settings"] as const,
   status: ["status"] as const,
   preview: (path: string) => ["preview", path] as const,
+  stageStatus: ["stage-status"] as const,
 };

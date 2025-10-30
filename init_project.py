@@ -254,7 +254,7 @@ def update_current_phase_with_stage(current_phase_file, assessment):
         stage_section += f"- Patterns: {', '.join(assessment['metrics']['patterns_found'][:3]) if assessment['metrics']['patterns_found'] else 'None'}\n"
 
         stage_section += f"\n**Recommended actions:**\n"
-        stage_section += f"- Follow rules in `.claude/02-stage{stage}-rules.md`\n"
+        stage_section += f"- Follow rules in `.claude/02-stage{stage}-rules.md` (and `.codex/stage{stage}-rules.md` if using Codex)\n"
         stage_section += f"- Use stage-aware subagents for guidance\n"
         stage_section += f"- Re-assess stage after significant changes\n"
 
@@ -295,8 +295,18 @@ if __name__ == "__main__":
         action="store_true",
         help="Only detect and display stage, don't initialize framework"
     )
+    parser.add_argument(
+        "--agent",
+        choices=["claude", "codex", "both"],
+        default="both",
+        help="Which agent integrations to prepare (default: both)"
+    )
 
     args = parser.parse_args()
+
+    agent_choice = args.agent.lower()
+    prepare_claude = agent_choice in ("claude", "both")
+    prepare_codex = agent_choice in ("codex", "both")
 
     # Handle detect-only mode
     if args.detect_only:
@@ -311,7 +321,8 @@ if __name__ == "__main__":
 
     # 2. Setup paths
     script_dir = Path(__file__).parent
-    template_source = script_dir / "templates" / "basic" / ".claude"
+    template_claude = script_dir / "templates" / "basic" / ".claude"
+    template_codex = script_dir / "templates" / "basic" / ".codex"
     template_docs = script_dir / "templates" / "docs"
 
     if args.existing:
@@ -332,20 +343,27 @@ if __name__ == "__main__":
         print(f"🆕 Creating new project: {project_name}")
 
     dest_claude = dest_dir / ".claude"
+    dest_codex = dest_dir / ".codex"
     dest_docs = dest_dir / "docs"
 
     # 3. Validate templates exist
-    if not template_source.exists():
-        print(f"Error: Template not found at {template_source}")
+    if not template_claude.exists():
+        print(f"Error: Template not found at {template_claude}")
         sys.exit(1)
 
     if not template_docs.exists():
         print(f"Error: Docs template not found at {template_docs}")
         sys.exit(1)
 
+    if prepare_codex and not template_codex.exists():
+        print(f"Error: Codex template not found at {template_codex}")
+        sys.exit(1)
+
     # 4. Create destination directories if needed
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_claude.mkdir(exist_ok=True)
+    if prepare_codex:
+        dest_codex.mkdir(exist_ok=True)
     dest_docs.mkdir(exist_ok=True)
 
     # 5. Copy only missing .claude/ template files
@@ -361,7 +379,7 @@ if __name__ == "__main__":
     files_skipped = []
 
     for filename in template_files:
-        source_file = template_source / filename
+        source_file = template_claude / filename
         dest_file = dest_claude / filename
 
         if dest_file.exists():
@@ -388,7 +406,7 @@ if __name__ == "__main__":
             dest_file.write_text(content, encoding="utf-8")
 
     # 6.5. Copy subagents directory
-    subagents_source = template_source / "subagents"
+    subagents_source = template_claude / "subagents"
     subagents_dest = dest_claude / "subagents"
 
     if subagents_source.exists():
@@ -409,13 +427,50 @@ if __name__ == "__main__":
             else:
                 print(f"ℹ️  subagents/ directory up to date")
 
+    # 6.6. Copy Codex templates if requested
+    codex_files_copied = []
+    codex_files_skipped = []
+
+    if prepare_codex:
+        codex_template_files = [
+            "AGENTS.md",
+            "stage1-rules.md",
+            "stage2-rules.md",
+            "stage3-rules.md",
+        ]
+
+        for filename in codex_template_files:
+            source_file = template_codex / filename
+            dest_file = dest_codex / filename
+
+            if dest_file.exists():
+                codex_files_skipped.append(filename)
+            else:
+                shutil.copy2(source_file, dest_file)
+                codex_files_copied.append(filename)
+
+        if codex_files_copied:
+            replacements = {
+                "{{PROJECT_NAME}}": project_name,
+                "{{DATE}}": datetime.now().strftime("%Y-%m-%d"),
+                "{{YEAR}}": str(datetime.now().year)
+            }
+
+            for filename in codex_files_copied:
+                dest_file = dest_codex / filename
+                content = dest_file.read_text(encoding="utf-8")
+                for placeholder, value in replacements.items():
+                    content = content.replace(placeholder, value)
+                dest_file.write_text(content, encoding="utf-8")
+
     # 7. Copy reference documentation files
     reference_files = [
         "QUICK_START.md",
         "STAGES_COMPARISON.md",
         "STAGE_CRITERIA.md",
         "GUIDE.md",
-        "CLAUDE_CODE_REFERENCE.md"
+        "CLAUDE_CODE_REFERENCE.md",
+        "CODEX_CLI_REFERENCE.md"
     ]
 
     ref_files_copied = []
@@ -432,17 +487,18 @@ if __name__ == "__main__":
             ref_files_copied.append(filename)
 
     # 8. Run Claude Code /init and append custom instructions
-    claude_md_path = dest_dir / "CLAUDE.md"
-    custom_instructions_template = template_source / "CUSTOM_INSTRUCTIONS.md"
+    if prepare_claude:
+        claude_md_path = dest_dir / "CLAUDE.md"
+        custom_instructions_template = template_claude / "CUSTOM_INSTRUCTIONS.md"
 
-    # Only run /init if CLAUDE.md doesn't exist
-    if not claude_md_path.exists():
-        init_success = run_claude_init(dest_dir)
-
-        # If /init didn't create CLAUDE.md (empty project), create a basic one
+        # Only run /init if CLAUDE.md doesn't exist
         if not claude_md_path.exists():
-            print("\nℹ️  Creating basic CLAUDE.md since /init didn't generate one...")
-            basic_content = f"""# {project_name}
+            init_success = run_claude_init(dest_dir)
+
+            # If /init didn't create CLAUDE.md (empty project), create a basic one
+            if not claude_md_path.exists():
+                print("\nℹ️  Creating basic CLAUDE.md since /init didn't generate one...")
+                basic_content = f"""# {project_name}
 
 This file contains project context and instructions for Claude Code.
 
@@ -459,15 +515,15 @@ This file contains project context and instructions for Claude Code.
 *Add setup instructions here*
 
 """
-            claude_md_path.write_text(basic_content, encoding="utf-8")
-            print("✓ Basic CLAUDE.md created")
-    else:
-        print(f"\nℹ️  CLAUDE.md already exists at {claude_md_path}")
-        print(f"   Assuming it was generated by /init, proceeding to append custom instructions...")
+                claude_md_path.write_text(basic_content, encoding="utf-8")
+                print("✓ Basic CLAUDE.md created")
+        else:
+            print(f"\nℹ️  CLAUDE.md already exists at {claude_md_path}")
+            print(f"   Assuming it was generated by /init, proceeding to append custom instructions...")
 
-    # Append custom instructions if CLAUDE.md exists or was just created
-    if claude_md_path.exists():
-        append_custom_instructions(claude_md_path, custom_instructions_template)
+        # Append custom instructions if CLAUDE.md exists or was just created
+        if claude_md_path.exists():
+            append_custom_instructions(claude_md_path, custom_instructions_template)
 
     # 8.5. Auto-detect stage for existing projects
     if args.existing:
@@ -491,7 +547,14 @@ This file contains project context and instructions for Claude Code.
 
     # 9. Success message
     print(f"✓ Project '{project_name}' initialized!")
-    print(f"✓ Claude context files at: {dest_claude}")
+    if prepare_claude:
+        print(f"✓ Claude context files at: {dest_claude}")
+    else:
+        print(f"ℹ️ Claude integration skipped (--agent=codex); core stage files stored at: {dest_claude}")
+    if prepare_codex:
+        print(f"✓ Codex instructions at: {dest_codex}")
+    else:
+        print("ℹ️ Codex integration skipped (--agent=claude)")
     print(f"✓ Reference docs at: {dest_docs}")
 
     if files_copied:
@@ -503,6 +566,17 @@ This file contains project context and instructions for Claude Code.
         print(f"\nSkipped {len(files_skipped)} existing .claude/ file(s):")
         for f in files_skipped:
             print(f"  - {f}")
+
+    if prepare_codex:
+        if codex_files_copied:
+            print(f"\nAdded {len(codex_files_copied)} .codex/ file(s):")
+            for f in codex_files_copied:
+                print(f"  + {f}")
+
+        if codex_files_skipped:
+            print(f"\nSkipped {len(codex_files_skipped)} existing .codex/ file(s):")
+            for f in codex_files_skipped:
+                print(f"  - {f}")
 
     if ref_files_copied:
         print(f"\nAdded {len(ref_files_copied)} reference doc(s):")
@@ -517,4 +591,9 @@ This file contains project context and instructions for Claude Code.
     print(f"\nNext steps:")
     print(f"  cd {project_name}")
     print(f"  cat docs/QUICK_START.md  # Read this first")
-    print(f"  # Open with Claude Code")
+    if prepare_claude and prepare_codex:
+        print(f"  # Agents ready: Claude Code + Codex CLI")
+    elif prepare_claude:
+        print(f"  # Agent ready: Claude Code")
+    elif prepare_codex:
+        print(f"  # Agent ready: Codex CLI")

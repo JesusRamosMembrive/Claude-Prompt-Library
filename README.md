@@ -2,13 +2,13 @@
 
 **Prevent over-engineering. Guide evolution. Stay in control.**
 
-A methodology and toolset for evolutionary software development with Claude Code. Automatically detects your project's maturity and configures Claude Code to work within appropriate constraints.
+A methodology and toolset for evolutionary software development with Claude Code **and** Codex CLI. Automatically detects your project's maturity and configures your preferred agent(s) to operate within appropriate constraints.
 
 ---
 
 ## 🎯 The Problem
 
-When developing with AI assistants like Claude Code:
+When developing with AI assistants like Claude Code or Codex:
 - ✗ Too easy to over-engineer early prototypes
 - ✗ AI suggests enterprise patterns for 100-line scripts
 - ✗ Hard to maintain "start simple" discipline
@@ -30,11 +30,20 @@ When developing with AI assistants like Claude Code:
 ### New Project
 
 ```bash
+# Both agents (default)
 python init_project.py my-new-project
+
+# Claude únicamente
+python init_project.py my-new-project --agent=claude
+
+# Codex únicamente
+python init_project.py my-new-project --agent=codex
+
 cd my-new-project
 ```
 
-Creates `.claude/` with stage rules, subagents, and tracking files.
+Siempre se generan los archivos base de seguimiento (`.claude/`).  
+Cuando seleccionas Codex, también se crea `.codex/` con `AGENTS.md` y reglas por etapa adaptadas al CLI.
 
 ### Existing Project
 

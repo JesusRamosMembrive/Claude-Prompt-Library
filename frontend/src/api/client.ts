@@ -5,6 +5,9 @@ import type {
   SettingsUpdatePayload,
   StatusPayload,
   SymbolInfo,
+  StageStatusPayload,
+  StageInitPayload,
+  StageInitResponse,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -194,6 +197,23 @@ export function updateSettings(payload: SettingsUpdatePayload): Promise<{
 }> {
   return fetchJson("/settings", {
     method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Obtiene el estado Stage-Aware del proyecto.
+ */
+export function getStageStatus(): Promise<StageStatusPayload> {
+  return fetchJson<StageStatusPayload>("/stage/status");
+}
+
+/**
+ * Ejecuta init_project.py sobre el proyecto actual con los agentes seleccionados.
+ */
+export function initializeStageToolkit(payload: StageInitPayload): Promise<StageInitResponse> {
+  return fetchJson<StageInitResponse>("/stage/init", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }

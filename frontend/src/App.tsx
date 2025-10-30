@@ -1,7 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { HeaderBar } from "./components/HeaderBar";
-import { Dashboard } from "./components/Dashboard";
+import { HomeView } from "./components/HomeView";
+import { CodeMapDashboard } from "./components/CodeMapDashboard";
 import { SettingsView } from "./components/SettingsView";
+import { StageToolkitView } from "./components/StageToolkitView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -24,12 +26,43 @@ export function App(): JSX.Element {
             element={
               <>
                 <HeaderBar
+                  title="Stage-Aware Workspace"
                   watcherActive={watcherActive}
                   rootPath={rootPath}
                   lastFullScan={statusQuery.data?.last_full_scan}
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
-                <Dashboard statusQuery={statusQuery} />
+                <HomeView statusQuery={statusQuery} />
+              </>
+            }
+          />
+          <Route
+            path="/code-map"
+            element={
+              <>
+                <HeaderBar
+                  title="Code Map"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <CodeMapDashboard statusQuery={statusQuery} />
+              </>
+            }
+          />
+          <Route
+            path="/stage-toolkit"
+            element={
+              <>
+                <HeaderBar
+                  title="Project Stage Toolkit"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <StageToolkitView />
               </>
             }
           />

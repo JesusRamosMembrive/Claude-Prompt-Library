@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from ..models import AnalysisError, FileSummary, ProjectTreeNode, SymbolInfo, SymbolKind
 from ..state import AppState
+from ..stage_toolkit import AgentSelection
 
 
 class HealthResponse(BaseModel):
@@ -125,6 +126,65 @@ class PreviewResponse(BaseModel):
     """Respuesta del endpoint de preview."""
     content: str
     content_type: str
+
+
+class OptionalFilesStatus(BaseModel):
+    """Estado opcional (archivos recomendados pero no obligatorios)."""
+    expected: List[str]
+    present: List[str]
+    missing: List[str]
+
+
+class AgentInstallStatus(BaseModel):
+    """Estado de instalación para un agente (Claude o Codex)."""
+    expected: List[str]
+    present: List[str]
+    missing: List[str]
+    installed: bool
+    optional: Optional[OptionalFilesStatus] = None
+
+
+class DocsStatus(BaseModel):
+    """Estado de los documentos de referencia."""
+    expected: List[str]
+    present: List[str]
+    missing: List[str]
+    complete: bool
+
+
+class StageDetectionStatus(BaseModel):
+    """Resultado de la detección automática de etapa."""
+    available: bool
+    recommended_stage: Optional[int] = None
+    confidence: Optional[str] = None
+    reasons: List[str] = Field(default_factory=list)
+    metrics: Optional[dict] = None
+    error: Optional[str] = None
+    checked_at: Optional[datetime] = None
+
+
+class StageStatusResponse(BaseModel):
+    """Payload completo con el estado stage-aware del proyecto."""
+    root_path: str
+    claude: AgentInstallStatus
+    codex: AgentInstallStatus
+    docs: DocsStatus
+    detection: StageDetectionStatus
+
+
+class StageInitRequest(BaseModel):
+    """Petición para inicializar los assets stage-aware."""
+    agents: AgentSelection = Field(default="both")
+
+
+class StageInitResponse(BaseModel):
+    """Respuesta tras ejecutar init_project.py."""
+    success: bool
+    exit_code: int
+    command: List[str]
+    stdout: str
+    stderr: str
+    status: StageStatusResponse
 
 
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:

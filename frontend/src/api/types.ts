@@ -73,3 +73,57 @@ export interface StatusPayload {
   pending_events: number;
   capabilities: AnalyzerCapability[];
 }
+
+export type StageAgentSelection = "claude" | "codex" | "both";
+
+export interface OptionalFilesStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+}
+
+export interface AgentInstallStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+  installed: boolean;
+  optional?: OptionalFilesStatus | null;
+}
+
+export interface DocsStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+  complete: boolean;
+}
+
+export interface StageDetectionStatus {
+  available: boolean;
+  recommended_stage?: number | null;
+  confidence?: string | null;
+  reasons: string[];
+  metrics?: Record<string, unknown> | null;
+  error?: string | null;
+  checked_at?: string | null;
+}
+
+export interface StageStatusPayload {
+  root_path: string;
+  claude: AgentInstallStatus;
+  codex: AgentInstallStatus;
+  docs: DocsStatus;
+  detection: StageDetectionStatus;
+}
+
+export interface StageInitPayload {
+  agents: StageAgentSelection;
+}
+
+export interface StageInitResponse {
+  success: boolean;
+  exit_code: number;
+  command: string[];
+  stdout: string;
+  stderr: string;
+  status: StageStatusPayload;
+}

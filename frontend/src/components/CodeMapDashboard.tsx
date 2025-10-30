@@ -7,7 +7,7 @@ import { SearchPanel } from "./SearchPanel";
 import { ActivityFeed } from "./ActivityFeed";
 import { StatusPanel } from "./StatusPanel";
 
-export function Dashboard({
+export function CodeMapDashboard({
   statusQuery,
 }: {
   statusQuery: UseQueryResult<StatusPayload>;
