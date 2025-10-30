@@ -28,7 +28,7 @@ export function WatcherSection({ watcherActive }: WatcherSectionProps): JSX.Elem
       <div className="toggle-row">
         <div>
           <strong>Persistir snapshots</strong>
-          <span>Guarda los resultados en `.cache` para iniciar más rápido.</span>
+          <span>Guarda los resultados en `.code-map` para iniciar más rápido.</span>
         </div>
         <input type="checkbox" checked readOnly />
       </div>

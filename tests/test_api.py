@@ -21,7 +21,7 @@ def write_file(root: Path, relative: str, content: str) -> Path:
 
 
 def create_test_app(root: Path) -> tuple[FastAPI, AppState]:
-    settings = load_settings(root)
+    settings = load_settings(root_override=root)
     scheduler = ChangeScheduler()
     state = AppState(settings=settings, scheduler=scheduler)
     save_settings(state.settings)

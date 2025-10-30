@@ -29,6 +29,7 @@ DEFAULT_EXCLUDED_DIRS: Set[str] = {
     ".svn",
     ".tox",
     ".venv",
+    ".code-map",
     "env",
     "node_modules",
     "venv",

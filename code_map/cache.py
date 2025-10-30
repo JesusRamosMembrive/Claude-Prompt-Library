@@ -10,16 +10,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from .constants import META_DIR_NAME
 from .models import AnalysisError, FileSummary, SymbolInfo, SymbolKind
 
 
 class SnapshotStore:
-    """Gestiona snapshots en `<root>/.cache/code-map.json`."""
+    """Gestiona snapshots en `<root>/.code-map/code-map.json`."""
 
     def __init__(self, root: Path, filename: str = "code-map.json") -> None:
         self.root = Path(root).expanduser().resolve()
-        self.cache_dir = self.root / ".cache"
-        self.snapshot_path = self.cache_dir / filename
+        self.meta_dir = self.root / META_DIR_NAME
+        self.snapshot_path = self.meta_dir / filename
 
     def load(self) -> List[FileSummary]:
         if not self.snapshot_path.exists():
@@ -41,7 +42,7 @@ class SnapshotStore:
     def save(self, summaries: Iterable[FileSummary]) -> None:
         serializable = [self._serialize_file(summary) for summary in summaries]
         serializable.sort(key=lambda item: item["path"])
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.meta_dir.mkdir(parents=True, exist_ok=True)
         self.snapshot_path.write_text(
             json.dumps(serializable, ensure_ascii=True, indent=2),
             encoding="utf-8",

@@ -67,7 +67,7 @@
   - En fallos críticos del watcher, notificamos a la UI y reintentamos inicialización cada `N` segundos.
 
 ## Persistencia y caché
-- `SnapshotStore` administra snapshots JSON en `<root>/.cache/code-map.json`.
+- `SnapshotStore` administra snapshots JSON en `<root>/.code-map/code-map.json`.
 - Serializamos caminos de archivo en forma relativa al root cuando es posible para soportar repos clonados en distintas rutas.
 - Cada `FileSummary` se exporta con sus `symbols`, `errors`, `modified_at` (`ISO8601`) y banderas futuras (p.ej. `has_docstrings`).
 - En arranques:

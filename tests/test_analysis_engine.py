@@ -200,7 +200,7 @@ def test_snapshot_store_persists_and_restores_summaries(tmp_path: Path) -> None:
     store = SnapshotStore(tmp_path)
     store.save(summaries)
 
-    snapshot_file = tmp_path / ".cache" / "code-map.json"
+    snapshot_file = tmp_path / ".code-map" / "code-map.json"
     assert snapshot_file.exists()
 
     index = SymbolIndex(tmp_path)

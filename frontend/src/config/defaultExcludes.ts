@@ -8,6 +8,7 @@ export const DEFAULT_EXCLUDED_DIRS: readonly string[] = [
   ".svn",
   ".tox",
   ".venv",
+  ".code-map",
   "env",
   "node_modules",
   "venv",

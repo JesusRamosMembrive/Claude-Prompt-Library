@@ -9,7 +9,7 @@ Permitir que la aplicación exponga y actualice opciones de configuración media
 - **Docstrings** (`include_docstrings`): booleano que controla si el analizador captura docstrings.
 
 ## Almacenamiento
-- Archivo JSON en `<root>/.cache/code-map-settings.json` con estructura:
+- Archivo JSON en `<root>/.code-map/code-map-settings.json` con estructura:
   ```json
   {
     "version": 1,

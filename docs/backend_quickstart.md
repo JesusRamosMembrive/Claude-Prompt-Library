@@ -49,7 +49,7 @@ export CODE_MAP_ROOT=/path/al/proyecto
    curl -X POST http://localhost:8000/rescan
    ```
 
-El backend persiste un snapshot en `<root>/.cache/code-map.json`; al reiniciar lo carga para responder rápido y luego ejecuta un escaneo completo en segundo plano.
+El backend persiste un snapshot en `<root>/.code-map/code-map.json`; al reiniciar lo carga para responder rápido y luego ejecuta un escaneo completo en segundo plano.
 
 ## Siguientes pasos
 - Añadir logging más detallado en los batch del watcher si hace falta visibilidad extra.
