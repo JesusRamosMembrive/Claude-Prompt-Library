@@ -8,6 +8,7 @@ import type {
   StageStatusPayload,
   StageInitPayload,
   StageInitResponse,
+  ClassGraphResponse,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -216,6 +217,25 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * Obtiene el grafo de clases del workspace.
+ */
+export function getClassGraph(options?: {
+  includeExternal?: boolean;
+  edgeTypes?: string[];
+}): Promise<ClassGraphResponse> {
+  const params = new URLSearchParams();
+  if (options?.includeExternal === false) {
+    params.set("include_external", "false");
+  }
+  if (options?.edgeTypes && options.edgeTypes.length > 0) {
+    options.edgeTypes.forEach((edge) => params.append("edge_types", edge));
+  }
+  const query = params.toString();
+  const path = `/graph/classes${query ? `?${query}` : ""}`;
+  return fetchJson<ClassGraphResponse>(path);
 }
 
 /**

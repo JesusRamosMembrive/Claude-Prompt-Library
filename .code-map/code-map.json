@@ -320,6 +320,21 @@
     "errors": []
   },
   {
+    "path": "code_map/api/graph.py",
+    "relative": true,
+    "modified_at": "2025-10-30T19:56:18.684848+00:00",
+    "symbols": [
+      {
+        "name": "get_class_graph",
+        "kind": "function",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Genera el grafo de clases detectado en el workspace actual."
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/api/preview.py",
     "relative": true,
     "modified_at": "2025-10-30T11:21:19.232449+00:00",
@@ -337,14 +352,14 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-10-30T17:29:59.914902+00:00",
+    "modified_at": "2025-10-30T19:56:40.175033+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-10-30T17:29:53.665850+00:00",
+    "modified_at": "2025-10-30T19:56:09.939772+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -494,51 +509,79 @@
         "docstring": "Respuesta tras ejecutar init_project.py."
       },
       {
+        "name": "ClassGraphNode",
+        "kind": "class",
+        "lineno": 190,
+        "parent": null,
+        "docstring": "Nodo del grafo de clases."
+      },
+      {
+        "name": "ClassGraphEdge",
+        "kind": "class",
+        "lineno": 198,
+        "parent": null,
+        "docstring": "Arista del grafo de clases."
+      },
+      {
+        "name": "ClassGraphStats",
+        "kind": "class",
+        "lineno": 207,
+        "parent": null,
+        "docstring": "M\u00e9tricas del grafo generado."
+      },
+      {
+        "name": "ClassGraphResponse",
+        "kind": "class",
+        "lineno": 214,
+        "parent": null,
+        "docstring": "Respuesta completa del grafo de clases."
+      },
+      {
         "name": "serialize_symbol",
         "kind": "function",
-        "lineno": 190,
+        "lineno": 221,
         "parent": null,
         "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
       },
       {
         "name": "serialize_error",
         "kind": "function",
-        "lineno": 203,
+        "lineno": 234,
         "parent": null,
         "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
       },
       {
         "name": "serialize_summary",
         "kind": "function",
-        "lineno": 212,
+        "lineno": 243,
         "parent": null,
         "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
       },
       {
         "name": "serialize_tree",
         "kind": "function",
-        "lineno": 224,
+        "lineno": 255,
         "parent": null,
         "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
       },
       {
         "name": "serialize_search_results",
         "kind": "function",
-        "lineno": 250,
+        "lineno": 281,
         "parent": null,
         "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
       },
       {
         "name": "serialize_settings",
         "kind": "function",
-        "lineno": 255,
+        "lineno": 286,
         "parent": null,
         "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
       },
       {
         "name": "serialize_status",
         "kind": "function",
-        "lineno": 261,
+        "lineno": 292,
         "parent": null,
         "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
       }
@@ -670,6 +713,203 @@
         "lineno": 133,
         "parent": "SnapshotStore",
         "docstring": "Deserializa un diccionario a un objeto AnalysisError."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/class_graph.py",
+    "relative": true,
+    "modified_at": "2025-10-30T19:55:45.495561+00:00",
+    "symbols": [
+      {
+        "name": "ClassInfo",
+        "kind": "class",
+        "lineno": 26,
+        "parent": null,
+        "docstring": "Informaci\u00f3n recolectada para una clase en un m\u00f3dulo."
+      },
+      {
+        "name": "ModuleInfo",
+        "kind": "class",
+        "lineno": 35,
+        "parent": null,
+        "docstring": "Informaci\u00f3n recolectada para un archivo (m\u00f3dulo) del proyecto."
+      },
+      {
+        "name": "GraphNode",
+        "kind": "class",
+        "lineno": 45,
+        "parent": null,
+        "docstring": "Nodo del grafo de clases."
+      },
+      {
+        "name": "GraphEdge",
+        "kind": "class",
+        "lineno": 55,
+        "parent": null,
+        "docstring": "Arista del grafo de clases."
+      },
+      {
+        "name": "ModuleAnalyzer",
+        "kind": "class",
+        "lineno": 69,
+        "parent": null,
+        "docstring": "Analiza un m\u00f3dulo para extraer clases e imports relevantes."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 72,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Import",
+        "kind": "method",
+        "lineno": 78,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ImportFrom",
+        "kind": "method",
+        "lineno": 84,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_resolve_relative",
+        "kind": "method",
+        "lineno": 99,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ClassDef",
+        "kind": "method",
+        "lineno": 110,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_FunctionDef",
+        "kind": "method",
+        "lineno": 121,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Assign",
+        "kind": "method",
+        "lineno": 128,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name",
+        "kind": "method",
+        "lineno": 135,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_collect_attribute",
+        "kind": "method",
+        "lineno": 146,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "InstantiationVisitor",
+        "kind": "class",
+        "lineno": 157,
+        "parent": null,
+        "docstring": "Detecta llamadas a constructores dentro de una clase."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 160,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "visit_Call",
+        "kind": "method",
+        "lineno": 163,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name",
+        "kind": "method",
+        "lineno": 169,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "collect_attribute",
+        "kind": "method",
+        "lineno": 177,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "build_class_graph",
+        "kind": "function",
+        "lineno": 192,
+        "parent": null,
+        "docstring": "Construye un grafo de relaciones de clases a partir del directorio dado.\n\nArgs:\n    root: ruta al workspace que se quiere analizar.\n\nReturns:\n    Diccionario serializable con nodos, aristas y m\u00e9tricas."
+      },
+      {
+        "name": "_analyze_modules",
+        "kind": "function",
+        "lineno": 247,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_module_name_from_path",
+        "kind": "function",
+        "lineno": 259,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_collect_definitions",
+        "kind": "function",
+        "lineno": 264,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_build_edges_for_class",
+        "kind": "function",
+        "lineno": 273,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_resolve_reference",
+        "kind": "function",
+        "lineno": 309,
+        "parent": null,
+        "docstring": "Intenta resolver el nombre recibido contra las clases internas del proyecto.\n\nReturns:\n    (target_id, internal, display_name)"
+      },
+      {
+        "name": "_possible_qualified_names",
+        "kind": "function",
+        "lineno": 330,
+        "parent": null,
+        "docstring": "Genera nombres candidatos (fully-qualified) a partir de un nombre crudo.\n\nConsidera clases locales, alias de imports y nombres simples."
+      },
+      {
+        "name": "_count_by_type",
+        "kind": "function",
+        "lineno": 368,
+        "parent": null,
+        "docstring": null
       }
     ],
     "errors": []
@@ -1769,6 +2009,28 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-CV1XqL5j.js",
+    "relative": true,
+    "modified_at": "2025-10-30T20:46:53.217326+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/dist/index.html",
+    "relative": true,
+    "modified_at": "2025-10-30T20:46:53.214483+00:00",
+    "symbols": [
+      {
+        "name": "root",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "div",
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/index.html",
     "relative": true,
     "modified_at": "2025-10-29T11:39:17.505630+00:00",
@@ -1786,12 +2048,12 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T17:33:04.439458+00:00",
+    "modified_at": "2025-10-30T20:33:23.226136+00:00",
     "symbols": [
       {
         "name": "App",
         "kind": "function",
-        "lineno": 12,
+        "lineno": 13,
         "parent": null,
         "docstring": null
       }
@@ -1801,96 +2063,103 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:30.985158+00:00",
+    "modified_at": "2025-10-30T20:31:39.169310+00:00",
     "symbols": [
       {
         "name": "buildUrl",
         "kind": "function",
-        "lineno": 32,
+        "lineno": 33,
         "parent": null,
         "docstring": null
       },
       {
         "name": "fetchJson",
         "kind": "function",
-        "lineno": 58,
+        "lineno": 59,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getTree",
         "kind": "function",
-        "lineno": 88,
+        "lineno": 89,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getFileSummary",
         "kind": "function",
-        "lineno": 106,
+        "lineno": 107,
         "parent": null,
         "docstring": null
       },
       {
         "name": "searchSymbols",
         "kind": "function",
-        "lineno": 125,
+        "lineno": 126,
         "parent": null,
         "docstring": null
       },
       {
         "name": "triggerRescan",
         "kind": "function",
-        "lineno": 141,
+        "lineno": 142,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getEventsUrl",
         "kind": "function",
-        "lineno": 158,
+        "lineno": 159,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getSettings",
         "kind": "function",
-        "lineno": 175,
+        "lineno": 176,
         "parent": null,
         "docstring": null
       },
       {
         "name": "updateSettings",
         "kind": "function",
-        "lineno": 194,
+        "lineno": 195,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStageStatus",
         "kind": "function",
-        "lineno": 207,
+        "lineno": 208,
         "parent": null,
         "docstring": null
       },
       {
         "name": "initializeStageToolkit",
         "kind": "function",
-        "lineno": 214,
+        "lineno": 215,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getClassGraph",
+        "kind": "function",
+        "lineno": 225,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStatus",
         "kind": "function",
-        "lineno": 232,
+        "lineno": 252,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getPreview",
         "kind": "function",
-        "lineno": 236,
+        "lineno": 256,
         "parent": null,
         "docstring": null
       }
@@ -1900,14 +2169,14 @@
   {
     "path": "frontend/src/api/queryKeys.ts",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:35.969200+00:00",
+    "modified_at": "2025-10-30T20:31:55.359438+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:25.414112+00:00",
+    "modified_at": "2025-10-30T20:31:30.893244+00:00",
     "symbols": [],
     "errors": []
   },
@@ -1927,6 +2196,49 @@
         "name": "ActivityFeed",
         "kind": "function",
         "lineno": 23,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/ClassGraphView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T21:12:29.500047+00:00",
+    "symbols": [
+      {
+        "name": "ClassGraphView",
+        "kind": "function",
+        "lineno": 13,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "toggleEdgeType",
+        "kind": "function",
+        "lineno": 34,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "EdgeList",
+        "kind": "function",
+        "lineno": 183,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "buildGraphData",
+        "kind": "function",
+        "lineno": 255,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "renderNode",
+        "kind": "function",
+        "lineno": 361,
         "parent": null,
         "docstring": null
       }
@@ -1973,7 +2285,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T17:34:28.915193+00:00",
+    "modified_at": "2025-10-30T20:33:07.545012+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -1988,10 +2300,10 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T17:31:34.402690+00:00",
+    "modified_at": "2025-10-30T20:42:14.540567+00:00",
     "symbols": [
       {
-        "name": "renderStageHeadline",
+        "name": "detectionBadgeLabel",
         "kind": "function",
         "lineno": 7,
         "parent": null,
@@ -2000,7 +2312,7 @@
       {
         "name": "HomeView",
         "kind": "function",
-        "lineno": 17,
+        "lineno": 19,
         "parent": null,
         "docstring": null
       }
@@ -2311,6 +2623,21 @@
     "relative": true,
     "modified_at": "2025-10-30T05:23:28.610648+00:00",
     "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useClassGraphQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T20:32:01.213485+00:00",
+    "symbols": [
+      {
+        "name": "useClassGraphQuery",
+        "kind": "function",
+        "lineno": 11,
+        "parent": null,
+        "docstring": null
+      }
+    ],
     "errors": []
   },
   {

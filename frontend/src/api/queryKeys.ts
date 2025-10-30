@@ -6,4 +6,6 @@ export const queryKeys = {
   status: ["status"] as const,
   preview: (path: string) => ["preview", path] as const,
   stageStatus: ["stage-status"] as const,
+  classGraph: (includeExternal: boolean, edgeTypes: string[]) =>
+    ["class-graph", includeExternal, [...edgeTypes].sort().join(",")] as const,
 };

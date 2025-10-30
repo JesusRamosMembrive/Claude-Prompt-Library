@@ -6,7 +6,7 @@ Esquemas Pydantic para serializar respuestas de la API.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -185,6 +185,37 @@ class StageInitResponse(BaseModel):
     stdout: str
     stderr: str
     status: StageStatusResponse
+
+
+class ClassGraphNode(BaseModel):
+    """Nodo del grafo de clases."""
+    id: str
+    name: str
+    module: str
+    file: str
+
+
+class ClassGraphEdge(BaseModel):
+    """Arista del grafo de clases."""
+    source: str
+    target: str
+    type: str
+    internal: bool
+    raw_target: str
+
+
+class ClassGraphStats(BaseModel):
+    """Métricas del grafo generado."""
+    nodes: int
+    edges: int
+    edges_by_type: Dict[str, int]
+
+
+class ClassGraphResponse(BaseModel):
+    """Respuesta completa del grafo de clases."""
+    nodes: List[ClassGraphNode]
+    edges: List[ClassGraphEdge]
+    stats: ClassGraphStats
 
 
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:

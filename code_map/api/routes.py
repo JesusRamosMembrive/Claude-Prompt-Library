@@ -11,9 +11,11 @@ from .analysis import router as analysis_router
 from .preview import router as preview_router
 from .settings import router as settings_router
 from .stage import router as stage_router
+from .graph import router as graph_router
 
 router = APIRouter()
 router.include_router(analysis_router)
 router.include_router(settings_router)
 router.include_router(preview_router)
 router.include_router(stage_router)
+router.include_router(graph_router)
