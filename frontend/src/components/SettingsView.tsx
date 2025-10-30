@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 import { updateSettings } from "../api/client";
 import type { SettingsPayload, SettingsUpdatePayload } from "../api/types";
@@ -14,7 +15,6 @@ import { RootPathSection } from "./settings/RootPathSection";
 import { WatcherSection } from "./settings/WatcherSection";
 
 interface SettingsViewProps {
-  onBack: () => void;
   settingsQuery: UseQueryResult<SettingsPayload>;
 }
 
@@ -31,9 +31,10 @@ function sortExcludes(list: string[]): string[] {
   return [...list].sort((a, b) => a.localeCompare(b));
 }
 
-export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.Element {
+export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element {
   const activityClear = useActivityStore((state) => state.clear);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const settings = settingsQuery.data;
   const originalRoot = settings?.root_path ?? "";
@@ -172,7 +173,7 @@ export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.
           </div>
         </div>
         <div className="header-actions">
-          <button className="secondary-btn" type="button" onClick={onBack}>
+          <button className="secondary-btn" type="button" onClick={() => navigate("/")}>
             Volver al overview
           </button>
           <button

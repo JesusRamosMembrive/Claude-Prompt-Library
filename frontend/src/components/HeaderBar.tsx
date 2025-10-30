@@ -1,18 +1,19 @@
+import { Link } from "react-router-dom";
 import { RescanButton } from "./RescanButton";
 
-export function HeaderBar({
-  onOpenSettings,
-  watcherActive = true,
-  rootPath,
-  lastFullScan,
-  filesIndexed,
-}: {
-  onOpenSettings: () => void;
+interface HeaderBarProps {
   watcherActive?: boolean;
   rootPath?: string;
   lastFullScan?: string | null;
   filesIndexed?: number;
-}): JSX.Element {
+}
+
+export function HeaderBar({
+  watcherActive = true,
+  rootPath,
+  lastFullScan,
+  filesIndexed,
+}: HeaderBarProps): JSX.Element {
   const rootLabel = rootPath ?? "CODE_MAP_ROOT";
   const description = lastFullScan
     ? `Último escaneo: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} archivos`
@@ -33,13 +34,9 @@ export function HeaderBar({
           <span className="status-dot" style={{ opacity: watcherActive ? 1 : 0.4 }} />
           {watcherActive ? "Watcher activo" : "Watcher inactivo"}
         </div>
-        <button
-          className="secondary-btn"
-          type="button"
-          onClick={onOpenSettings}
-        >
+        <Link className="secondary-btn" to="/settings">
           Settings
-        </button>
+        </Link>
         <RescanButton />
       </div>
     </header>
