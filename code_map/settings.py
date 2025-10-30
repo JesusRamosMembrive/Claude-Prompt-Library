@@ -20,6 +20,7 @@ ENV_INCLUDE_DOCSTRINGS = "CODE_MAP_INCLUDE_DOCSTRINGS"
 
 
 def _normalize_exclusions(additional: Iterable[str] | None = None) -> Tuple[str, ...]:
+    """Combina las exclusiones por defecto con exclusiones adicionales."""
     base = set(DEFAULT_EXCLUDED_DIRS)
     if additional:
         for item in additional:
@@ -36,11 +37,13 @@ def _normalize_exclusions(additional: Iterable[str] | None = None) -> Tuple[str,
 
 @dataclass(frozen=True)
 class AppSettings:
+    """Define la configuración de la aplicación."""
     root_path: Path
     exclude_dirs: Tuple[str, ...] = field(default_factory=tuple)
     include_docstrings: bool = True
 
     def to_payload(self) -> dict:
+        """Convierte la configuración a un diccionario serializable."""
         return {
             "root_path": str(self.root_path),
             "exclude_dirs": list(self.exclude_dirs),
@@ -55,6 +58,7 @@ class AppSettings:
         include_docstrings: bool | None = None,
         exclude_dirs: Iterable[str] | None = None,
     ) -> "AppSettings":
+        """Crea una nueva instancia de AppSettings con actualizaciones."""
         return AppSettings(
             root_path=(root_path or self.root_path).expanduser().resolve(),
             exclude_dirs=_normalize_exclusions(exclude_dirs) if exclude_dirs is not None else self.exclude_dirs,
@@ -67,6 +71,7 @@ class AppSettings:
 
 
 def settings_storage_path(root_path: Path) -> Path:
+    """Devuelve la ruta del archivo de configuración."""
     root = root_path.expanduser().resolve()
     return root / META_DIR_NAME / SETTINGS_FILENAME
 
@@ -76,6 +81,7 @@ def _load_settings_from_disk(
     *,
     default_include_docstrings: bool = True,
 ) -> AppSettings:
+    """Carga la configuración desde el disco."""
     default_root = default_root.expanduser().resolve()
     path = settings_storage_path(default_root)
 
@@ -112,6 +118,7 @@ def _load_settings_from_disk(
 
 
 def _parse_env_flag(raw: Optional[str]) -> Optional[bool]:
+    """Parsea una variable de entorno como un booleano."""
     if raw is None:
         return None
     value = raw.strip().lower()
@@ -123,6 +130,7 @@ def _parse_env_flag(raw: Optional[str]) -> Optional[bool]:
 
 
 def _coerce_path(value: Optional[str | Path]) -> Optional[Path]:
+    """Convierte un valor a una ruta absoluta."""
     if value is None:
         return None
     return Path(value).expanduser().resolve()
@@ -133,6 +141,7 @@ def load_settings(
     root_override: Optional[str | Path] = None,
     env: Optional[Mapping[str, str]] = None,
 ) -> AppSettings:
+    """Carga la configuración de la aplicación desde el disco y el entorno."""
     effective_env: Mapping[str, str] = env or os.environ
 
     env_root = _coerce_path(effective_env.get(ENV_ROOT_PATH))
@@ -157,6 +166,7 @@ def load_settings(
 
 
 def save_settings(settings: AppSettings) -> None:
+    """Guarda la configuración en el disco."""
     path = settings_storage_path(settings.root_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(

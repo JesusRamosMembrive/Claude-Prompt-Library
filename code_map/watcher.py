@@ -40,6 +40,8 @@ EXCLUDED_DEFAULT: Set[str] = {
 
 
 class _EventHandler(FileSystemEventHandler):
+    """Encapsula la conversión de eventos watchdog a ChangeEventType."""
+
     def __init__(
         self,
         root: Path,
@@ -47,21 +49,26 @@ class _EventHandler(FileSystemEventHandler):
         exclude_dirs: Set[str],
         extensions: Set[str],
     ) -> None:
+        """Configura el manejador con la raíz monitoreada y filtros activos."""
         self.root = root
         self.scheduler = scheduler
         self.exclude_dirs = exclude_dirs
         self.extensions = extensions
 
     def on_created(self, event: FileSystemEvent) -> None:
+        """Registra la creación de un archivo con extensión soportada."""
         self._dispatch(ChangeEventType.CREATED, event)
 
     def on_modified(self, event: FileSystemEvent) -> None:
+        """Registra la modificación de un archivo con extensión soportada."""
         self._dispatch(ChangeEventType.MODIFIED, event)
 
     def on_deleted(self, event: FileSystemEvent) -> None:
+        """Registra la eliminación de un archivo con extensión soportada."""
         self._dispatch(ChangeEventType.DELETED, event)
 
     def on_moved(self, event: FileMovedEvent) -> None:
+        """Registra el movimiento o renombrado de un archivo."""
         self._dispatch(ChangeEventType.MOVED, event)
 
     def _dispatch(
@@ -69,6 +76,7 @@ class _EventHandler(FileSystemEventHandler):
         event_type: ChangeEventType,
         event: FileSystemEvent,
     ) -> None:
+        """Filtra y transforma el evento recibido antes de encolarlo."""
         if getattr(event, "is_directory", False):
             return
 
@@ -91,6 +99,7 @@ class _EventHandler(FileSystemEventHandler):
         self.scheduler.enqueue(event_type, src_path)
 
     def _should_track(self, path: Path) -> bool:
+        """Determina si la ruta debe generar eventos de cambio."""
         if not path.exists():
             return path.suffix.lower() in self.extensions
 
@@ -106,6 +115,7 @@ class _EventHandler(FileSystemEventHandler):
         return True
 
     def _within_root(self, path: Path) -> bool:
+        """Comprueba si la ruta pertenece al árbol monitoreado."""
         try:
             path.resolve().relative_to(self.root)
             return True
@@ -113,6 +123,7 @@ class _EventHandler(FileSystemEventHandler):
             return False
 
     def _is_excluded(self, path: Path) -> bool:
+        """Verifica si alguna parte de la ruta está excluida."""
         for part in path.parts:
             if part in self.exclude_dirs:
                 return True
@@ -122,6 +133,8 @@ class _EventHandler(FileSystemEventHandler):
 
 
 class WatcherService:
+    """Servicio que gestiona el ciclo de vida de watchdog para un proyecto."""
+
     def __init__(
         self,
         root: Path,
@@ -130,6 +143,7 @@ class WatcherService:
         exclude_dirs: Optional[Iterable[str]] = None,
         extensions: Optional[Iterable[str]] = None,
     ) -> None:
+        """Inicializa el servicio con los filtros y extensiones relevantes."""
         self.root = Path(root).expanduser().resolve()
         self.scheduler = scheduler
         self.exclude_dirs: Set[str] = set(EXCLUDED_DEFAULT)
@@ -143,9 +157,11 @@ class WatcherService:
 
     @property
     def is_running(self) -> bool:
+        """Indica si el observador de archivos está activo."""
         return self._observer is not None
 
     def start(self) -> bool:
+        """Inicia el observador si watchdog está disponible."""
         if Observer is None:
             logger.warning("watchdog no está disponible; watcher deshabilitado")
             return False
@@ -162,6 +178,7 @@ class WatcherService:
         return True
 
     def stop(self) -> None:
+        """Detiene el observador y espera a que finalice."""
         observer = self._observer
         if not observer:
             return

@@ -15,16 +15,19 @@ from ..state import AppState
 
 
 class HealthResponse(BaseModel):
+    """Respuesta del endpoint de health."""
     status: str = "ok"
 
 
 class AnalysisErrorSchema(BaseModel):
+    """Esquema para un error de análisis."""
     message: str
     lineno: Optional[int] = None
     col_offset: Optional[int] = None
 
 
 class SymbolSchema(BaseModel):
+    """Esquema para un símbolo de código."""
     name: str
     kind: SymbolKind
     lineno: int
@@ -34,6 +37,7 @@ class SymbolSchema(BaseModel):
 
 
 class FileSummarySchema(BaseModel):
+    """Esquema para el resumen de un archivo."""
     path: str
     modified_at: Optional[datetime] = None
     symbols: List[SymbolSchema] = Field(default_factory=list)
@@ -41,6 +45,7 @@ class FileSummarySchema(BaseModel):
 
 
 class TreeNodeSchema(BaseModel):
+    """Esquema para un nodo del árbol de archivos."""
     name: str
     path: str
     is_dir: bool
@@ -54,19 +59,23 @@ TreeNodeSchema.model_rebuild()
 
 
 class SearchResultsSchema(BaseModel):
+    """Esquema para los resultados de una búsqueda."""
     results: List[SymbolSchema]
 
 
 class RescanResponse(BaseModel):
+    """Respuesta del endpoint de rescan."""
     files: int
 
 
 class ChangeNotification(BaseModel):
+    """Notificación de cambios en el sistema de archivos."""
     updated: List[str]
     deleted: List[str]
 
 
 class SettingsResponse(BaseModel):
+    """Respuesta del endpoint de settings."""
     root_path: str
     absolute_root: str
     exclude_dirs: List[str]
@@ -75,17 +84,20 @@ class SettingsResponse(BaseModel):
 
 
 class SettingsUpdateRequest(BaseModel):
+    """Petición para actualizar los settings."""
     root_path: Optional[str] = None
     include_docstrings: Optional[bool] = None
     exclude_dirs: Optional[List[str]] = None
 
 
 class SettingsUpdateResponse(BaseModel):
+    """Respuesta de la actualización de settings."""
     updated: List[str]
     settings: SettingsResponse
 
 
 class AnalyzerCapabilitySchema(BaseModel):
+    """Esquema para una capacidad del analizador."""
     key: str
     description: str
     extensions: List[str]
@@ -96,6 +108,7 @@ class AnalyzerCapabilitySchema(BaseModel):
 
 
 class StatusResponse(BaseModel):
+    """Respuesta del endpoint de status."""
     root_path: str
     absolute_root: str
     watcher_active: bool
@@ -109,11 +122,13 @@ class StatusResponse(BaseModel):
 
 
 class PreviewResponse(BaseModel):
+    """Respuesta del endpoint de preview."""
     content: str
     content_type: str
 
 
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:
+    """Serializa un objeto SymbolInfo a un SymbolSchema."""
     path = state.to_relative(symbol.path) if include_path else None
     return SymbolSchema(
         name=symbol.name,
@@ -126,6 +141,7 @@ def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool 
 
 
 def serialize_error(error: AnalysisError) -> AnalysisErrorSchema:
+    """Serializa un objeto AnalysisError a un AnalysisErrorSchema."""
     return AnalysisErrorSchema(
         message=error.message,
         lineno=error.lineno,
@@ -134,6 +150,7 @@ def serialize_error(error: AnalysisError) -> AnalysisErrorSchema:
 
 
 def serialize_summary(summary: FileSummary, state: AppState) -> FileSummarySchema:
+    """Serializa un objeto FileSummary a un FileSummarySchema."""
     symbols = [serialize_symbol(symbol, state, include_path=False) for symbol in summary.symbols]
     errors = [serialize_error(error) for error in summary.errors]
     return FileSummarySchema(
@@ -145,6 +162,7 @@ def serialize_summary(summary: FileSummary, state: AppState) -> FileSummarySchem
 
 
 def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
+    """Serializa un objeto ProjectTreeNode a un TreeNodeSchema."""
     children = [
         serialize_tree(child, state)
         for child in sorted(node.children.values(), key=lambda n: n.name)
@@ -170,14 +188,17 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
 
 
 def serialize_search_results(symbols: Iterable[SymbolInfo], state: AppState) -> SearchResultsSchema:
+    """Serializa una lista de SymbolInfo a un SearchResultsSchema."""
     return SearchResultsSchema(results=[serialize_symbol(symbol, state) for symbol in symbols])
 
 
 def serialize_settings(state: AppState) -> SettingsResponse:
+    """Serializa el estado de la configuración a un SettingsResponse."""
     payload = state.get_settings_payload()
     return SettingsResponse(**payload)
 
 
 def serialize_status(state: AppState) -> StatusResponse:
+    """Serializa el estado de la aplicación a un StatusResponse."""
     payload = state.get_status_payload()
     return StatusResponse(**payload)

@@ -25,7 +25,25 @@ IGNORE_DIRS = {
 
 
 def should_ignore(path):
-    """Check if path should be ignored."""
+    """
+    Check if path should be ignored during analysis.
+
+    Determines if a file or directory path should be excluded from stage detection
+    analysis based on common development artifacts and dependencies.
+
+    Args:
+        path (Path): Path object to check (can be file or directory)
+
+    Returns:
+        bool: True if path should be ignored (matches IGNORE_DIRS or starts with '.'),
+              False if path should be analyzed
+
+    Notes:
+        - Checks all path parts (parent directories)
+        - Excludes hidden files/dirs (starting with '.')
+        - Uses global IGNORE_DIRS set for common exclusions
+        - Prevents noise from virtualenvs, node_modules, build artifacts, etc.
+    """
     parts = path.parts
     for part in parts:
         if part in IGNORE_DIRS or part.startswith('.'):
@@ -34,7 +52,25 @@ def should_ignore(path):
 
 
 def count_files_by_extension(root_dir, extensions):
-    """Count files with given extensions, ignoring noise."""
+    """
+    Count files with given extensions, ignoring noise.
+
+    Recursively counts code files with specified extensions while excluding
+    directories that should be ignored (virtualenvs, node_modules, etc.).
+
+    Args:
+        root_dir (Path): Root directory to search from
+        extensions (list): List of file extensions to count (e.g., ['.py', '.js'])
+
+    Returns:
+        int: Total count of files matching extensions (excluding ignored paths)
+
+    Notes:
+        - Uses rglob for recursive search
+        - Applies should_ignore() filter to exclude noise
+        - Extensions should include the dot (e.g., '.py' not 'py')
+        - Returns 0 if no matching files found
+    """
     count = 0
     for ext in extensions:
         for file_path in root_dir.rglob(f"*{ext}"):
@@ -44,7 +80,26 @@ def count_files_by_extension(root_dir, extensions):
 
 
 def count_lines_of_code(root_dir, extensions):
-    """Estimate lines of code, ignoring noise."""
+    """
+    Estimate lines of code, ignoring noise.
+
+    Recursively counts total lines in all code files with specified extensions,
+    excluding ignored directories. Uses simple line counting (not complexity analysis).
+
+    Args:
+        root_dir (Path): Root directory to search from
+        extensions (list): List of file extensions to count (e.g., ['.py', '.js'])
+
+    Returns:
+        int: Total lines of code across all matching files (excluding ignored paths)
+
+    Notes:
+        - Counts all lines (including comments, blank lines)
+        - Uses UTF-8 encoding with error tolerance ('ignore' mode)
+        - Silently skips files that can't be read (permissions, binary files, etc.)
+        - Not a true SLOC metric - includes comments and whitespace
+        - Fast approximation suitable for stage detection
+    """
     total = 0
     for ext in extensions:
         for file_path in root_dir.rglob(f"*{ext}"):
@@ -59,7 +114,36 @@ def count_lines_of_code(root_dir, extensions):
 
 
 def detect_patterns(root_dir):
-    """Detect common design patterns in code."""
+    """
+    Detect common design patterns in code.
+
+    Searches for indicators of design patterns by looking for pattern-related
+    keywords in file and directory names throughout the project.
+
+    Args:
+        root_dir (Path): Root directory to search from
+
+    Returns:
+        list: List of detected pattern names (e.g., ['Factory Pattern', 'Repository'])
+              Returns empty list if no patterns detected
+
+    Patterns Detected:
+        - Factory Pattern: 'factory', 'Factory', 'create_'
+        - Singleton: 'singleton', 'Singleton', 'getInstance'
+        - Observer: 'observer', 'Observer', 'subscribe', 'emit'
+        - Strategy: 'strategy', 'Strategy'
+        - Repository: 'repository', 'Repository', 'repo'
+        - Service Layer: 'service', 'Service', 'services/'
+        - Adapter: 'adapter', 'Adapter', 'adapters/'
+        - Middleware: 'middleware', 'Middleware'
+
+    Notes:
+        - Heuristic-based detection (naming conventions)
+        - Does not analyze code semantics
+        - May have false positives/negatives
+        - Returns deduplicated list
+        - Applies should_ignore() filter
+    """
     patterns_found = []
 
     # Check for common pattern indicators
@@ -87,7 +171,33 @@ def detect_patterns(root_dir):
 
 
 def analyze_structure(root_dir):
-    """Analyze project structure complexity."""
+    """
+    Analyze project structure complexity.
+
+    Examines directory organization to identify architectural patterns and
+    measure structural complexity based on directory count and naming conventions.
+
+    Args:
+        root_dir (Path): Root directory to analyze
+
+    Returns:
+        dict: Dictionary containing:
+            - directory_count (int): Total non-ignored directories in project
+            - architectural_folders (list): List of detected architectural layer names
+                                          (e.g., ['models', 'services', 'controllers'])
+
+    Architectural Folders Detected:
+        - MVC: models, views, controllers
+        - Layered: services, repositories, handlers, routers
+        - DDD: domain, infrastructure, application, presentation
+        - Common: middleware, adapters, interfaces, api, core
+
+    Notes:
+        - Uses partial name matching (e.g., 'user_service' matches 'service')
+        - Applies should_ignore() filter
+        - Returns deduplicated architectural folder list
+        - Directory count excludes ignored paths
+    """
     # Count directories (excluding ignored ones)
     all_dirs = [d for d in root_dir.rglob("*")
                 if d.is_dir() and not should_ignore(d.relative_to(root_dir))]
@@ -116,13 +226,53 @@ def analyze_structure(root_dir):
 
 def assess_stage(project_path):
     """
-    Assess project and recommend stage.
+    Assess project and recommend development stage.
 
-    Returns dict with:
-    - recommended_stage: 1, 2, or 3
-    - confidence: 'high', 'medium', 'low'
-    - reasons: list of reasons for recommendation
-    - metrics: dict of project metrics
+    Analyzes a project's codebase metrics, structure, and patterns to recommend
+    the appropriate development stage (Prototyping, Structuring, or Scaling).
+
+    Args:
+        project_path (str or Path): Path to project directory to analyze
+
+    Returns:
+        dict or None: Assessment dictionary containing:
+            - recommended_stage (int): 1 (Prototyping), 2 (Structuring), or 3 (Scaling)
+            - confidence (str): 'high', 'medium', or 'low'
+            - reasons (list): Human-readable reasons explaining the recommendation
+            - metrics (dict): Project metrics:
+                - file_count (int): Number of code files
+                - lines_of_code (int): Total lines of code (approximate)
+                - directory_count (int): Number of directories
+                - patterns_found (list): Detected design patterns
+                - architectural_folders (list): Detected architectural layers
+        Returns None if project_path doesn't exist
+
+    Stage Decision Criteria:
+        Stage 1 (Prototyping):
+            - ≤3 files, <500 LOC
+            - No patterns or architecture
+            - Single file preferred
+
+        Stage 2 (Structuring):
+            - ≤20 files, <3000 LOC
+            - ≤3 patterns
+            - Basic architecture emerging
+            - Sub-stages: Early (≤8 files), Mid (≤15 files), Late (>15 files)
+
+        Stage 3 (Scaling):
+            - >20 files OR >3000 LOC OR >3 patterns
+            - Complex architecture
+            - Multiple patterns in use
+
+    Confidence Adjustments:
+        - Medium if: Few files but high LOC (needs refactoring)
+        - Medium if: Many files but no patterns (needs structure)
+
+    Notes:
+        - Ignores common noise (node_modules, .venv, etc.)
+        - Prefers lower stage when borderline (simpler is better)
+        - Returns detailed reasoning for transparency
+        - Includes actionable warnings and hints
     """
     root = Path(project_path).resolve()
 
@@ -228,7 +378,34 @@ def assess_stage(project_path):
 
 
 def print_assessment(assessment):
-    """Pretty print assessment results."""
+    """
+    Pretty print assessment results to console.
+
+    Formats and displays stage assessment results in a readable format with
+    emojis, metrics, reasoning, and actionable next steps.
+
+    Args:
+        assessment (dict or None): Assessment dictionary from assess_stage()
+                                   If None, prints error message
+
+    Returns:
+        None (prints to stdout)
+
+    Output Sections:
+        1. Recommended stage with confidence indicator
+        2. Project metrics (files, LOC, directories, patterns, architecture)
+        3. Reasoning (why this stage was chosen)
+        4. Stage explanation (what each stage means)
+        5. Next steps (actionable recommendations)
+        6. Confidence warnings (if confidence is not high)
+
+    Notes:
+        - Uses emojis for visual clarity
+        - Formatted with separator lines for readability
+        - Truncates long lists (e.g., max 6 architectural folders shown)
+        - Includes stage philosophy and best practices
+        - Provides specific next steps
+    """
     if not assessment:
         print("❌ Could not assess project")
         return

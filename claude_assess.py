@@ -1,5 +1,36 @@
 #!/usr/bin/env python3
-"""Generate detailed assessment report for manual review."""
+"""
+Generate detailed assessment report for manual review.
+
+This script generates a comprehensive stage assessment report combining:
+1. Visual project tree structure
+2. Automated stage detection metrics
+3. Instructions for Claude Code to perform deep analysis
+
+The output is formatted as Markdown for easy copy-paste into Claude Code
+or documentation. It's designed for borderline cases where automated
+detection needs human verification.
+
+Usage:
+    python claude_assess.py <project-path>
+
+Output:
+    Markdown-formatted report to stdout containing:
+    - Project structure tree (via 'tree' command, depth 3)
+    - Automated assessment results (from assess_stage.py)
+    - Analysis instructions for Claude Code
+    - Decision criteria for Stage 2 vs Stage 3 borderline cases
+
+Dependencies:
+    - assess_stage.py (must be in same directory)
+    - tree command (optional, graceful fallback if not installed)
+
+Notes:
+    - Ignores common noise (.venv, node_modules, .git, etc.)
+    - Focuses on Stage 2/3 distinction (most common ambiguity)
+    - Provides specific guidance for human/AI review
+    - Output can be piped to file or clipboard
+"""
 import sys
 from pathlib import Path
 import subprocess

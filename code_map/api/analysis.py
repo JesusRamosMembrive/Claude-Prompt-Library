@@ -32,6 +32,7 @@ KEEPALIVE_SECONDS = 10
 
 @router.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
+    """Comprueba el estado de la API."""
     return HealthResponse()
 
 
@@ -40,6 +41,7 @@ async def get_tree(
     refresh: bool = Query(False, description="Fuerza un escaneo completo antes de responder."),
     state: AppState = Depends(get_app_state),
 ) -> TreeNodeSchema:
+    """Obtiene el árbol de archivos del proyecto."""
     if refresh:
         await state.perform_full_scan()
     tree = state.index.get_tree()
@@ -51,6 +53,7 @@ async def get_file(
     file_path: str,
     state: AppState = Depends(get_app_state),
 ) -> FileSummarySchema:
+    """Obtiene el resumen de un archivo específico."""
     try:
         target_path = state.resolve_path(file_path)
     except ValueError as exc:
@@ -67,11 +70,13 @@ async def search(
     q: str = Query(..., min_length=1, description="Texto a buscar en nombres de símbolos."),
     state: AppState = Depends(get_app_state),
 ) -> SearchResultsSchema:
+    """Busca símbolos en el proyecto."""
     symbols = state.index.search(q)
     return serialize_search_results(symbols, state)
 
 
 async def _event_stream(state: AppState) -> AsyncIterator[bytes]:
+    """Genera un flujo de eventos de cambio."""
     while True:
         try:
             payload = await asyncio.wait_for(state.event_queue.get(), timeout=KEEPALIVE_SECONDS)
@@ -83,10 +88,12 @@ async def _event_stream(state: AppState) -> AsyncIterator[bytes]:
 
 @router.get("/events")
 async def events(state: AppState = Depends(get_app_state)) -> StreamingResponse:
+    """Suscribe al flujo de eventos de cambio."""
     return StreamingResponse(_event_stream(state), media_type="text/event-stream")
 
 
 @router.post("/rescan", response_model=RescanResponse)
 async def rescan(state: AppState = Depends(get_app_state)) -> RescanResponse:
+    """Dispara un escaneo completo del proyecto."""
     count = await state.perform_full_scan()
     return RescanResponse(files=count)

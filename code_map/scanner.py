@@ -57,6 +57,17 @@ class ProjectScanner:
         include_docstrings: bool = False,
         extensions: Optional[Sequence[str]] = None,
     ) -> None:
+        """
+        Inicializa el scanner.
+
+        Args:
+            root: La ruta raíz del proyecto a escanear.
+            analyzer: (Opcional) Un analizador de archivos personalizado para archivos .py.
+            analyzers: (Opcional) Un mapeo de extensiones de archivo a analizadores personalizados.
+            exclude_dirs: (Opcional) Una secuencia de nombres de directorios a excluir.
+            include_docstrings: (Opcional) Si es True, se incluirán los docstrings en el análisis.
+            extensions: (Opcional) Una secuencia de extensiones de archivo a incluir en el escaneo.
+        """
         self.root = Path(root).expanduser().resolve()
         if not self.root.exists():
             raise ValueError(f"La ruta raíz no existe: {self.root}")
@@ -110,6 +121,14 @@ class ProjectScanner:
     ) -> List[FileSummary]:
         """
         Ejecuta un escaneo, actualiza el índice y opcionalmente persiste un snapshot.
+
+        Args:
+            index: El índice de símbolos a actualizar.
+            persist: Si es True, se guardará un snapshot del índice.
+            store: (Opcional) El almacén de snapshots a utilizar.
+
+        Returns:
+            Una lista de resúmenes de archivos.
         """
 
         summaries = self.scan()
@@ -127,6 +146,13 @@ class ProjectScanner:
     ) -> List[FileSummary]:
         """
         Carga un snapshot (si existe) y lo aplica al índice antes de escanear.
+
+        Args:
+            index: El índice de símbolos a hidratar.
+            store: (Opcional) El almacén de snapshots a utilizar.
+
+        Returns:
+            Una lista de resúmenes de archivos del snapshot.
         """
 
         snapshot_store = store or self._default_store()
@@ -142,6 +168,15 @@ class ProjectScanner:
     ) -> dict:
         """
         Reprocesa los archivos afectados por un lote de cambios y actualiza el índice.
+
+        Args:
+            batch: El lote de cambios a aplicar.
+            index: El índice de símbolos a actualizar.
+            persist: Si es True, se guardará un snapshot del índice.
+            store: (Opcional) El almacén de snapshots a utilizar.
+
+        Returns:
+            Un diccionario con las rutas de los archivos actualizados y eliminados.
         """
 
         if not batch:
@@ -191,6 +226,7 @@ class ProjectScanner:
                     yield full_path.resolve()
 
     def _should_exclude(self, path: Path) -> bool:
+        """Determina si una ruta debe ser excluida del escaneo."""
         name = path.name
         if name in self.exclude_dirs:
             return True
@@ -200,11 +236,13 @@ class ProjectScanner:
         return False
 
     def _default_store(self) -> "SnapshotStore":
+        """Crea una instancia por defecto de SnapshotStore."""
         from .cache import SnapshotStore
 
         return SnapshotStore(self.root)
 
     def _within_root(self, path: Path) -> bool:
+        """Comprueba si una ruta está dentro de la raíz del proyecto."""
         try:
             Path(path).resolve().relative_to(self.root)
             return True
@@ -212,6 +250,7 @@ class ProjectScanner:
             return False
 
     def _dedupe_paths(self, paths: Iterable[Path]) -> List[Path]:
+        """Elimina duplicados y rutas fuera de la raíz de una lista de rutas."""
         ordered: List[Path] = []
         seen: Set[Path] = set()
         for path in paths:

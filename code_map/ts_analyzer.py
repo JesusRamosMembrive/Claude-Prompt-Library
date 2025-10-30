@@ -16,10 +16,12 @@ from .models import FileSummary, SymbolInfo, SymbolKind
 
 @dataclass
 class _TsParser:
+    """Wrapper ligero sobre el parser de tree-sitter."""
     parser: Any
 
     @classmethod
     def for_language(cls, modules: Dict[str, Any], name: str) -> "_TsParser":
+        """Construye un parser configurado para el lenguaje indicado."""
         parser_cls = getattr(modules.get("tree_sitter"), "Parser", None)
         get_language = getattr(modules.get("tree_sitter_languages"), "get_language", None)
         if parser_cls is None or get_language is None:
@@ -31,7 +33,10 @@ class _TsParser:
 
 
 class TsAnalyzer:
+    """Analizador basado en tree-sitter para archivos TypeScript/TSX."""
+
     def __init__(self, *, include_docstrings: bool = False, is_tsx: bool = False) -> None:
+        """Inicializa el parser adecuado y comprueba la disponibilidad de dependencias."""
         self.include_docstrings = include_docstrings
         self._modules = optional_dependencies.load("tree_sitter_languages")
         status = optional_dependencies.status("tree_sitter_languages")[0]
@@ -47,6 +52,12 @@ class TsAnalyzer:
         self.available = bool(status.available and self.parser_wrapper)
 
     def parse(self, path: Path) -> FileSummary:
+        """
+        Analiza un archivo TypeScript/TSX y devuelve los símbolos detectados.
+
+        Args:
+            path: Ruta del archivo a analizar.
+        """
         abs_path = path.resolve()
         try:
             source = abs_path.read_text(encoding="utf-8")
@@ -81,6 +92,7 @@ class TsAnalyzer:
         lines: List[str],
         parent: Optional[str] = None,
     ) -> None:
+        """Recorre recursivamente el árbol sintáctico para extraer símbolos."""
         for child in node.children:
             if child.type in {"function_declaration", "method_definition"}:
                 name = self._extract_identifier(child)
@@ -131,6 +143,7 @@ class TsAnalyzer:
             self._collect_from_children(child, file_path, symbols, lines, parent)
 
     def _extract_identifier(self, node: Any) -> Optional[str]:
+        """Obtiene el identificador asociado a un nodo, si existe."""
         ident = self._find_child(node, "identifier")
         if ident:
             return ident.text.decode("utf-8")
@@ -140,6 +153,7 @@ class TsAnalyzer:
         return None
 
     def _find_child(self, node: Any, type_name: str) -> Optional[Any]:
+        """Busca el primer hijo del tipo indicado dentro de un nodo."""
         for child in node.children:
             if child.type == type_name:
                 return child
@@ -152,6 +166,7 @@ class TsAnalyzer:
         symbols: List[SymbolInfo],
         lines: List[str],
     ) -> None:
+        """Detecta asignaciones con funciones flecha o estándar y las registra."""
         for child in node.children:
             if child.type == "variable_declarator":
                 ident = child.child_by_field_name("name")
@@ -179,6 +194,7 @@ class TsAnalyzer:
                     )
 
     def _find_leading_comment(self, node: Any, lines: List[str]) -> Optional[str]:
+        """Localiza comentarios inmediatamente anteriores a un nodo."""
         start_line = node.start_point[0]
         for offset in range(1, 4):
             index = start_line - offset

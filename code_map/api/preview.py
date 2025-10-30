@@ -19,6 +19,7 @@ async def preview_file(
     path: str = Query(..., description="Ruta relativa al root configurado."),
     state: AppState = Depends(get_app_state),
 ) -> PlainTextResponse:
+    """Obtiene el contenido de un archivo para previsualización."""
     try:
         target_path = state.resolve_path(path)
     except ValueError as exc:

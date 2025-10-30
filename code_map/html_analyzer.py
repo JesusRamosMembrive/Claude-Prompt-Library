@@ -14,13 +14,25 @@ from .models import FileSummary, SymbolInfo, SymbolKind
 
 
 class HtmlAnalyzer:
+    """Analiza documentos HTML para extraer elementos identificables."""
+
     def __init__(self) -> None:
+        """Inicializa BeautifulSoup si la dependencia opcional está disponible."""
         module = optional_dependencies.require("beautifulsoup4", module="bs4")
         self._beautiful_soup = getattr(module, "BeautifulSoup", None) if module else None
         status = optional_dependencies.status("beautifulsoup4")[0]
         self.available = bool(status.available and self._beautiful_soup)
 
     def parse(self, path: Path) -> FileSummary:
+        """
+        Analiza un archivo HTML y devuelve los elementos relevantes.
+
+        Args:
+            path: Ruta del archivo HTML a procesar.
+
+        Returns:
+            Un resumen con los elementos detectados (ids y custom elements).
+        """
         abs_path = path.resolve()
         try:
             content = abs_path.read_text(encoding="utf-8")

@@ -26,6 +26,7 @@ router = APIRouter()
 
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings(state: AppState = Depends(get_app_state)) -> SettingsResponse:
+    """Obtiene la configuración actual de la aplicación."""
     return serialize_settings(state)
 
 
@@ -34,6 +35,7 @@ async def update_settings(
     payload: SettingsUpdateRequest,
     state: AppState = Depends(get_app_state),
 ) -> SettingsUpdateResponse:
+    """Actualiza la configuración de la aplicación."""
     root_path: Optional[Path] = None
     if payload.root_path is not None:
         candidate = Path(payload.root_path).expanduser()
@@ -60,4 +62,5 @@ async def update_settings(
 
 @router.get("/status", response_model=StatusResponse)
 async def get_status(state: AppState = Depends(get_app_state)) -> StatusResponse:
+    """Obtiene el estado actual de la aplicación."""
     return serialize_status(state)

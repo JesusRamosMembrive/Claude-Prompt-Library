@@ -11,4 +11,5 @@ from ..state import AppState
 
 
 def get_app_state(request: Request) -> AppState:
+    """Obtiene el estado de la aplicación desde la solicitud."""
     return request.app.state.app_state  # type: ignore[attr-defined]

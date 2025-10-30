@@ -27,22 +27,28 @@ class SymbolIndex:
             self._files[summary.path] = summary
 
     def update_file(self, summary: FileSummary) -> None:
+        """Actualiza o inserta un único resumen en el índice."""
         self._files[summary.path] = summary
 
     def remove(self, path: Path) -> None:
+        """Elimina un archivo del índice si existe."""
         self._files.pop(Path(path).resolve(), None)
 
     def get_file(self, path: Path) -> Optional[FileSummary]:
+        """Recupera el resumen asociado a una ruta concreta."""
         return self._files.get(Path(path).resolve())
 
     def get_all(self) -> List[FileSummary]:
+        """Devuelve la lista completa de resúmenes almacenados."""
         return list(self._files.values())
 
     def iter_symbols(self) -> Iterator[SymbolInfo]:
+        """Itera sobre todos los símbolos indexados."""
         for summary in self._files.values():
             yield from summary.symbols
 
     def search(self, term: str) -> List[SymbolInfo]:
+        """Busca símbolos cuyo nombre contenga el término proporcionado."""
         if not term:
             return []
         lowered = term.lower()

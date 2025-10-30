@@ -17,11 +17,26 @@ def run_claude_init(project_path):
     """
     Execute 'claude -p "/init"' to generate CLAUDE.md in the project directory.
 
+    This function invokes the Claude Code CLI tool to automatically generate a CLAUDE.md
+    file with project-specific context. It verifies the command exists, executes it with
+    a 2-minute timeout, and validates the output file was created.
+
     Args:
-        project_path: Path object pointing to the project directory
+        project_path (Path): Path object pointing to the project directory where CLAUDE.md
+                            will be generated
 
     Returns:
-        bool: True if successful, False otherwise
+        bool: True if CLAUDE.md was successfully generated, False if the command failed,
+              timed out, or the file was not created
+
+    Raises:
+        No exceptions raised - all errors are caught and logged with warnings
+
+    Notes:
+        - Requires 'claude' command in PATH (Claude Code CLI)
+        - Automatically handles empty projects (where /init may not generate output)
+        - 2-minute timeout prevents hanging on large projects
+        - Non-blocking: warnings printed but execution continues on failure
     """
     print("\n🤖 Running Claude Code /init to generate CLAUDE.md...")
 
@@ -73,12 +88,24 @@ def append_custom_instructions(claude_md_path, custom_instructions_template):
     """
     Append custom workflow instructions to CLAUDE.md.
 
+    This function reads the CUSTOM_INSTRUCTIONS.md template containing stage-aware
+    workflow instructions and appends it to an existing CLAUDE.md file. It checks
+    for duplicates to avoid appending multiple times.
+
     Args:
-        claude_md_path: Path object to CLAUDE.md file
-        custom_instructions_template: Path object to CUSTOM_INSTRUCTIONS.md template
+        claude_md_path (Path): Path object to the target CLAUDE.md file
+        custom_instructions_template (Path): Path object to CUSTOM_INSTRUCTIONS.md template
+                                            containing workflow instructions
 
     Returns:
-        bool: True if successful, False otherwise
+        bool: True if instructions were successfully appended or already present,
+              False if template/CLAUDE.md not found or write operation failed
+
+    Notes:
+        - Idempotent: checks for existing instructions marker before appending
+        - Adds clear HTML comment marker for traceability
+        - Preserves existing CLAUDE.md content (append-only)
+        - Uses UTF-8 encoding to handle international characters
     """
     try:
         # Read custom instructions template
@@ -119,7 +146,26 @@ def append_custom_instructions(claude_md_path, custom_instructions_template):
 
 
 def replace_placeholders(dest_path, replacements):
-    """Replace placeholders in all .md files in dest_path"""
+    """
+    Replace placeholders in all .md files in dest_path.
+
+    Recursively searches for all Markdown files and performs simple string
+    replacement for project-specific values like project name and dates.
+
+    Args:
+        dest_path (Path): Root directory to search for .md files
+        replacements (dict): Dictionary mapping placeholder strings to replacement values
+                            (e.g., {"{{PROJECT_NAME}}": "my-project"})
+
+    Returns:
+        None
+
+    Notes:
+        - Processes .md files recursively
+        - Uses UTF-8 encoding
+        - Modifies files in-place
+        - No validation of placeholder format
+    """
     for md_file in dest_path.rglob("*.md"):
         content = md_file.read_text(encoding="utf-8")
 
@@ -131,8 +177,26 @@ def replace_placeholders(dest_path, replacements):
 
 def detect_project_stage(project_path):
     """
-    Import and run stage detection from assess_stage.py
-    Returns assessment dict or None if detection fails
+    Import and run stage detection from assess_stage.py.
+
+    Dynamically imports the assess_stage module and runs analysis on the specified
+    project directory to determine its development maturity stage (1, 2, or 3).
+
+    Args:
+        project_path (str or Path): Path to the project directory to analyze
+
+    Returns:
+        dict or None: Assessment dictionary containing:
+            - recommended_stage (int): 1 (Prototyping), 2 (Structuring), or 3 (Scaling)
+            - confidence (str): 'high', 'medium', or 'low'
+            - reasons (list): List of reasoning strings explaining the recommendation
+            - metrics (dict): Project metrics (file_count, lines_of_code, patterns, etc.)
+        Returns None if detection fails (module not found, analysis error, etc.)
+
+    Notes:
+        - Requires assess_stage.py in same directory
+        - Graceful degradation: returns None on any error
+        - Non-blocking: errors logged as warnings
     """
     try:
         # Import assess_stage function dynamically
@@ -146,7 +210,26 @@ def detect_project_stage(project_path):
 
 def update_current_phase_with_stage(current_phase_file, assessment):
     """
-    Update 01-current-phase.md with detected stage information
+    Update 01-current-phase.md with detected stage information.
+
+    Injects or updates a "Detected Stage" section in the current-phase tracking file
+    with auto-detection results, including metrics, reasoning, and recommended actions.
+
+    Args:
+        current_phase_file (Path): Path to 01-current-phase.md file
+        assessment (dict): Assessment dictionary from detect_project_stage() containing
+                          stage, confidence, reasons, and metrics
+
+    Returns:
+        bool: True if file was successfully updated, False if assessment is None,
+              file not found, or write operation failed
+
+    Notes:
+        - Idempotent: replaces existing "Detected Stage" section if present
+        - Truncates reasoning to top 5 reasons for readability
+        - Adds timestamp for traceability
+        - Includes actionable next steps
+        - Uses regex for section replacement
     """
     if not assessment:
         return False

@@ -34,6 +34,7 @@ class PlainTextAnalyzer:
     """Analizador de reserva cuando no existe soporte específico."""
 
     def parse(self, path: Path) -> FileSummary:
+        """Genera un resumen vacío para un archivo de texto plano."""
         abs_path = path.resolve()
         return FileSummary(
             path=abs_path,
@@ -56,6 +57,7 @@ class AnalyzerRegistry:
         overrides: Optional[Mapping[str, object]] = None,
         dependency_registry: Optional[OptionalDependencyRegistry] = None,
     ) -> None:
+        """Inicializa el registro de analizadores."""
         self._include_docstrings = include_docstrings
         self._extensions: Set[str] = {self._normalize_extension(ext) for ext in extensions}
         self._dependency_registry = dependency_registry or optional_dependencies
@@ -76,26 +78,32 @@ class AnalyzerRegistry:
         self._capabilities = self._build_capabilities(override_map)
 
     def get(self, extension: str) -> Optional[object]:
+        """Obtiene el analizador para una extensión de archivo."""
         return self._mapping.get(self._normalize_extension(extension))
 
     def items(self):
+        """Itera sobre los pares (extensión, analizador) registrados."""
         return self._mapping.items()
 
     @property
     def analyzers(self) -> Dict[str, object]:
+        """Diccionario de los analizadores registrados."""
         return dict(self._mapping)
 
     @property
     def capabilities(self) -> List[AnalyzerCapability]:
+        """Lista de las capacidades de los analizadores."""
         return list(self._capabilities)
 
     def _build_override_map(self, overrides: Mapping[str, object]) -> Dict[str, object]:
+        """Construye un mapa de analizadores personalizados."""
         return {
             self._normalize_extension(extension): analyzer
             for extension, analyzer in overrides.items()
         }
 
     def _default_analyzer_for(self, extension: str) -> object:
+        """Obtiene el analizador por defecto para una extensión de archivo."""
         if extension == ".py":
             return self._python_analyzer
         if extension in self.JS_EXTENSIONS:
@@ -109,6 +117,7 @@ class AnalyzerRegistry:
         return self._plain_text_analyzer
 
     def _build_capabilities(self, overrides: Mapping[str, object]) -> List[AnalyzerCapability]:
+        """Construye la lista de capacidades de los analizadores."""
         capabilities: List[AnalyzerCapability] = []
 
         if ".py" in self._extensions:
@@ -193,5 +202,6 @@ class AnalyzerRegistry:
 
     @staticmethod
     def _normalize_extension(extension: str) -> str:
+        """Normaliza una extensión de archivo."""
         ext = extension if extension.startswith(".") else f".{extension}"
         return ext.lower()

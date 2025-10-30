@@ -17,13 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 class JsAnalyzer:
+    """Analizador que extrae símbolos JavaScript/JSX usando esprima."""
+
     def __init__(self, *, include_docstrings: bool = True) -> None:
+        """Inicializa el analizador y carga esprima si está disponible."""
         self.include_docstrings = include_docstrings
         self._module = optional_dependencies.require("esprima")
         status = optional_dependencies.status("esprima")[0]
         self.available = status.available
 
     def parse(self, path: Path) -> FileSummary:
+        """
+        Analiza un archivo JavaScript/JSX y devuelve los símbolos encontrados.
+
+        Args:
+            path: Ruta del archivo a analizar.
+        """
         abs_path = path.resolve()
         if not self._module:
             return FileSummary(
@@ -79,6 +88,7 @@ class JsAnalyzer:
         parent: Optional[str],
         file_path: Path,
     ) -> None:
+        """Recorre un nodo del AST y acumula símbolos relevantes."""
         node_type = node.get("type")
 
         if node_type == "FunctionDeclaration":
@@ -147,6 +157,7 @@ class JsAnalyzer:
         comment_map: Dict[int, str],
         file_path: Path,
     ) -> None:
+        """Registra funciones declaradas mediante asignaciones de variables."""
         id_node = declarator.get("id")
         init = declarator.get("init")
         if not id_node or not init:
@@ -168,6 +179,7 @@ class JsAnalyzer:
             )
 
     def _method_name(self, node: Dict[str, Any]) -> Optional[str]:
+        """Obtiene el nombre legible de un método de clase."""
         key = node.get("key")
         if not key:
             return None
@@ -178,6 +190,7 @@ class JsAnalyzer:
         return None
 
     def _build_comment_map(self, comments: List[Dict[str, Any]]) -> Dict[int, str]:
+        """Asocia comentarios finales con la línea donde finalizan."""
         if not self.include_docstrings:
             return {}
         result: Dict[int, str] = {}
@@ -194,6 +207,7 @@ class JsAnalyzer:
         return result
 
     def _docstring_for(self, line: Optional[int], comment_map: Dict[int, str]) -> Optional[str]:
+        """Busca un comentario inmediatamente anterior a la línea indicada."""
         if not self.include_docstrings or line is None:
             return None
         # Buscar comentario inmediatamente anterior (línea anterior o dos líneas antes).
@@ -204,6 +218,7 @@ class JsAnalyzer:
         return None
 
     def _clean_comment(self, value: str) -> str:
+        """Limpia anotaciones JSDoc y devuelve texto plano."""
         stripped = value.strip()
         # Eliminar asteriscos de bloque JSDoc
         lines = [line.strip(" *") for line in stripped.splitlines()]

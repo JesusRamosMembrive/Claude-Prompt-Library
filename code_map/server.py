@@ -19,6 +19,15 @@ from .api.routes import router as api_router
 
 
 def create_app(root: Optional[str | Path] = None) -> FastAPI:
+    """
+    Crea y configura la aplicación FastAPI.
+
+    Args:
+        root: La ruta raíz del proyecto a escanear.
+
+    Returns:
+        La instancia de la aplicación FastAPI.
+    """
     settings = load_settings(root_override=root)
     scheduler = ChangeScheduler()
 

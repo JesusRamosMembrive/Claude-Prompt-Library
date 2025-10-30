@@ -16,6 +16,7 @@ from .index import SymbolIndex
 
 
 def _serialize_capability(cap: AnalyzerCapability) -> Dict[str, Any]:
+    """Serializa un objeto AnalyzerCapability a un diccionario."""
     return {
         "key": cap.key,
         "description": cap.description,
@@ -36,6 +37,15 @@ class StateReporter:
     index: SymbolIndex
 
     def settings_payload(self, *, watcher_active: bool) -> Dict[str, Any]:
+        """
+        Construye el payload de settings para la API.
+
+        Args:
+            watcher_active: True si el observador de archivos está activo.
+
+        Returns:
+            Un diccionario con la configuración actual de la aplicación.
+        """
         return {
             "root_path": self.settings.root_path.as_posix(),
             "exclude_dirs": list(self.settings.exclude_dirs),
@@ -52,6 +62,18 @@ class StateReporter:
         last_event_batch: Optional[datetime],
         pending_events: int,
     ) -> Dict[str, Any]:
+        """
+        Construye el payload de estado para la API.
+
+        Args:
+            watcher_active: True si el observador de archivos está activo.
+            last_full_scan: Fecha y hora del último escaneo completo.
+            last_event_batch: Fecha y hora del último lote de eventos procesado.
+            pending_events: Número de eventos de archivo pendientes de procesar.
+
+        Returns:
+            Un diccionario con el estado actual de la aplicación.
+        """
         summaries = self.index.get_all()
         total_files = len(summaries)
         total_symbols = sum(len(summary.symbols) for summary in summaries)
