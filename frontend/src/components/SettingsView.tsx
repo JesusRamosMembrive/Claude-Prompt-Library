@@ -64,7 +64,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
       queryClient.setQueryData(queryKeys.settings, result.settings);
       queryClient.invalidateQueries({ queryKey: queryKeys.tree });
       if (result.updated.includes("root_path")) {
-        useSelectionStore.getState().select(undefined);
+        useSelectionStore.getState().clearSelection();
       }
       setCustomExcludes(sortExcludes(extractCustomExcludes(result.settings.exclude_dirs)));
       setStatusMessage(

@@ -6,7 +6,8 @@ import { useSelectionStore } from "../state/useSelectionStore";
 
 export function SearchPanel(): JSX.Element {
   const [term, setTerm] = useState("");
-  const select = useSelectionStore((state) => state.select);
+  const selectPath = useSelectionStore((state) => state.selectPath);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   const { data, isFetching, isError, error } = useQuery({
     queryKey: queryKeys.search(term),
@@ -52,11 +53,21 @@ export function SearchPanel(): JSX.Element {
                 <li
                   key={`${symbol.path}-${symbol.name}-${symbol.kind}`}
                   className="search-item"
-                  onClick={() => select(symbol.path ?? undefined)}
+                  onClick={() => {
+                    if (symbol.path) {
+                      selectPath(symbol.path);
+                    } else {
+                      clearSelection();
+                    }
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      select(symbol.path ?? undefined);
+                      if (symbol.path) {
+                        selectPath(symbol.path);
+                      } else {
+                        clearSelection();
+                      }
                     }
                   }}
                   role="button"
