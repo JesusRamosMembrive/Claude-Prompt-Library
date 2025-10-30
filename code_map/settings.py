@@ -9,7 +9,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, List, Mapping, Optional
+from typing import Iterable, Mapping, Optional, Tuple
 
 from .constants import META_DIR_NAME
 from .scanner import DEFAULT_EXCLUDED_DIRS
@@ -19,7 +19,7 @@ ENV_ROOT_PATH = "CODE_MAP_ROOT"
 ENV_INCLUDE_DOCSTRINGS = "CODE_MAP_INCLUDE_DOCSTRINGS"
 
 
-def _normalize_exclusions(additional: Iterable[str] | None = None) -> List[str]:
+def _normalize_exclusions(additional: Iterable[str] | None = None) -> Tuple[str, ...]:
     base = set(DEFAULT_EXCLUDED_DIRS)
     if additional:
         for item in additional:
@@ -31,19 +31,19 @@ def _normalize_exclusions(additional: Iterable[str] | None = None) -> List[str]:
             if normalized.startswith("/"):
                 continue
             base.add(normalized)
-    return sorted(base)
+    return tuple(sorted(base))
 
 
-@dataclass
+@dataclass(frozen=True)
 class AppSettings:
     root_path: Path
-    exclude_dirs: List[str] = field(default_factory=list)
+    exclude_dirs: Tuple[str, ...] = field(default_factory=tuple)
     include_docstrings: bool = True
 
     def to_payload(self) -> dict:
         return {
             "root_path": str(self.root_path),
-            "exclude_dirs": self.exclude_dirs,
+            "exclude_dirs": list(self.exclude_dirs),
             "include_docstrings": self.include_docstrings,
             "version": 1,
         }

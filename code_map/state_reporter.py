@@ -38,7 +38,7 @@ class StateReporter:
     def settings_payload(self, *, watcher_active: bool) -> Dict[str, Any]:
         return {
             "root_path": self.settings.root_path.as_posix(),
-            "exclude_dirs": self.settings.exclude_dirs,
+            "exclude_dirs": list(self.settings.exclude_dirs),
             "include_docstrings": self.settings.include_docstrings,
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
