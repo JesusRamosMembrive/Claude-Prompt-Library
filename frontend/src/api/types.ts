@@ -128,6 +128,10 @@ export interface StageInitResponse {
   status: StageStatusPayload;
 }
 
+export interface BrowseDirectoryResponse {
+  path: string;
+}
+
 export interface ClassGraphNode {
   id: string;
   name: string;
@@ -138,7 +142,7 @@ export interface ClassGraphNode {
 export interface ClassGraphEdge {
   source: string;
   target: string;
-  type: "inherits" | "instantiates";
+  type: "inherits" | "instantiates" | "references";
   internal: boolean;
   raw_target: string;
 }
@@ -153,4 +157,32 @@ export interface ClassGraphResponse {
   nodes: ClassGraphNode[];
   edges: ClassGraphEdge[];
   stats: ClassGraphStats;
+}
+
+export interface UMLAttribute {
+  name: string;
+  type?: string | null;
+  optional: boolean;
+}
+
+export interface UMLMethod {
+  name: string;
+  parameters: string[];
+  returns?: string | null;
+}
+
+export interface UMLClass {
+  id: string;
+  name: string;
+  module: string;
+  file: string;
+  bases: string[];
+  attributes: UMLAttribute[];
+  methods: UMLMethod[];
+  associations: string[];
+}
+
+export interface UMLDiagramResponse {
+  classes: UMLClass[];
+  stats: Record<string, number>;
 }

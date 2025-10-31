@@ -5,6 +5,7 @@ import { CodeMapDashboard } from "./components/CodeMapDashboard";
 import { SettingsView } from "./components/SettingsView";
 import { StageToolkitView } from "./components/StageToolkitView";
 import { ClassGraphView } from "./components/ClassGraphView";
+import { ClassUMLView } from "./components/ClassUMLView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -79,6 +80,21 @@ export function App(): JSX.Element {
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
                 <ClassGraphView />
+              </>
+            }
+          />
+          <Route
+            path="/class-uml"
+            element={
+              <>
+                <HeaderBar
+                  title="Class UML"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <ClassUMLView />
               </>
             }
           />

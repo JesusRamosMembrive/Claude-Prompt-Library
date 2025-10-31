@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { updateSettings } from "../api/client";
+import { browseForRoot, updateSettings } from "../api/client";
 import type { SettingsPayload, SettingsUpdatePayload } from "../api/types";
 import { queryKeys } from "../api/queryKeys";
 import { DEFAULT_EXCLUDED_DIRS } from "../config/defaultExcludes";
@@ -63,6 +63,8 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     onSuccess: (result) => {
       queryClient.setQueryData(queryKeys.settings, result.settings);
       queryClient.invalidateQueries({ queryKey: queryKeys.tree });
+      queryClient.invalidateQueries({ queryKey: queryKeys.status });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
       if (result.updated.includes("root_path")) {
         useSelectionStore.getState().clearSelection();
       }
@@ -161,6 +163,17 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
   const statusTone = statusMessage?.toLowerCase().startsWith("error") ? "error" : "info";
   const isLoading = settingsQuery.isLoading;
   const isMutating = mutation.isPending;
+  const browseMutation = useMutation({
+    mutationFn: browseForRoot,
+    onSuccess: (response) => {
+      setFormRoot(response.path);
+      setStatusMessage(`Directorio seleccionado: ${response.path}`);
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "No se pudo abrir el diálogo";
+      setStatusMessage(`Error al seleccionar directorio: ${message}`);
+    },
+  });
 
   return (
     <div className="settings-view">
@@ -214,8 +227,10 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
         <RootPathSection
           absoluteRoot={settings?.absolute_root}
           rootValue={formRoot}
-          disabled={isLoading}
+          disabled={isLoading || browseMutation.isPending}
           onRootChange={setFormRoot}
+          onBrowse={() => browseMutation.mutate()}
+          browseDisabled={browseMutation.isPending || isMutating || isLoading}
         />
 
         <ExcludeDirsSection

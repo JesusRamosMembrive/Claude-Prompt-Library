@@ -5,33 +5,49 @@ import type { GraphData } from "react-force-graph-2d";
 import { useClassGraphQuery } from "../hooks/useClassGraphQuery";
 import type { ClassGraphEdge, ClassGraphNode, ClassGraphResponse } from "../api/types";
 
-const EDGE_OPTIONS: { value: "inherits" | "instantiates"; label: string }[] = [
+const EDGE_OPTIONS: { value: "inherits" | "instantiates" | "references"; label: string }[] = [
   { value: "inherits", label: "Herencias" },
   { value: "instantiates", label: "Instancias" },
+  { value: "references", label: "Referencias" },
 ];
 
+const DEFAULT_LIMIT = 250;
+
 export function ClassGraphView(): JSX.Element {
-  const [includeExternal, setIncludeExternal] = useState(true);
-  const [edgeTypes, setEdgeTypes] = useState<("inherits" | "instantiates")[]>([
+  const [includeExternal, setIncludeExternal] = useState(false);
+  const [edgeTypes, setEdgeTypes] = useState<("inherits" | "instantiates" | "references")[]>([
     "inherits",
     "instantiates",
+    "references",
   ]);
-  const [moduleFilter, setModuleFilter] = useState("");
-  const [nodeLimit, setNodeLimit] = useState(300);
+  const [moduleInput, setModuleInput] = useState("");
+  const [nodeLimit, setNodeLimit] = useState(DEFAULT_LIMIT);
+
+  const modulePrefixes = useMemo(
+    () =>
+      moduleInput
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    [moduleInput],
+  );
 
   const query = useClassGraphQuery({
     includeExternal,
     edgeTypes,
+    modulePrefixes,
   });
 
   const data = query.data;
 
-  const { graph, internalEdges, externalEdges, nodeCount, edgeCount } = useMemo(
-    () => buildGraphData(data, { moduleFilter, nodeLimit, includeExternal }),
-    [data, moduleFilter, nodeLimit, includeExternal],
+  const graphResult = useMemo(
+    () => buildGraphData(data, { includeExternal, nodeLimit }),
+    [data, includeExternal, nodeLimit],
   );
 
-  const toggleEdgeType = (value: "inherits" | "instantiates") => {
+  const { graph, internalEdges, externalEdges, nodeCount, edgeCount } = graphResult;
+
+  const toggleEdgeType = (value: "inherits" | "instantiates" | "references") => {
     setEdgeTypes((prev) =>
       prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
     );
@@ -69,13 +85,13 @@ export function ClassGraphView(): JSX.Element {
         </div>
 
         <div className="control-block">
-          <h2>Filtro por módulo</h2>
+          <h2>Prefijos de módulos</h2>
           <input
             type="text"
             className="input-text"
-            placeholder="Ej: code_map."
-            value={moduleFilter}
-            onChange={(event) => setModuleFilter(event.target.value)}
+            placeholder="Ej: api, src"
+            value={moduleInput}
+            onChange={(event) => setModuleInput(event.target.value)}
           />
         </div>
 
@@ -153,7 +169,7 @@ export function ClassGraphView(): JSX.Element {
               ) : null}
             </div>
 
-            <div className="class-graph-canvas">
+            <div className="class-graph-canvas large">
               {graph.nodes.length === 0 ? (
                 <p className="summary-info">No hay datos para los filtros seleccionados.</p>
               ) : (
@@ -224,14 +240,14 @@ function EdgeList({
   );
 }
 
-type GraphNode = ClassGraphNode & {
+interface GraphNode extends ClassGraphNode {
   x?: number;
   y?: number;
   vx?: number;
   vy?: number;
   val?: number;
   external?: boolean;
-};
+}
 
 type GraphLink = ClassGraphEdge & {
   source: string;
@@ -239,13 +255,13 @@ type GraphLink = ClassGraphEdge & {
   value?: number;
 };
 
-interface ForceGraphData extends GraphData {
+interface ForceGraphDataResult extends GraphData {
   nodes: GraphNode[];
   links: GraphLink[];
 }
 
 interface FilteredGraphResult {
-  graph: ForceGraphData;
+  graph: ForceGraphDataResult;
   internalEdges: ClassGraphEdge[];
   externalEdges: ClassGraphEdge[];
   nodeCount: number;
@@ -254,7 +270,7 @@ interface FilteredGraphResult {
 
 function buildGraphData(
   data: ClassGraphResponse | undefined,
-  options: { moduleFilter: string; nodeLimit: number; includeExternal: boolean },
+  options: { includeExternal: boolean; nodeLimit: number },
 ): FilteredGraphResult {
   if (!data) {
     return {
@@ -266,34 +282,11 @@ function buildGraphData(
     };
   }
 
-  const filterText = options.moduleFilter.trim().toLowerCase();
-  const sortedNodes = [...data.nodes].sort((a, b) =>
+  const nodesSorted = [...data.nodes].sort((a, b) =>
     a.module.localeCompare(b.module) || a.name.localeCompare(b.name),
   );
-
-  let candidateNodes = sortedNodes;
-  if (filterText) {
-    candidateNodes = sortedNodes.filter(
-      (node) =>
-        node.module.toLowerCase().includes(filterText) ||
-        node.name.toLowerCase().includes(filterText),
-    );
-  }
-  if (candidateNodes.length === 0) {
-    if (filterText) {
-      return {
-        graph: { nodes: [], links: [] },
-        internalEdges: [],
-        externalEdges: [],
-        nodeCount: 0,
-        edgeCount: 0,
-      };
-    }
-    candidateNodes = sortedNodes;
-  }
-
   const limit = Math.max(1, options.nodeLimit);
-  const limitedNodes = candidateNodes.slice(0, limit);
+  const limitedNodes = nodesSorted.slice(0, limit);
 
   const nodeMap = new Map<string, GraphNode>();
   const nodes: GraphNode[] = [];
@@ -309,7 +302,6 @@ function buildGraphData(
   const internalEdges: ClassGraphEdge[] = [];
   const externalEdges: ClassGraphEdge[] = [];
 
-  // TODO: mover este filtrado al backend para evitar transferir grafos enormes.
   for (const edge of data.edges) {
     if (!allowedSources.has(edge.source)) {
       continue;
@@ -318,7 +310,7 @@ function buildGraphData(
     const targetAllowed = nodeMap.has(edge.target);
 
     if (!targetAllowed) {
-      if (edge.internal || !options.includeExternal) {
+      if (!options.includeExternal) {
         continue;
       }
       if (!nodeMap.has(edge.target)) {
@@ -335,18 +327,13 @@ function buildGraphData(
       }
     }
 
-    if (!edge.internal && !options.includeExternal) {
-      continue;
-    }
-
-    const link: GraphLink = { ...edge };
-    links.push(link);
-
-    if (edge.internal) {
-      internalEdges.push(edge);
-    } else if (options.includeExternal) {
+    if (!edge.internal) {
       externalEdges.push(edge);
+    } else {
+      internalEdges.push(edge);
     }
+
+    links.push({ ...edge });
   }
 
   return {
@@ -358,7 +345,12 @@ function buildGraphData(
   };
 }
 
-function renderNode(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number, fillStyle?: string) {
+function renderNode(
+  node: GraphNode,
+  ctx: CanvasRenderingContext2D,
+  globalScale: number,
+  fillStyle?: string,
+) {
   if (typeof node.x !== "number" || typeof node.y !== "number") {
     return;
   }

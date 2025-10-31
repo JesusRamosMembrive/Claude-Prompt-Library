@@ -3,6 +3,8 @@ interface RootPathSectionProps {
   rootValue: string;
   disabled: boolean;
   onRootChange: (value: string) => void;
+  onBrowse: () => void;
+  browseDisabled?: boolean;
 }
 
 export function RootPathSection({
@@ -10,6 +12,8 @@ export function RootPathSection({
   rootValue,
   disabled,
   onRootChange,
+  onBrowse,
+  browseDisabled = false,
 }: RootPathSectionProps): JSX.Element {
   return (
     <section className="settings-card">
@@ -28,8 +32,8 @@ export function RootPathSection({
             disabled={disabled}
             placeholder="/ruta/del/proyecto"
           />
-          <button type="button" disabled>
-            Cambiar...
+          <button type="button" onClick={onBrowse} disabled={browseDisabled || disabled}>
+            Seleccionar…
           </button>
         </div>
       </div>

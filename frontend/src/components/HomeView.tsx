@@ -176,6 +176,17 @@ export function HomeView({
           </div>
           <span className="home-card-cta">Ir al grafo →</span>
         </Link>
+
+        <Link to="/class-uml" className="home-card">
+          <div className="home-card-body">
+            <h3>Class UML</h3>
+            <p>
+              Diagramas UML con atributos y métodos por clase. Perfecto para entender la estructura
+              interna sin ruido externo.
+            </p>
+          </div>
+          <span className="home-card-cta">Ver UML →</span>
+        </Link>
       </section>
     </div>
   );

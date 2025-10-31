@@ -146,6 +146,11 @@
   color: #93c5fd;
 }
 
+.edge-type-references {
+  background: rgba(244, 196, 99, 0.2);
+  color: #fcd34d;
+}
+
 .edge-source,
 .edge-target {
   font-weight: 600;
@@ -170,6 +175,10 @@
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 20px;
   overflow: hidden;
+}
+
+.class-graph-canvas.large {
+  height: 720px;
 }
 
 .class-graph-placeholder h3 {

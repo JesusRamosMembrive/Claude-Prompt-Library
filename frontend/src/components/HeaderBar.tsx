@@ -29,6 +29,7 @@ export function HeaderBar({
     { to: "/stage-toolkit", label: "Stage Toolkit" },
     { to: "/code-map", label: "Code Map" },
     { to: "/class-graph", label: "Class Graph" },
+    { to: "/class-uml", label: "Class UML" },
   ];
 
   return (

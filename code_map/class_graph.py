@@ -29,6 +29,7 @@ class ClassInfo:
     name: str
     bases: List[str] = field(default_factory=list)
     instantiates: Set[str] = field(default_factory=set)
+    references: Set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -130,6 +131,13 @@ class ModuleAnalyzer(ast.NodeVisitor):
             visitor = InstantiationVisitor()
             visitor.visit(node)
             self._current_class.instantiates.update(visitor.instantiated_classes)
+            refs = _extract_references_from_assignment(node)
+            self._current_class.references.update(refs)
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if self._current_class is not None:
+            self._current_class.references.update(_extract_type_names(node.annotation))
         self.generic_visit(node)
 
     def _expr_to_name(self, expr: ast.expr) -> str:
@@ -186,6 +194,76 @@ class InstantiationVisitor(ast.NodeVisitor):
 
 
 # ---------------------------------------------------------------------------
+# Helper utilities
+
+
+def _extract_type_names(node: Optional[ast.AST]) -> Set[str]:
+    names: Set[str] = set()
+    if node is None:
+        return names
+    if isinstance(node, ast.Name):
+        names.add(node.id)
+    elif isinstance(node, ast.Attribute):
+        parts: List[str] = []
+        current: ast.AST = node
+        while isinstance(current, ast.Attribute):
+            parts.append(current.attr)
+            current = current.value
+        if isinstance(current, ast.Name):
+            parts.append(current.id)
+        if parts:
+            names.add(".".join(reversed(parts)))
+    elif isinstance(node, ast.Subscript):
+        names.update(_extract_type_names(node.value))
+        if isinstance(node.slice, ast.Tuple):
+            for elt in node.slice.elts:
+                names.update(_extract_type_names(elt))
+        else:
+            names.update(_extract_type_names(node.slice))
+    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):  # PEP 604 unions
+        names.update(_extract_type_names(node.left))
+        names.update(_extract_type_names(node.right))
+    elif isinstance(node, ast.Tuple):
+        for elt in node.elts:
+            names.update(_extract_type_names(elt))
+    return names
+
+
+def _extract_references_from_assignment(node: ast.Assign) -> Set[str]:
+    refs: Set[str] = set()
+    if not isinstance(node.value, ast.Call):
+        return refs
+    target = _expr_to_name_simple(node.value.func)
+    if not target:
+        return refs
+    lower = target.lower()
+    if "relationship" in lower:
+        for arg in node.value.args:
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                refs.add(arg.value)
+            else:
+                refs.update(_extract_type_names(arg))
+        for kw in node.value.keywords:
+            refs.update(_extract_type_names(kw.value))
+    return refs
+
+
+def _expr_to_name_simple(expr: ast.AST) -> Optional[str]:
+    if isinstance(expr, ast.Name):
+        return expr.id
+    if isinstance(expr, ast.Attribute):
+        parts: List[str] = []
+        current: ast.AST = expr
+        while isinstance(current, ast.Attribute):
+            parts.append(current.attr)
+            current = current.value
+        if isinstance(current, ast.Name):
+            parts.append(current.id)
+        return ".".join(reversed(parts))
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Construcción del grafo
 
 
@@ -194,6 +272,7 @@ def build_class_graph(
     *,
     include_external: bool = True,
     edge_types: Optional[Set[str]] = None,
+    module_prefixes: Optional[Set[str]] = None,
 ) -> Dict[str, object]:
     """
     Construye un grafo de relaciones de clases a partir del directorio dado.
@@ -206,13 +285,14 @@ def build_class_graph(
     """
     root = root.expanduser().resolve()
     modules = list(_analyze_modules(root))
-    definitions = _collect_definitions(modules)
+    filtered_modules = _filter_modules(modules, module_prefixes)
+    definitions = _collect_definitions(filtered_modules)
 
     nodes: Dict[str, GraphNode] = {}
     edges: List[GraphEdge] = []
-    edge_filter = edge_types or {"inherits", "instantiates"}
+    edge_filter = edge_types or {"inherits", "instantiates", "references"}
 
-    for module in modules:
+    for module in filtered_modules:
         for class_name, class_info in module.classes.items():
             node_id = f"{module.module}.{class_name}"
             nodes[node_id] = GraphNode(
@@ -226,6 +306,7 @@ def build_class_graph(
                 class_info=class_info,
                 module=module,
                 definitions=definitions,
+                include_external=include_external,
             ):
                 if edge.type not in edge_filter:
                     continue
@@ -270,17 +351,44 @@ def _collect_definitions(modules: Iterable[ModuleInfo]) -> Dict[str, ModuleInfo]
     return index
 
 
+def _filter_modules(
+    modules: List[ModuleInfo],
+    module_prefixes: Optional[Set[str]],
+) -> List[ModuleInfo]:
+    if not module_prefixes:
+        return modules
+
+    normalized = {prefix.strip() for prefix in module_prefixes if prefix.strip()}
+    if not normalized:
+        return modules
+
+    def matches(module_name: str) -> bool:
+        return any(
+            module_name == prefix or module_name.startswith(f"{prefix}.")
+            for prefix in normalized
+        )
+
+    filtered: List[ModuleInfo] = []
+    for module in modules:
+        if matches(module.module):
+            filtered.append(module)
+    return filtered or modules
+
+
 def _build_edges_for_class(
     *,
     node_id: str,
     class_info: ClassInfo,
     module: ModuleInfo,
     definitions: Dict[str, ModuleInfo],
+    include_external: bool,
 ) -> List[GraphEdge]:
     edges: List[GraphEdge] = []
 
     for base in class_info.bases:
         target, internal, display = _resolve_reference(base, module, definitions)
+        if not internal and not include_external:
+            continue
         edges.append(
             GraphEdge(
                 source=node_id,
@@ -293,11 +401,27 @@ def _build_edges_for_class(
 
     for target_name in sorted(class_info.instantiates):
         target, internal, display = _resolve_reference(target_name, module, definitions)
+        if not internal and not include_external:
+            continue
         edges.append(
             GraphEdge(
                 source=node_id,
                 target=target or display,
                 type="instantiates",
+                internal=internal,
+                raw_target=display,
+            )
+        )
+
+    for ref_name in sorted(class_info.references):
+        target, internal, display = _resolve_reference(ref_name, module, definitions)
+        if not internal and not include_external:
+            continue
+        edges.append(
+            GraphEdge(
+                source=node_id,
+                target=target or display,
+                type="references",
                 internal=internal,
                 raw_target=display,
             )

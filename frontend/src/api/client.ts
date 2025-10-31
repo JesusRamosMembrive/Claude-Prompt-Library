@@ -9,6 +9,8 @@ import type {
   StageInitPayload,
   StageInitResponse,
   ClassGraphResponse,
+  BrowseDirectoryResponse,
+  UMLDiagramResponse,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -203,6 +205,15 @@ export function updateSettings(payload: SettingsUpdatePayload): Promise<{
 }
 
 /**
+ * Solicita al backend un cuadro de diálogo nativo para seleccionar directorio.
+ */
+export function browseForRoot(): Promise<BrowseDirectoryResponse> {
+  return fetchJson("/settings/browse", {
+    method: "POST",
+  });
+}
+
+/**
  * Obtiene el estado Stage-Aware del proyecto.
  */
 export function getStageStatus(): Promise<StageStatusPayload> {
@@ -225,6 +236,7 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
 export function getClassGraph(options?: {
   includeExternal?: boolean;
   edgeTypes?: string[];
+  modulePrefixes?: string[];
 }): Promise<ClassGraphResponse> {
   const params = new URLSearchParams();
   if (options?.includeExternal === false) {
@@ -233,9 +245,60 @@ export function getClassGraph(options?: {
   if (options?.edgeTypes && options.edgeTypes.length > 0) {
     options.edgeTypes.forEach((edge) => params.append("edge_types", edge));
   }
+  if (options?.modulePrefixes && options.modulePrefixes.length > 0) {
+    options.modulePrefixes.forEach((prefix) => {
+      if (prefix.trim()) {
+        params.append("module_prefix", prefix.trim());
+      }
+    });
+  }
   const query = params.toString();
   const path = `/graph/classes${query ? `?${query}` : ""}`;
   return fetchJson<ClassGraphResponse>(path);
+}
+
+export function getClassUml(options?: {
+  includeExternal?: boolean;
+  modulePrefixes?: string[];
+}): Promise<UMLDiagramResponse> {
+  const params = new URLSearchParams();
+  if (options?.includeExternal) {
+    params.set("include_external", "true");
+  }
+  if (options?.modulePrefixes) {
+    options.modulePrefixes.forEach((prefix) => {
+      if (prefix.trim()) {
+        params.append("module_prefix", prefix.trim());
+      }
+    });
+  }
+  const query = params.toString();
+  return fetchJson(`/graph/uml${query ? `?${query}` : ""}`);
+}
+
+export async function getClassUmlSvg(options?: {
+  includeExternal?: boolean;
+  modulePrefixes?: string[];
+}): Promise<string> {
+  const params = new URLSearchParams();
+  if (options?.includeExternal) {
+    params.set("include_external", "true");
+  }
+  if (options?.modulePrefixes) {
+    options.modulePrefixes.forEach((prefix) => {
+      const trimmed = prefix.trim();
+      if (trimmed) {
+        params.append("module_prefix", trimmed);
+      }
+    });
+  }
+  const query = params.toString();
+  const response = await fetch(buildUrl(`/graph/uml/svg${query ? `?${query}` : ""}`));
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`API request failed (${response.status}): ${detail || "Unknown error"}`);
+  }
+  return await response.text();
 }
 
 /**

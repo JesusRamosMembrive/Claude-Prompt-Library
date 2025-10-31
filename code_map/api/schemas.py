@@ -187,6 +187,11 @@ class StageInitResponse(BaseModel):
     status: StageStatusResponse
 
 
+class BrowseDirectoryResponse(BaseModel):
+    """Respuesta al seleccionar un directorio en el servidor."""
+    path: str
+
+
 class ClassGraphNode(BaseModel):
     """Nodo del grafo de clases."""
     id: str
@@ -216,6 +221,34 @@ class ClassGraphResponse(BaseModel):
     nodes: List[ClassGraphNode]
     edges: List[ClassGraphEdge]
     stats: ClassGraphStats
+
+
+class UMLAttribute(BaseModel):
+    name: str
+    type: Optional[str] = None
+    optional: bool = False
+
+
+class UMLMethod(BaseModel):
+    name: str
+    parameters: List[str] = Field(default_factory=list)
+    returns: Optional[str] = None
+
+
+class UMLClass(BaseModel):
+    id: str
+    name: str
+    module: str
+    file: str
+    bases: List[str] = Field(default_factory=list)
+    attributes: List[UMLAttribute] = Field(default_factory=list)
+    methods: List[UMLMethod] = Field(default_factory=list)
+    associations: List[str] = Field(default_factory=list)
+
+
+class UMLDiagramResponse(BaseModel):
+    classes: List[UMLClass]
+    stats: Dict[str, int]
 
 
 def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:
