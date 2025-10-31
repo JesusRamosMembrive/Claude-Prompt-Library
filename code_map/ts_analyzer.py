@@ -148,8 +148,15 @@ class TsAnalyzer:
         if ident:
             return ident.text.decode("utf-8")
         name = node.child_by_field_name("name")
-        if name and name.type == "identifier":
+        if name and name.type in {
+            "identifier",
+            "type_identifier",
+            "property_identifier",
+        }:
             return name.text.decode("utf-8")
+        type_ident = self._find_child(node, "type_identifier")
+        if type_ident:
+            return type_ident.text.decode("utf-8")
         return None
 
     def _find_child(self, node: Any, type_name: str) -> Optional[Any]:

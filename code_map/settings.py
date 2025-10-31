@@ -8,15 +8,18 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+import sqlite3
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Tuple
 
 from .constants import META_DIR_NAME
 from .scanner import DEFAULT_EXCLUDED_DIRS
 
-SETTINGS_FILENAME = "code-map-settings.json"
 ENV_ROOT_PATH = "CODE_MAP_ROOT"
 ENV_INCLUDE_DOCSTRINGS = "CODE_MAP_INCLUDE_DOCSTRINGS"
+ENV_DB_PATH = "CODE_MAP_DB_PATH"
+ENV_DISABLE_LINTERS = "CODE_MAP_DISABLE_LINTERS"
+DB_FILENAME = "state.db"
 
 
 def _normalize_exclusions(additional: Iterable[str] | None = None) -> Tuple[str, ...]:
@@ -69,54 +72,6 @@ class AppSettings:
             ),
         )
 
-
-def settings_storage_path(root_path: Path) -> Path:
-    """Devuelve la ruta del archivo de configuración."""
-    root = root_path.expanduser().resolve()
-    return root / META_DIR_NAME / SETTINGS_FILENAME
-
-
-def _load_settings_from_disk(
-    default_root: Path,
-    *,
-    default_include_docstrings: bool = True,
-) -> AppSettings:
-    """Carga la configuración desde el disco."""
-    default_root = default_root.expanduser().resolve()
-    path = settings_storage_path(default_root)
-
-    if not path.exists():
-        return AppSettings(
-            root_path=default_root,
-            exclude_dirs=_normalize_exclusions(),
-            include_docstrings=default_include_docstrings,
-        )
-
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return AppSettings(
-            root_path=default_root,
-            exclude_dirs=_normalize_exclusions(),
-            include_docstrings=default_include_docstrings,
-        )
-
-    stored_root = Path(data.get("root_path", default_root)).expanduser().resolve()
-    exclude_dirs = data.get("exclude_dirs", [])
-    include_docstrings = data.get("include_docstrings")
-    include_value = (
-        bool(include_docstrings)
-        if include_docstrings is not None
-        else default_include_docstrings
-    )
-
-    return AppSettings(
-        root_path=stored_root if stored_root.exists() else default_root,
-        exclude_dirs=_normalize_exclusions(exclude_dirs),
-        include_docstrings=include_value,
-    )
-
-
 def _parse_env_flag(raw: Optional[str]) -> Optional[bool]:
     """Parsea una variable de entorno como un booleano."""
     if raw is None:
@@ -136,6 +91,149 @@ def _coerce_path(value: Optional[str | Path]) -> Optional[Path]:
     return Path(value).expanduser().resolve()
 
 
+def database_path(env: Optional[Mapping[str, str]] = None) -> Path:
+    """Obtiene la ruta del archivo SQLite para estado global."""
+    effective_env: Mapping[str, str] = env or os.environ
+    custom_path = effective_env.get(ENV_DB_PATH)
+    if custom_path:
+        return Path(custom_path).expanduser().resolve()
+    return Path.home() / META_DIR_NAME / DB_FILENAME
+
+
+def open_database(env: Optional[Mapping[str, str]] = None) -> sqlite3.Connection:
+    """Abre una conexión a la base de datos y asegura el esquema."""
+    path = database_path(env)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    _ensure_db_schema(connection)
+    return connection
+
+
+def _ensure_db_schema(connection: sqlite3.Connection) -> None:
+    """Crea la tabla de configuración si no existe."""
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            root_path TEXT NOT NULL,
+            exclude_dirs TEXT NOT NULL,
+            include_docstrings INTEGER NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS linter_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            generated_at TEXT NOT NULL,
+            root_path TEXT NOT NULL,
+            overall_status TEXT NOT NULL,
+            issues_total INTEGER NOT NULL DEFAULT 0,
+            critical_issues INTEGER NOT NULL DEFAULT 0,
+            payload TEXT NOT NULL
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_linter_reports_generated_at
+            ON linter_reports(generated_at DESC)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            channel TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            payload TEXT,
+            root_path TEXT,
+            read INTEGER NOT NULL DEFAULT 0
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_notifications_created_at
+            ON notifications(created_at DESC)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_notifications_root_path
+            ON notifications(root_path)
+        """
+    )
+
+    connection.commit()
+
+
+def _load_settings_from_db(
+    db_path: Path,
+    default_root: Path,
+    *,
+    default_include_docstrings: bool = True,
+) -> Optional[AppSettings]:
+    """Carga la configuración desde la base de datos SQLite si existe."""
+    with open_database(env={ENV_DB_PATH: str(db_path)}) as connection:
+        cursor = connection.execute(
+            "SELECT root_path, exclude_dirs, include_docstrings FROM app_settings WHERE id = 1"
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        stored_root_raw = row["root_path"]
+        stored_root = Path(stored_root_raw).expanduser().resolve() if stored_root_raw else default_root
+        excludes_raw = row["exclude_dirs"] or "[]"
+        try:
+            data = json.loads(excludes_raw)
+        except json.JSONDecodeError:
+            data = []
+
+        include_flag = bool(row["include_docstrings"]) if row["include_docstrings"] is not None else default_include_docstrings
+        effective_root = stored_root if stored_root.exists() else default_root
+
+        return AppSettings(
+            root_path=effective_root,
+            exclude_dirs=_normalize_exclusions(data),
+            include_docstrings=include_flag,
+        )
+
+
+def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
+    """Persiste la configuración actual en SQLite."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with open_database(env={ENV_DB_PATH: str(db_path)}) as connection:
+        connection.execute(
+            """
+            INSERT INTO app_settings (id, root_path, exclude_dirs, include_docstrings, updated_at)
+            VALUES (1, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+            ON CONFLICT(id) DO UPDATE SET
+                root_path = excluded.root_path,
+                exclude_dirs = excluded.exclude_dirs,
+                include_docstrings = excluded.include_docstrings,
+                updated_at = excluded.updated_at
+            """,
+            (
+                str(settings.root_path),
+                json.dumps(list(settings.exclude_dirs)),
+                1 if settings.include_docstrings else 0,
+            ),
+        )
+        connection.commit()
+
+
 def load_settings(
     *,
     root_override: Optional[str | Path] = None,
@@ -151,10 +249,20 @@ def load_settings(
     include_flag = _parse_env_flag(effective_env.get(ENV_INCLUDE_DOCSTRINGS))
     default_include = include_flag if include_flag is not None else True
 
-    settings = _load_settings_from_disk(
+    db_path = database_path(effective_env)
+    settings = _load_settings_from_db(
+        db_path,
         base_root,
         default_include_docstrings=default_include,
     )
+
+    if settings is None:
+        settings = AppSettings(
+            root_path=base_root,
+            exclude_dirs=_normalize_exclusions(),
+            include_docstrings=default_include,
+        )
+        _save_settings_to_db(db_path, settings)
 
     if (override_path or env_root) and settings.root_path != base_root:
         settings = settings.with_updates(root_path=base_root)
@@ -165,11 +273,7 @@ def load_settings(
     return settings
 
 
-def save_settings(settings: AppSettings) -> None:
+def save_settings(settings: AppSettings, *, env: Optional[Mapping[str, str]] = None) -> None:
     """Guarda la configuración en el disco."""
-    path = settings_storage_path(settings.root_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(settings.to_payload(), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    db_path = database_path(env)
+    _save_settings_to_db(db_path, settings)

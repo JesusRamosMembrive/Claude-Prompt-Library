@@ -6,6 +6,7 @@ import { SettingsView } from "./components/SettingsView";
 import { StageToolkitView } from "./components/StageToolkitView";
 import { ClassGraphView } from "./components/ClassGraphView";
 import { ClassUMLView } from "./components/ClassUMLView";
+import { LintersView } from "./components/LintersView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -95,6 +96,21 @@ export function App(): JSX.Element {
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
                 <ClassUMLView />
+              </>
+            }
+          />
+          <Route
+            path="/linters"
+            element={
+              <>
+                <HeaderBar
+                  title="Linters & Calidad"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <LintersView />
               </>
             }
           />

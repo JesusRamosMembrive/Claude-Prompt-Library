@@ -8,9 +8,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from ..models import AnalysisError, FileSummary, ProjectTreeNode, SymbolInfo, SymbolKind
+from ..linters.report_schema import CheckStatus, Severity
 from ..state import AppState
 from ..stage_toolkit import AgentSelection
 
@@ -225,6 +226,135 @@ class LintersDiscoveryResponse(BaseModel):
     tools: List[LinterToolSchema] = Field(default_factory=list)
     custom_rules: List[LinterCustomRuleSchema] = Field(default_factory=list)
     notifications: List[NotificationChannelSchema] = Field(default_factory=list)
+
+
+class LinterIssueDetailSchema(BaseModel):
+    """Detalle de incidencias registradas por un linter."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    message: str
+    file: Optional[str] = None
+    line: Optional[int] = None
+    column: Optional[int] = None
+    code: Optional[str] = None
+    severity: Severity = Severity.MEDIUM
+    suggestion: Optional[str] = None
+
+
+class LinterToolRunSchema(BaseModel):
+    """Resultado de ejecutar una herramienta estándar."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    key: str
+    name: str
+    status: CheckStatus
+    command: Optional[str] = None
+    duration_ms: Optional[int] = None
+    exit_code: Optional[int] = None
+    version: Optional[str] = None
+    issues_found: int = 0
+    issues_sample: List[LinterIssueDetailSchema] = Field(default_factory=list)
+    stdout_excerpt: Optional[str] = None
+    stderr_excerpt: Optional[str] = None
+
+
+class LinterRunCustomRuleSchema(BaseModel):
+    """Estado de una regla personalizada ejecutada."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    key: str
+    name: str
+    description: str
+    status: CheckStatus
+    threshold: Optional[int] = None
+    violations: List[LinterIssueDetailSchema] = Field(default_factory=list)
+
+
+class LinterCoverageSchema(BaseModel):
+    """Instantánea de cobertura de tests."""
+
+    statement_coverage: Optional[float] = None
+    branch_coverage: Optional[float] = None
+    missing_lines: Optional[int] = None
+
+
+class LinterReportSummarySchema(BaseModel):
+    """Resumen de un reporte de linters."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    overall_status: CheckStatus
+    total_checks: int
+    checks_passed: int
+    checks_warned: int
+    checks_failed: int
+    duration_ms: Optional[int] = None
+    files_scanned: Optional[int] = None
+    lines_scanned: Optional[int] = None
+    issues_total: int = 0
+    critical_issues: int = 0
+
+
+class LinterChartDataSchema(BaseModel):
+    """Datos agregados para visualizaciones."""
+
+    issues_by_tool: Dict[str, int] = Field(default_factory=dict)
+    issues_by_severity: Dict[str, int] = Field(default_factory=dict)
+    top_offenders: List[str] = Field(default_factory=list)
+
+
+class LintersReportSchema(BaseModel):
+    """Payload completo de un reporte de linters."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    root_path: str
+    generated_at: datetime
+    summary: LinterReportSummarySchema
+    tools: List[LinterToolRunSchema] = Field(default_factory=list)
+    custom_rules: List[LinterRunCustomRuleSchema] = Field(default_factory=list)
+    coverage: Optional[LinterCoverageSchema] = None
+    metrics: Dict[str, float] = Field(default_factory=dict)
+    chart_data: LinterChartDataSchema = Field(default_factory=LinterChartDataSchema)
+    notes: List[str] = Field(default_factory=list)
+
+
+class LintersReportListItemSchema(BaseModel):
+    """Elemento resumido para listados de reportes."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    id: int
+    generated_at: datetime
+    root_path: str
+    overall_status: CheckStatus
+    issues_total: int
+    critical_issues: int
+
+
+class LintersReportRecordSchema(LintersReportListItemSchema):
+    """Registro completo con el payload detallado."""
+
+    report: LintersReportSchema
+
+
+class NotificationEntrySchema(BaseModel):
+    """Notificación almacenada en la base de datos."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    id: int
+    created_at: datetime
+    channel: str
+    severity: Severity
+    title: str
+    message: str
+    payload: Optional[dict] = None
+    root_path: Optional[str] = None
+    read: bool = False
 
 
 class BrowseDirectoryResponse(BaseModel):

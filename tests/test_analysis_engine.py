@@ -32,6 +32,13 @@ class FakeClock:
         return self._value
 
 
+def symbol_signatures(summary):
+    return {
+        (symbol.kind.value, symbol.name, symbol.parent or None)
+        for symbol in summary.symbols
+    }
+
+
 def test_project_scanner_extracts_functions_classes_and_methods(tmp_path: Path) -> None:
     module_path = write_module(
         tmp_path,
@@ -145,6 +152,48 @@ def test_project_scanner_handles_js_files(tmp_path: Path) -> None:
     assert "sum" in symbol_names
 
 
+def test_project_scanner_handles_complex_js_patterns(tmp_path: Path) -> None:
+    pytest.importorskip("esprima")
+    write_module(
+        tmp_path,
+        "pkg/math.js",
+        """
+/**
+ * Colección de utilidades matemáticas.
+ */
+export class Calculator {
+  add(a, b) {
+    return a + b;
+  }
+
+  multiply(a, b) {
+    return a * b;
+  }
+}
+
+export const identity = (value) => value;
+
+const format = function (value) {
+  return String(value).trim();
+};
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+    js_summary = next(summary for summary in results if summary.path.name == "math.js")
+
+    signatures = symbol_signatures(js_summary)
+    expected = {
+        ("class", "Calculator", None),
+        ("method", "add", "Calculator"),
+        ("method", "multiply", "Calculator"),
+        ("function", "identity", None),
+        ("function", "format", None),
+    }
+    assert expected <= signatures
+
+
 def test_project_scanner_handles_ts_files(tmp_path: Path) -> None:
     pytest.importorskip("tree_sitter_languages")
     write_module(
@@ -165,6 +214,49 @@ export const handler = (value: number): number => value * 2;
     ts_summary = next(summary for summary in results if summary.path.name == "service.ts")
     names = {symbol.name for symbol in ts_summary.symbols}
     assert {"Service", "handler"} <= names
+
+
+def test_project_scanner_handles_ts_methods_and_exports(tmp_path: Path) -> None:
+    pytest.importorskip("tree_sitter_languages")
+    write_module(
+        tmp_path,
+        "pkg/toolkit.ts",
+        """
+export class Toolbox {
+  constructor(private readonly prefix: string) {}
+
+  format(value: string): string {
+    return `${this.prefix}:${value}`;
+  }
+
+  static version(): string {
+    return "1.0.0";
+  }
+}
+
+export const mapValues = <T, R>(items: T[], fn: (item: T) => R): R[] => {
+  return items.map(fn);
+};
+
+function helper(input: number): number {
+  return input * 10;
+}
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+
+    ts_summary = next(summary for summary in results if summary.path.name == "toolkit.ts")
+    signatures = symbol_signatures(ts_summary)
+    expected = {
+        ("class", "Toolbox", None),
+        ("method", "format", "Toolbox"),
+        ("method", "version", "Toolbox"),
+        ("function", "mapValues", None),
+        ("function", "helper", None),
+    }
+    assert expected <= signatures
 
 
 def test_project_scanner_handles_html_files(tmp_path: Path) -> None:

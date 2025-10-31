@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,14 @@ from .index import SymbolIndex
 from .scanner import ProjectScanner
 from .scheduler import ChangeScheduler
 from .watcher import WatcherService
-from .settings import AppSettings, save_settings
+from .settings import AppSettings, save_settings, ENV_DISABLE_LINTERS
+from .linters import (
+    CheckStatus,
+    Severity,
+    record_linters_report,
+    record_notification,
+    run_linters_pipeline,
+)
 from .state_reporter import StateReporter
 
 logger = logging.getLogger(__name__)
@@ -40,6 +48,15 @@ class AppState:
         self.event_queue: "asyncio.Queue[Dict[str, Any]]" = asyncio.Queue()
         self._stop_event = asyncio.Event()
         self._scheduler_task: Optional[asyncio.Task[None]] = None
+        self._linters_task: Optional[asyncio.Task[None]] = None
+        self._linters_pending = False
+        self._linters_disabled = os.environ.get(ENV_DISABLE_LINTERS, "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self.last_linters_report_id: Optional[int] = None
         self._build_components()
 
     async def startup(self) -> None:
@@ -62,12 +79,16 @@ class AppState:
             started = await asyncio.to_thread(self.watcher.start)
             if not started:
                 logger.warning("Watcher no iniciado (watchdog ausente o error).")
+        self._schedule_linters_pipeline()
         self._scheduler_task = asyncio.create_task(self._scheduler_loop())
 
     async def shutdown(self) -> None:
         """Detiene el estado de la aplicación."""
         logger.info("Deteniendo estado de la app")
         self._stop_event.set()
+        self._linters_pending = False
+        if self._linters_task:
+            await self._linters_task
         if self._scheduler_task:
             await self._scheduler_task
         if self.watcher:
@@ -89,6 +110,7 @@ class AppState:
                 if payload["updated"] or payload["deleted"]:
                     self.last_event_batch = datetime.now(timezone.utc)
                     await self.event_queue.put(payload)
+                    self._schedule_linters_pipeline()
             await asyncio.sleep(self.scheduler.debounce_seconds)
 
     def _serialize_changes(self, changes: Dict[str, Iterable[Path]]) -> Dict[str, List[str]]:
@@ -113,7 +135,66 @@ class AppState:
             self.last_event_batch = datetime.now(timezone.utc)
             await self.event_queue.put(payload)
         self.last_full_scan = datetime.now(timezone.utc)
+        self._schedule_linters_pipeline()
         return len(summaries)
+
+    def _schedule_linters_pipeline(self) -> None:
+        """Programa la ejecución del pipeline de linters."""
+        if self._linters_disabled:
+            return
+        if self._linters_task and not self._linters_task.done():
+            self._linters_pending = True
+            return
+        self._linters_task = asyncio.create_task(self._run_linters_pipeline())
+
+    async def _run_linters_pipeline(self) -> None:
+        """Ejecuta el pipeline de linters y persiste el resultado."""
+        try:
+            report = await asyncio.to_thread(run_linters_pipeline, self.settings.root_path)
+            report_id = record_linters_report(report)
+            self.last_linters_report_id = report_id
+            summary = report.summary
+            status = summary.overall_status
+
+            if status in {CheckStatus.FAIL, CheckStatus.WARN, CheckStatus.SKIPPED}:
+                if status == CheckStatus.FAIL:
+                    severity = Severity.CRITICAL if summary.critical_issues else Severity.HIGH
+                    message = (
+                        f"{summary.issues_total} incidencias detectadas (críticas: {summary.critical_issues})."
+                        if summary.issues_total
+                        else "El pipeline falló. Revisa la salida de las herramientas."
+                    )
+                elif status == CheckStatus.WARN:
+                    severity = Severity.MEDIUM
+                    message = (
+                        f"{summary.issues_total} advertencias encontradas."
+                        if summary.issues_total
+                        else "El pipeline reportó advertencias."
+                    )
+                else:
+                    severity = Severity.LOW
+                    message = "No se pudieron ejecutar las herramientas configuradas."
+
+                record_notification(
+                    channel="linters",
+                    severity=severity,
+                    title=f"Pipeline de linters: {status.value.upper()}",
+                    message=message,
+                    root_path=self.settings.root_path,
+                    payload={
+                        "report_id": report_id,
+                        "status": status.value,
+                        "issues_total": summary.issues_total,
+                        "critical_issues": summary.critical_issues,
+                    },
+                )
+        except Exception:  # pragma: no cover - logging del pipeline
+            logger.exception("Error al ejecutar el pipeline de linters")
+        finally:
+            self._linters_task = None
+            if self._linters_pending:
+                self._linters_pending = False
+                self._schedule_linters_pipeline()
 
     def to_relative(self, path: Path) -> str:
         """Convierte una ruta absoluta en una ruta relativa al root del proyecto."""

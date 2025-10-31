@@ -97,3 +97,12 @@
 
 Los modelos viven en `code_map/linters/report_schema.py` y se diseñaron para serializarse a JSON sin pérdida,
 sirviendo directamente al frontend para renderizar tarjetas-resumen, tablas, timelines y gráficos.
+
+## Persistencia actual
+- `code_map/settings.py` define `state.db` como fuente única de verdad y crea automáticamente las tablas:
+  - `app_settings` (configuración general)
+  - `linter_reports` (histórico con payload completo y metadatos)
+  - `notifications` (avisos de escritorio vinculados a cada root)
+- `code_map/linters/storage.py` ofrece funciones de alto nivel para registrar y consultar reportes/notificaciones,
+  y la API (`code_map/api/linters.py`) expone los endpoints correspondientes.
+- El pipeline real está implementado en `code_map/linters/pipeline.py` (ejecuta ruff, black, mypy, bandit, pytest+cov y reglas personalizadas) y se programa automáticamente desde `AppState` tras cada cambio o escaneo completo; los resultados se persisten vía `record_linters_report` y se emiten notificaciones según el estado.

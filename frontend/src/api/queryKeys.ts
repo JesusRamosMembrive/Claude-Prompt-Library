@@ -19,4 +19,9 @@ export const queryKeys = {
       includeExternal,
       prefixes ? [...prefixes].sort().join(",") : "",
     ] as const,
+  lintersLatest: ["linters", "latest"] as const,
+  lintersReports: (limit: number, offset: number) =>
+    ["linters", "reports", limit, offset] as const,
+  lintersNotifications: (unreadOnly: boolean) =>
+    ["linters", "notifications", unreadOnly] as const,
 };

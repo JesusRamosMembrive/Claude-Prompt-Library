@@ -6,6 +6,7 @@ Analizador para archivos JavaScript/TypeScript usando esprima.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -14,6 +15,32 @@ from .dependencies import optional_dependencies
 from .models import FileSummary, SymbolInfo, SymbolKind
 
 logger = logging.getLogger(__name__)
+
+
+def _node_get(node: Any, key: str, default: Any = None) -> Any:
+    """Obtiene una propiedad desde dict o nodo de esprima."""
+    if node is None:
+        return default
+    if isinstance(node, Mapping):
+        return node.get(key, default)
+    value = getattr(node, key, default)
+    if callable(value):
+        try:
+            return value()
+        except TypeError:
+            return default
+    return value
+
+
+def _ensure_list(value: Any) -> List[Any]:
+    """Normaliza cualquier iterable en lista estándar."""
+    if not value:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+        return list(value)
+    return [value]
 
 
 class JsAnalyzer:
@@ -65,11 +92,19 @@ class JsAnalyzer:
                 modified_at=get_modified_time(abs_path),
             )
 
-        comments = module.get("comments", []) or []
+        comments = _ensure_list(_node_get(module, "comments", []))
+        body = _ensure_list(_node_get(module, "body", []))
+        if not body and hasattr(module, "toDict"):
+            try:
+                data = module.toDict()  # type: ignore[attr-defined]
+                comments = _ensure_list(data.get("comments", []) or comments)
+                body = _ensure_list(data.get("body", []))
+            except Exception:
+                body = body or []
+
         comment_map = self._build_comment_map(comments)
 
         symbols: List[SymbolInfo] = []
-        body = module.get("body", []) or []
         for node in body:
             self._collect_from_node(node, symbols, comment_map, parent=None, file_path=abs_path)
 
@@ -89,12 +124,12 @@ class JsAnalyzer:
         file_path: Path,
     ) -> None:
         """Recorre un nodo del AST y acumula símbolos relevantes."""
-        node_type = node.get("type")
+        node_type = _node_get(node, "type")
 
         if node_type == "FunctionDeclaration":
-            name = node.get("id", {}).get("name")
+            name = _node_get(_node_get(node, "id", {}), "name")
             if name:
-                line = node.get("loc", {}).get("start", {}).get("line")
+                line = _node_get(_node_get(_node_get(node, "loc", {}), "start", {}), "line")
                 doc = self._docstring_for(line, comment_map)
                 symbols.append(
                     SymbolInfo(
@@ -106,8 +141,8 @@ class JsAnalyzer:
                     )
                 )
         elif node_type == "ClassDeclaration":
-            class_name = node.get("id", {}).get("name")
-            line = node.get("loc", {}).get("start", {}).get("line")
+            class_name = _node_get(_node_get(node, "id", {}), "name")
+            line = _node_get(_node_get(_node_get(node, "loc", {}), "start", {}), "line")
             doc = self._docstring_for(line, comment_map)
             if class_name:
                 symbols.append(
@@ -119,16 +154,17 @@ class JsAnalyzer:
                         docstring=doc,
                     )
                 )
-                for item in (node.get("body", {}) or {}).get("body", []) or []:
-                    if item.get("type") == "MethodDefinition":
+                body = _node_get(node, "body", {}) or {}
+                for item in _ensure_list(_node_get(body, "body", [])):
+                    if _node_get(item, "type") == "MethodDefinition":
                         method_name = self._method_name(item)
                         if method_name:
-                            method_line = (
-                                item.get("value", {})
-                                .get("loc", {})
-                                .get("start", {})
-                                .get("line")
+                            method_line = _node_get(
+                                _node_get(_node_get(item, "value", {}), "loc", {}),
+                                "start",
+                                {},
                             )
+                            method_line = _node_get(method_line, "line")
                             method_doc = self._docstring_for(method_line, comment_map)
                             symbols.append(
                                 SymbolInfo(
@@ -141,13 +177,13 @@ class JsAnalyzer:
                                 )
                             )
         elif node_type in {"ExportNamedDeclaration", "ExportDefaultDeclaration"}:
-            declaration = node.get("declaration")
+            declaration = _node_get(node, "declaration")
             if declaration:
                 self._collect_from_node(
                     declaration, symbols, comment_map, parent=None, file_path=file_path
                 )
         elif node_type == "VariableDeclaration":
-            for declarator in node.get("declarations", []) or []:
+            for declarator in _ensure_list(_node_get(node, "declarations", [])):
                 self._handle_variable_declarator(declarator, symbols, comment_map, file_path)
 
     def _handle_variable_declarator(
@@ -158,15 +194,15 @@ class JsAnalyzer:
         file_path: Path,
     ) -> None:
         """Registra funciones declaradas mediante asignaciones de variables."""
-        id_node = declarator.get("id")
-        init = declarator.get("init")
+        id_node = _node_get(declarator, "id")
+        init = _node_get(declarator, "init")
         if not id_node or not init:
             return
 
-        name = id_node.get("name")
-        init_type = init.get("type")
+        name = _node_get(id_node, "name")
+        init_type = _node_get(init, "type")
         if name and init_type in {"FunctionExpression", "ArrowFunctionExpression"}:
-            line = init.get("loc", {}).get("start", {}).get("line")
+            line = _node_get(_node_get(_node_get(init, "loc", {}), "start", {}), "line")
             doc = self._docstring_for(line, comment_map)
             symbols.append(
                 SymbolInfo(
@@ -180,28 +216,29 @@ class JsAnalyzer:
 
     def _method_name(self, node: Dict[str, Any]) -> Optional[str]:
         """Obtiene el nombre legible de un método de clase."""
-        key = node.get("key")
+        key = _node_get(node, "key")
         if not key:
             return None
-        if key.get("type") == "Identifier":
-            return key.get("name")
-        if key.get("type") == "Literal":
-            return str(key.get("value"))
+        key_type = _node_get(key, "type")
+        if key_type == "Identifier":
+            return _node_get(key, "name")
+        if key_type == "Literal":
+            return str(_node_get(key, "value"))
         return None
 
-    def _build_comment_map(self, comments: List[Dict[str, Any]]) -> Dict[int, str]:
+    def _build_comment_map(self, comments: List[Any]) -> Dict[int, str]:
         """Asocia comentarios finales con la línea donde finalizan."""
         if not self.include_docstrings:
             return {}
         result: Dict[int, str] = {}
         for comment in comments:
-            loc = comment.get("loc")
+            loc = _node_get(comment, "loc")
             if not loc:
                 continue
-            end_line = loc.get("end", {}).get("line")
+            end_line = _node_get(_node_get(loc, "end", {}), "line")
             if end_line is None:
                 continue
-            value = comment.get("value", "")
+            value = _node_get(comment, "value", "")
             cleaned = self._clean_comment(value)
             result[end_line] = cleaned
         return result

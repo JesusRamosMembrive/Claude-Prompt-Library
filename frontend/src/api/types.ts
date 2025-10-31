@@ -186,3 +186,101 @@ export interface UMLDiagramResponse {
   classes: UMLClass[];
   stats: Record<string, number>;
 }
+
+export type LinterCheckStatus = "pass" | "warn" | "fail" | "skipped" | "error";
+export type LinterSeverity = "info" | "low" | "medium" | "high" | "critical";
+
+export interface LinterIssueDetail {
+  message: string;
+  file?: string | null;
+  line?: number | null;
+  column?: number | null;
+  code?: string | null;
+  severity: LinterSeverity;
+  suggestion?: string | null;
+}
+
+export interface LinterToolRun {
+  key: string;
+  name: string;
+  status: LinterCheckStatus;
+  command?: string | null;
+  duration_ms?: number | null;
+  exit_code?: number | null;
+  version?: string | null;
+  issues_found: number;
+  issues_sample: LinterIssueDetail[];
+  stdout_excerpt?: string | null;
+  stderr_excerpt?: string | null;
+}
+
+export interface LinterCustomRuleRun {
+  key: string;
+  name: string;
+  description: string;
+  status: LinterCheckStatus;
+  threshold?: number | null;
+  violations: LinterIssueDetail[];
+}
+
+export interface LinterCoverageSnapshot {
+  statement_coverage?: number | null;
+  branch_coverage?: number | null;
+  missing_lines?: number | null;
+}
+
+export interface LinterReportSummary {
+  overall_status: LinterCheckStatus;
+  total_checks: number;
+  checks_passed: number;
+  checks_warned: number;
+  checks_failed: number;
+  duration_ms?: number | null;
+  files_scanned?: number | null;
+  lines_scanned?: number | null;
+  issues_total: number;
+  critical_issues: number;
+}
+
+export interface LinterChartData {
+  issues_by_tool: Record<string, number>;
+  issues_by_severity: Record<LinterSeverity | string, number>;
+  top_offenders: string[];
+}
+
+export interface LintersReportPayload {
+  root_path: string;
+  generated_at: string;
+  summary: LinterReportSummary;
+  tools: LinterToolRun[];
+  custom_rules: LinterCustomRuleRun[];
+  coverage?: LinterCoverageSnapshot | null;
+  metrics: Record<string, number>;
+  chart_data: LinterChartData;
+  notes: string[];
+}
+
+export interface LintersReportListItem {
+  id: number;
+  generated_at: string;
+  root_path: string;
+  overall_status: LinterCheckStatus;
+  issues_total: number;
+  critical_issues: number;
+}
+
+export interface LintersReportRecord extends LintersReportListItem {
+  report: LintersReportPayload;
+}
+
+export interface LintersNotificationEntry {
+  id: number;
+  created_at: string;
+  channel: string;
+  severity: LinterSeverity;
+  title: string;
+  message: string;
+  payload?: Record<string, unknown> | null;
+  root_path?: string | null;
+  read: boolean;
+}

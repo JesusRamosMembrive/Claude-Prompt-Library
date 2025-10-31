@@ -11,6 +11,9 @@ import type {
   ClassGraphResponse,
   BrowseDirectoryResponse,
   UMLDiagramResponse,
+  LintersReportRecord,
+  LintersReportListItem,
+  LintersNotificationEntry,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -72,6 +75,36 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(
       `API request failed (${response.status}): ${detail || "Unknown error"}`
     );
+  }
+
+  return (await response.json()) as T;
+}
+
+async function fetchJsonNullable<T>(
+  path: string,
+  init?: RequestInit
+): Promise<T | null> {
+  const response = await fetch(buildUrl(path), {
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    ...init,
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `API request failed (${response.status}): ${detail || "Unknown error"}`
+    );
+  }
+
+  if (response.status === 204) {
+    return null;
   }
 
   return (await response.json()) as T;
@@ -325,4 +358,43 @@ export async function getPreview(path: string): Promise<{ content: string; conte
   const content = await response.text();
   const contentType = response.headers.get("Content-Type") ?? "text/plain";
   return { content, contentType };
+}
+
+export function getLintersLatestReport(): Promise<LintersReportRecord | null> {
+  return fetchJsonNullable<LintersReportRecord>("/linters/reports/latest");
+}
+
+export function getLintersReports(
+  limit = 20,
+  offset = 0
+): Promise<LintersReportListItem[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  return fetchJson<LintersReportListItem[]>(`/linters/reports?${params.toString()}`);
+}
+
+export function getLintersNotifications(
+  limit = 50,
+  unreadOnly = false
+): Promise<LintersNotificationEntry[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    unread_only: unreadOnly ? "true" : "false",
+  });
+  return fetchJson<LintersNotificationEntry[]>(
+    `/linters/notifications?${params.toString()}`
+  );
+}
+
+export async function markNotificationAsRead(
+  notificationId: number,
+  read = true
+): Promise<void> {
+  const query = read ? "" : "?read=false";
+  await fetchJsonNullable<void>(
+    `/linters/notifications/${notificationId}/read${query}`,
+    { method: "POST" }
+  );
 }

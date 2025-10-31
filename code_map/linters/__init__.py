@@ -19,6 +19,21 @@ from .report_schema import (
     ReportSummary,
     Severity,
     ToolRunResult,
+    report_from_dict,
+    report_to_dict,
+)
+from .pipeline import run_linters_pipeline
+from .storage import (
+    StoredLintersReport,
+    StoredNotification,
+    get_latest_linters_report,
+    get_linters_report,
+    list_linters_reports,
+    list_notifications,
+    mark_notification_read,
+    get_notification,
+    record_linters_report,
+    record_notification,
 )
 
 __all__ = [
@@ -33,6 +48,19 @@ __all__ = [
     "IssueDetail",
     "CheckStatus",
     "Severity",
+    "report_to_dict",
+    "report_from_dict",
+    "run_linters_pipeline",
+    "record_linters_report",
+    "get_linters_report",
+    "get_latest_linters_report",
+    "list_linters_reports",
+    "StoredLintersReport",
+    "record_notification",
+    "list_notifications",
+    "mark_notification_read",
+    "StoredNotification",
+    "get_notification",
 ]
 
 
