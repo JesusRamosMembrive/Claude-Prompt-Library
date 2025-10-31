@@ -1,0 +1,3496 @@
+[
+  {
+    "path": "assess_stage.py",
+    "relative": true,
+    "modified_at": "2025-10-30T15:42:21.547371+00:00",
+    "symbols": [
+      {
+        "name": "should_ignore",
+        "kind": "function",
+        "lineno": 27,
+        "parent": null,
+        "docstring": "Check if path should be ignored during analysis.\n\nDetermines if a file or directory path should be excluded from stage detection\nanalysis based on common development artifacts and dependencies.\n\nArgs:\n    path (Path): Path object to check (can be file or directory)\n\nReturns:\n    bool: True if path should be ignored (matches IGNORE_DIRS or starts with '.'),\n          False if path should be analyzed\n\nNotes:\n    - Checks all path parts (parent directories)\n    - Excludes hidden files/dirs (starting with '.')\n    - Uses global IGNORE_DIRS set for common exclusions\n    - Prevents noise from virtualenvs, node_modules, build artifacts, etc."
+      },
+      {
+        "name": "count_files_by_extension",
+        "kind": "function",
+        "lineno": 54,
+        "parent": null,
+        "docstring": "Count files with given extensions, ignoring noise.\n\nRecursively counts code files with specified extensions while excluding\ndirectories that should be ignored (virtualenvs, node_modules, etc.).\n\nArgs:\n    root_dir (Path): Root directory to search from\n    extensions (list): List of file extensions to count (e.g., ['.py', '.js'])\n\nReturns:\n    int: Total count of files matching extensions (excluding ignored paths)\n\nNotes:\n    - Uses rglob for recursive search\n    - Applies should_ignore() filter to exclude noise\n    - Extensions should include the dot (e.g., '.py' not 'py')\n    - Returns 0 if no matching files found"
+      },
+      {
+        "name": "count_lines_of_code",
+        "kind": "function",
+        "lineno": 82,
+        "parent": null,
+        "docstring": "Estimate lines of code, ignoring noise.\n\nRecursively counts total lines in all code files with specified extensions,\nexcluding ignored directories. Uses simple line counting (not complexity analysis).\n\nArgs:\n    root_dir (Path): Root directory to search from\n    extensions (list): List of file extensions to count (e.g., ['.py', '.js'])\n\nReturns:\n    int: Total lines of code across all matching files (excluding ignored paths)\n\nNotes:\n    - Counts all lines (including comments, blank lines)\n    - Uses UTF-8 encoding with error tolerance ('ignore' mode)\n    - Silently skips files that can't be read (permissions, binary files, etc.)\n    - Not a true SLOC metric - includes comments and whitespace\n    - Fast approximation suitable for stage detection"
+      },
+      {
+        "name": "detect_patterns",
+        "kind": "function",
+        "lineno": 116,
+        "parent": null,
+        "docstring": "Detect common design patterns in code.\n\nSearches for indicators of design patterns by looking for pattern-related\nkeywords in file and directory names throughout the project.\n\nArgs:\n    root_dir (Path): Root directory to search from\n\nReturns:\n    list: List of detected pattern names (e.g., ['Factory Pattern', 'Repository'])\n          Returns empty list if no patterns detected\n\nPatterns Detected:\n    - Factory Pattern: 'factory', 'Factory', 'create_'\n    - Singleton: 'singleton', 'Singleton', 'getInstance'\n    - Observer: 'observer', 'Observer', 'subscribe', 'emit'\n    - Strategy: 'strategy', 'Strategy'\n    - Repository: 'repository', 'Repository', 'repo'\n    - Service Layer: 'service', 'Service', 'services/'\n    - Adapter: 'adapter', 'Adapter', 'adapters/'\n    - Middleware: 'middleware', 'Middleware'\n\nNotes:\n    - Heuristic-based detection (naming conventions)\n    - Does not analyze code semantics\n    - May have false positives/negatives\n    - Returns deduplicated list\n    - Applies should_ignore() filter"
+      },
+      {
+        "name": "analyze_structure",
+        "kind": "function",
+        "lineno": 173,
+        "parent": null,
+        "docstring": "Analyze project structure complexity.\n\nExamines directory organization to identify architectural patterns and\nmeasure structural complexity based on directory count and naming conventions.\n\nArgs:\n    root_dir (Path): Root directory to analyze\n\nReturns:\n    dict: Dictionary containing:\n        - directory_count (int): Total non-ignored directories in project\n        - architectural_folders (list): List of detected architectural layer names\n                                      (e.g., ['models', 'services', 'controllers'])\n\nArchitectural Folders Detected:\n    - MVC: models, views, controllers\n    - Layered: services, repositories, handlers, routers\n    - DDD: domain, infrastructure, application, presentation\n    - Common: middleware, adapters, interfaces, api, core\n\nNotes:\n    - Uses partial name matching (e.g., 'user_service' matches 'service')\n    - Applies should_ignore() filter\n    - Returns deduplicated architectural folder list\n    - Directory count excludes ignored paths"
+      },
+      {
+        "name": "assess_stage",
+        "kind": "function",
+        "lineno": 227,
+        "parent": null,
+        "docstring": "Assess project and recommend development stage.\n\nAnalyzes a project's codebase metrics, structure, and patterns to recommend\nthe appropriate development stage (Prototyping, Structuring, or Scaling).\n\nArgs:\n    project_path (str or Path): Path to project directory to analyze\n\nReturns:\n    dict or None: Assessment dictionary containing:\n        - recommended_stage (int): 1 (Prototyping), 2 (Structuring), or 3 (Scaling)\n        - confidence (str): 'high', 'medium', or 'low'\n        - reasons (list): Human-readable reasons explaining the recommendation\n        - metrics (dict): Project metrics:\n            - file_count (int): Number of code files\n            - lines_of_code (int): Total lines of code (approximate)\n            - directory_count (int): Number of directories\n            - patterns_found (list): Detected design patterns\n            - architectural_folders (list): Detected architectural layers\n    Returns None if project_path doesn't exist\n\nStage Decision Criteria:\n    Stage 1 (Prototyping):\n        - \u22643 files, <500 LOC\n        - No patterns or architecture\n        - Single file preferred\n\n    Stage 2 (Structuring):\n        - \u226420 files, <3000 LOC\n        - \u22643 patterns\n        - Basic architecture emerging\n        - Sub-stages: Early (\u22648 files), Mid (\u226415 files), Late (>15 files)\n\n    Stage 3 (Scaling):\n        - >20 files OR >3000 LOC OR >3 patterns\n        - Complex architecture\n        - Multiple patterns in use\n\nConfidence Adjustments:\n    - Medium if: Few files but high LOC (needs refactoring)\n    - Medium if: Many files but no patterns (needs structure)\n\nNotes:\n    - Ignores common noise (node_modules, .venv, etc.)\n    - Prefers lower stage when borderline (simpler is better)\n    - Returns detailed reasoning for transparency\n    - Includes actionable warnings and hints"
+      },
+      {
+        "name": "print_assessment",
+        "kind": "function",
+        "lineno": 380,
+        "parent": null,
+        "docstring": "Pretty print assessment results to console.\n\nFormats and displays stage assessment results in a readable format with\nemojis, metrics, reasoning, and actionable next steps.\n\nArgs:\n    assessment (dict or None): Assessment dictionary from assess_stage()\n                               If None, prints error message\n\nReturns:\n    None (prints to stdout)\n\nOutput Sections:\n    1. Recommended stage with confidence indicator\n    2. Project metrics (files, LOC, directories, patterns, architecture)\n    3. Reasoning (why this stage was chosen)\n    4. Stage explanation (what each stage means)\n    5. Next steps (actionable recommendations)\n    6. Confidence warnings (if confidence is not high)\n\nNotes:\n    - Uses emojis for visual clarity\n    - Formatted with separator lines for readability\n    - Truncates long lists (e.g., max 6 architectural folders shown)\n    - Includes stage philosophy and best practices\n    - Provides specific next steps"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "claude_assess.py",
+    "relative": true,
+    "modified_at": "2025-10-30T15:42:43.121542+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "code_map/__init__.py",
+    "relative": true,
+    "modified_at": "2025-10-29T18:26:58.891913+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "code_map/analyzer.py",
+    "relative": true,
+    "modified_at": "2025-10-30T15:43:19.167826+00:00",
+    "symbols": [
+      {
+        "name": "get_modified_time",
+        "kind": "function",
+        "lineno": 17,
+        "parent": null,
+        "docstring": "Obtiene la \u00faltima modificaci\u00f3n del archivo en UTC.\n\nArgs:\n    path (Path): Ruta al archivo del cual obtener la fecha de modificaci\u00f3n\n\nReturns:\n    Optional[datetime]: Fecha de \u00faltima modificaci\u00f3n en UTC, o None si hay error\n                       al acceder al archivo (permisos, archivo no existe, etc.)\n\nNotes:\n    - Usa stat().st_mtime del sistema de archivos\n    - Convierte autom\u00e1ticamente a timezone UTC\n    - Maneja OSError silenciosamente retornando None"
+      },
+      {
+        "name": "FileAnalyzer",
+        "kind": "class",
+        "lineno": 41,
+        "parent": null,
+        "docstring": "Extrae s\u00edmbolos soportados (funciones, clases, m\u00e9todos) de un archivo Python.\n\nUtiliza el m\u00f3dulo AST (Abstract Syntax Tree) de Python para parsear archivos\nde c\u00f3digo fuente y extraer informaci\u00f3n estructural sobre funciones, clases y\nm\u00e9todos, incluyendo sus docstrings y ubicaciones.\n\nAttributes:\n    include_docstrings (bool): Si True, incluye los docstrings de los s\u00edmbolos\n                               en la informaci\u00f3n extra\u00edda\n\nNotes:\n    - Maneja errores de sintaxis gracefully (contin\u00faa el an\u00e1lisis)\n    - Detecta autom\u00e1ticamente la codificaci\u00f3n del archivo\n    - Soporta funciones s\u00edncronas y as\u00edncronas\n    - Extrae jerarqu\u00eda completa de clases y sus m\u00e9todos"
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 60,
+        "parent": "FileAnalyzer",
+        "docstring": "Inicializa el analizador de archivos.\n\nArgs:\n    include_docstrings (bool): Si True, los docstrings ser\u00e1n incluidos en\n                               los s\u00edmbolos extra\u00eddos. Default: False\n\nNotes:\n    - Keyword-only argument para claridad\n    - include_docstrings=False ahorra memoria en proyectos grandes"
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 74,
+        "parent": "FileAnalyzer",
+        "docstring": "Analiza un archivo Python y devuelve los s\u00edmbolos detectados.\n\nArgs:\n    path: Ruta del archivo a inspeccionar.\n\nReturns:\n    Un resumen con s\u00edmbolos y errores asociados al archivo."
+      },
+      {
+        "name": "_read_source",
+        "kind": "method",
+        "lineno": 119,
+        "parent": "FileAnalyzer",
+        "docstring": "Lee el archivo detectando la codificaci\u00f3n declarada.\n\nUtiliza tokenize.detect_encoding() para respetar las declaraciones de\ncodificaci\u00f3n en el archivo (PEP 263: # -*- coding: utf-8 -*-).\n\nArgs:\n    path (Path): Ruta al archivo a leer\n\nReturns:\n    str: Contenido completo del archivo decodificado\n\nRaises:\n    UnicodeDecodeError: Si la codificaci\u00f3n detectada es incorrecta\n    OSError: Si el archivo no puede ser le\u00eddo\n\nNotes:\n    - Respeta declaraciones de encoding en la primera o segunda l\u00ednea\n    - Fallback a UTF-8 si no hay declaraci\u00f3n expl\u00edcita\n    - Abre en modo binario para detecci\u00f3n correcta"
+      },
+      {
+        "name": "_build_function_symbol",
+        "kind": "method",
+        "lineno": 147,
+        "parent": "FileAnalyzer",
+        "docstring": "Crea la representaci\u00f3n de s\u00edmbolo para una funci\u00f3n o corrutina.\n\nArgs:\n    node (AstFunction): Nodo AST de tipo FunctionDef o AsyncFunctionDef\n    path (Path): Ruta del archivo donde se encuentra la funci\u00f3n\n\nReturns:\n    SymbolInfo: Informaci\u00f3n estructurada del s\u00edmbolo funci\u00f3n\n\nNotes:\n    - Soporta tanto funciones s\u00edncronas como as\u00edncronas (async def)\n    - Extrae nombre, ubicaci\u00f3n (lineno) y opcionalmente docstring\n    - No distingue entre funci\u00f3n sync y async en el tipo retornado"
+      },
+      {
+        "name": "_build_class_symbol",
+        "kind": "method",
+        "lineno": 171,
+        "parent": "FileAnalyzer",
+        "docstring": "Crea la representaci\u00f3n de s\u00edmbolo para una clase.\n\nArgs:\n    node (ast.ClassDef): Nodo AST de tipo ClassDef\n    path (Path): Ruta del archivo donde se encuentra la clase\n\nReturns:\n    SymbolInfo: Informaci\u00f3n estructurada del s\u00edmbolo clase\n\nNotes:\n    - Solo procesa la definici\u00f3n de la clase (no sus m\u00e9todos)\n    - Los m\u00e9todos se procesan por separado en _build_method_symbols()\n    - Extrae docstring de clase si include_docstrings=True"
+      },
+      {
+        "name": "_build_method_symbols",
+        "kind": "method",
+        "lineno": 195,
+        "parent": "FileAnalyzer",
+        "docstring": "Genera s\u00edmbolos para los m\u00e9todos definidos dentro de una clase."
+      },
+      {
+        "name": "_docstring_for",
+        "kind": "method",
+        "lineno": 210,
+        "parent": "FileAnalyzer",
+        "docstring": "Recupera el docstring del nodo si est\u00e1 habilitado."
+      },
+      {
+        "name": "_is_function",
+        "kind": "method",
+        "lineno": 217,
+        "parent": "FileAnalyzer",
+        "docstring": "Indica si el nodo AST corresponde a una funci\u00f3n o corrutina."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/analyzer_registry.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:23:58.669265+00:00",
+    "symbols": [
+      {
+        "name": "AnalyzerCapability",
+        "kind": "class",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Descripci\u00f3n de la disponibilidad de un analizador por dominio."
+      },
+      {
+        "name": "PlainTextAnalyzer",
+        "kind": "class",
+        "lineno": 33,
+        "parent": null,
+        "docstring": "Analizador de reserva cuando no existe soporte espec\u00edfico."
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 36,
+        "parent": "PlainTextAnalyzer",
+        "docstring": "Genera un resumen vac\u00edo para un archivo de texto plano."
+      },
+      {
+        "name": "AnalyzerRegistry",
+        "kind": "class",
+        "lineno": 47,
+        "parent": null,
+        "docstring": "Agrupa los analizadores disponibles y proporciona sus capacidades."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 52,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Inicializa el registro de analizadores."
+      },
+      {
+        "name": "get",
+        "kind": "method",
+        "lineno": 80,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Obtiene el analizador para una extensi\u00f3n de archivo."
+      },
+      {
+        "name": "items",
+        "kind": "method",
+        "lineno": 84,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Itera sobre los pares (extensi\u00f3n, analizador) registrados."
+      },
+      {
+        "name": "analyzers",
+        "kind": "method",
+        "lineno": 89,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Diccionario de los analizadores registrados."
+      },
+      {
+        "name": "capabilities",
+        "kind": "method",
+        "lineno": 94,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Lista de las capacidades de los analizadores."
+      },
+      {
+        "name": "_build_override_map",
+        "kind": "method",
+        "lineno": 98,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Construye un mapa de analizadores personalizados."
+      },
+      {
+        "name": "_default_analyzer_for",
+        "kind": "method",
+        "lineno": 105,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Obtiene el analizador por defecto para una extensi\u00f3n de archivo."
+      },
+      {
+        "name": "_build_capabilities",
+        "kind": "method",
+        "lineno": 119,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Construye la lista de capacidades de los analizadores."
+      },
+      {
+        "name": "_normalize_extension",
+        "kind": "method",
+        "lineno": 204,
+        "parent": "AnalyzerRegistry",
+        "docstring": "Normaliza una extensi\u00f3n de archivo."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/analysis.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:21:02.550360+00:00",
+    "symbols": [
+      {
+        "name": "health",
+        "kind": "function",
+        "lineno": 34,
+        "parent": null,
+        "docstring": "Comprueba el estado de la API."
+      },
+      {
+        "name": "get_tree",
+        "kind": "function",
+        "lineno": 40,
+        "parent": null,
+        "docstring": "Obtiene el \u00e1rbol de archivos del proyecto."
+      },
+      {
+        "name": "get_file",
+        "kind": "function",
+        "lineno": 52,
+        "parent": null,
+        "docstring": "Obtiene el resumen de un archivo espec\u00edfico."
+      },
+      {
+        "name": "search",
+        "kind": "function",
+        "lineno": 69,
+        "parent": null,
+        "docstring": "Busca s\u00edmbolos en el proyecto."
+      },
+      {
+        "name": "_event_stream",
+        "kind": "function",
+        "lineno": 78,
+        "parent": null,
+        "docstring": "Genera un flujo de eventos de cambio."
+      },
+      {
+        "name": "events",
+        "kind": "function",
+        "lineno": 90,
+        "parent": null,
+        "docstring": "Suscribe al flujo de eventos de cambio."
+      },
+      {
+        "name": "rescan",
+        "kind": "function",
+        "lineno": 96,
+        "parent": null,
+        "docstring": "Dispara un escaneo completo del proyecto."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/deps.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:22:00.322666+00:00",
+    "symbols": [
+      {
+        "name": "get_app_state",
+        "kind": "function",
+        "lineno": 13,
+        "parent": null,
+        "docstring": "Obtiene el estado de la aplicaci\u00f3n desde la solicitud."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/graph.py",
+    "relative": true,
+    "modified_at": "2025-10-31T11:37:13.055345+00:00",
+    "symbols": [
+      {
+        "name": "get_class_graph",
+        "kind": "function",
+        "lineno": 22,
+        "parent": null,
+        "docstring": "Genera el grafo de clases detectado en el workspace actual."
+      },
+      {
+        "name": "get_uml_diagram",
+        "kind": "function",
+        "lineno": 56,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "get_uml_svg",
+        "kind": "function",
+        "lineno": 77,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/preview.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:21:19.232449+00:00",
+    "symbols": [
+      {
+        "name": "preview_file",
+        "kind": "function",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Obtiene el contenido de un archivo para previsualizaci\u00f3n."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/routes.py",
+    "relative": true,
+    "modified_at": "2025-10-30T19:56:40.175033+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/schemas.py",
+    "relative": true,
+    "modified_at": "2025-10-31T10:22:35.033875+00:00",
+    "symbols": [
+      {
+        "name": "HealthResponse",
+        "kind": "class",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Respuesta del endpoint de health."
+      },
+      {
+        "name": "AnalysisErrorSchema",
+        "kind": "class",
+        "lineno": 23,
+        "parent": null,
+        "docstring": "Esquema para un error de an\u00e1lisis."
+      },
+      {
+        "name": "SymbolSchema",
+        "kind": "class",
+        "lineno": 30,
+        "parent": null,
+        "docstring": "Esquema para un s\u00edmbolo de c\u00f3digo."
+      },
+      {
+        "name": "FileSummarySchema",
+        "kind": "class",
+        "lineno": 40,
+        "parent": null,
+        "docstring": "Esquema para el resumen de un archivo."
+      },
+      {
+        "name": "TreeNodeSchema",
+        "kind": "class",
+        "lineno": 48,
+        "parent": null,
+        "docstring": "Esquema para un nodo del \u00e1rbol de archivos."
+      },
+      {
+        "name": "SearchResultsSchema",
+        "kind": "class",
+        "lineno": 62,
+        "parent": null,
+        "docstring": "Esquema para los resultados de una b\u00fasqueda."
+      },
+      {
+        "name": "RescanResponse",
+        "kind": "class",
+        "lineno": 67,
+        "parent": null,
+        "docstring": "Respuesta del endpoint de rescan."
+      },
+      {
+        "name": "ChangeNotification",
+        "kind": "class",
+        "lineno": 72,
+        "parent": null,
+        "docstring": "Notificaci\u00f3n de cambios en el sistema de archivos."
+      },
+      {
+        "name": "SettingsResponse",
+        "kind": "class",
+        "lineno": 78,
+        "parent": null,
+        "docstring": "Respuesta del endpoint de settings."
+      },
+      {
+        "name": "SettingsUpdateRequest",
+        "kind": "class",
+        "lineno": 87,
+        "parent": null,
+        "docstring": "Petici\u00f3n para actualizar los settings."
+      },
+      {
+        "name": "SettingsUpdateResponse",
+        "kind": "class",
+        "lineno": 94,
+        "parent": null,
+        "docstring": "Respuesta de la actualizaci\u00f3n de settings."
+      },
+      {
+        "name": "AnalyzerCapabilitySchema",
+        "kind": "class",
+        "lineno": 100,
+        "parent": null,
+        "docstring": "Esquema para una capacidad del analizador."
+      },
+      {
+        "name": "StatusResponse",
+        "kind": "class",
+        "lineno": 111,
+        "parent": null,
+        "docstring": "Respuesta del endpoint de status."
+      },
+      {
+        "name": "PreviewResponse",
+        "kind": "class",
+        "lineno": 125,
+        "parent": null,
+        "docstring": "Respuesta del endpoint de preview."
+      },
+      {
+        "name": "OptionalFilesStatus",
+        "kind": "class",
+        "lineno": 131,
+        "parent": null,
+        "docstring": "Estado opcional (archivos recomendados pero no obligatorios)."
+      },
+      {
+        "name": "AgentInstallStatus",
+        "kind": "class",
+        "lineno": 138,
+        "parent": null,
+        "docstring": "Estado de instalaci\u00f3n para un agente (Claude o Codex)."
+      },
+      {
+        "name": "DocsStatus",
+        "kind": "class",
+        "lineno": 147,
+        "parent": null,
+        "docstring": "Estado de los documentos de referencia."
+      },
+      {
+        "name": "StageDetectionStatus",
+        "kind": "class",
+        "lineno": 155,
+        "parent": null,
+        "docstring": "Resultado de la detecci\u00f3n autom\u00e1tica de etapa."
+      },
+      {
+        "name": "StageStatusResponse",
+        "kind": "class",
+        "lineno": 166,
+        "parent": null,
+        "docstring": "Payload completo con el estado stage-aware del proyecto."
+      },
+      {
+        "name": "StageInitRequest",
+        "kind": "class",
+        "lineno": 175,
+        "parent": null,
+        "docstring": "Petici\u00f3n para inicializar los assets stage-aware."
+      },
+      {
+        "name": "StageInitResponse",
+        "kind": "class",
+        "lineno": 180,
+        "parent": null,
+        "docstring": "Respuesta tras ejecutar init_project.py."
+      },
+      {
+        "name": "BrowseDirectoryResponse",
+        "kind": "class",
+        "lineno": 190,
+        "parent": null,
+        "docstring": "Respuesta al seleccionar un directorio en el servidor."
+      },
+      {
+        "name": "ClassGraphNode",
+        "kind": "class",
+        "lineno": 195,
+        "parent": null,
+        "docstring": "Nodo del grafo de clases."
+      },
+      {
+        "name": "ClassGraphEdge",
+        "kind": "class",
+        "lineno": 203,
+        "parent": null,
+        "docstring": "Arista del grafo de clases."
+      },
+      {
+        "name": "ClassGraphStats",
+        "kind": "class",
+        "lineno": 212,
+        "parent": null,
+        "docstring": "M\u00e9tricas del grafo generado."
+      },
+      {
+        "name": "ClassGraphResponse",
+        "kind": "class",
+        "lineno": 219,
+        "parent": null,
+        "docstring": "Respuesta completa del grafo de clases."
+      },
+      {
+        "name": "UMLAttribute",
+        "kind": "class",
+        "lineno": 226,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "UMLMethod",
+        "kind": "class",
+        "lineno": 232,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "UMLClass",
+        "kind": "class",
+        "lineno": 238,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "UMLDiagramResponse",
+        "kind": "class",
+        "lineno": 249,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "serialize_symbol",
+        "kind": "function",
+        "lineno": 254,
+        "parent": null,
+        "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
+      },
+      {
+        "name": "serialize_error",
+        "kind": "function",
+        "lineno": 267,
+        "parent": null,
+        "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
+      },
+      {
+        "name": "serialize_summary",
+        "kind": "function",
+        "lineno": 276,
+        "parent": null,
+        "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
+      },
+      {
+        "name": "serialize_tree",
+        "kind": "function",
+        "lineno": 288,
+        "parent": null,
+        "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
+      },
+      {
+        "name": "serialize_search_results",
+        "kind": "function",
+        "lineno": 314,
+        "parent": null,
+        "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
+      },
+      {
+        "name": "serialize_settings",
+        "kind": "function",
+        "lineno": 319,
+        "parent": null,
+        "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
+      },
+      {
+        "name": "serialize_status",
+        "kind": "function",
+        "lineno": 325,
+        "parent": null,
+        "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/settings.py",
+    "relative": true,
+    "modified_at": "2025-10-31T06:07:19.193387+00:00",
+    "symbols": [
+      {
+        "name": "get_settings",
+        "kind": "function",
+        "lineno": 31,
+        "parent": null,
+        "docstring": "Obtiene la configuraci\u00f3n actual de la aplicaci\u00f3n."
+      },
+      {
+        "name": "update_settings",
+        "kind": "function",
+        "lineno": 37,
+        "parent": null,
+        "docstring": "Actualiza la configuraci\u00f3n de la aplicaci\u00f3n."
+      },
+      {
+        "name": "get_status",
+        "kind": "function",
+        "lineno": 67,
+        "parent": null,
+        "docstring": "Obtiene el estado actual de la aplicaci\u00f3n."
+      },
+      {
+        "name": "browse_directory",
+        "kind": "function",
+        "lineno": 73,
+        "parent": null,
+        "docstring": "Abre un di\u00e1logo nativo para seleccionar un directorio."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/api/stage.py",
+    "relative": true,
+    "modified_at": "2025-10-30T17:29:37.187715+00:00",
+    "symbols": [
+      {
+        "name": "get_stage_status",
+        "kind": "function",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Devuelve el estado actual de los archivos Stage-Aware del proyecto."
+      },
+      {
+        "name": "initialize_stage_assets",
+        "kind": "function",
+        "lineno": 28,
+        "parent": null,
+        "docstring": "Ejecuta init_project.py sobre el root actual para instalar instrucciones."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/cache.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:20:26.814165+00:00",
+    "symbols": [
+      {
+        "name": "SnapshotStore",
+        "kind": "class",
+        "lineno": 17,
+        "parent": null,
+        "docstring": "Gestiona snapshots en `<root>/.code-map/code-map.json`."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 20,
+        "parent": "SnapshotStore",
+        "docstring": null
+      },
+      {
+        "name": "load",
+        "kind": "method",
+        "lineno": 25,
+        "parent": "SnapshotStore",
+        "docstring": "Carga un snapshot desde el disco."
+      },
+      {
+        "name": "save",
+        "kind": "method",
+        "lineno": 43,
+        "parent": "SnapshotStore",
+        "docstring": "Guarda un snapshot en el disco."
+      },
+      {
+        "name": "_serialize_file",
+        "kind": "method",
+        "lineno": 53,
+        "parent": "SnapshotStore",
+        "docstring": "Serializa un objeto FileSummary a un diccionario."
+      },
+      {
+        "name": "_serialize_symbol",
+        "kind": "method",
+        "lineno": 71,
+        "parent": "SnapshotStore",
+        "docstring": "Serializa un objeto SymbolInfo a un diccionario."
+      },
+      {
+        "name": "_serialize_error",
+        "kind": "method",
+        "lineno": 81,
+        "parent": "SnapshotStore",
+        "docstring": "Serializa un objeto AnalysisError a un diccionario."
+      },
+      {
+        "name": "_deserialize_file",
+        "kind": "method",
+        "lineno": 89,
+        "parent": "SnapshotStore",
+        "docstring": "Deserializa un diccionario a un objeto FileSummary."
+      },
+      {
+        "name": "_deserialize_symbol",
+        "kind": "method",
+        "lineno": 121,
+        "parent": "SnapshotStore",
+        "docstring": "Deserializa un diccionario a un objeto SymbolInfo."
+      },
+      {
+        "name": "_deserialize_error",
+        "kind": "method",
+        "lineno": 133,
+        "parent": "SnapshotStore",
+        "docstring": "Deserializa un diccionario a un objeto AnalysisError."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/class_graph.py",
+    "relative": true,
+    "modified_at": "2025-10-31T08:59:50.223769+00:00",
+    "symbols": [
+      {
+        "name": "ClassInfo",
+        "kind": "class",
+        "lineno": 26,
+        "parent": null,
+        "docstring": "Informaci\u00f3n recolectada para una clase en un m\u00f3dulo."
+      },
+      {
+        "name": "ModuleInfo",
+        "kind": "class",
+        "lineno": 36,
+        "parent": null,
+        "docstring": "Informaci\u00f3n recolectada para un archivo (m\u00f3dulo) del proyecto."
+      },
+      {
+        "name": "GraphNode",
+        "kind": "class",
+        "lineno": 46,
+        "parent": null,
+        "docstring": "Nodo del grafo de clases."
+      },
+      {
+        "name": "GraphEdge",
+        "kind": "class",
+        "lineno": 56,
+        "parent": null,
+        "docstring": "Arista del grafo de clases."
+      },
+      {
+        "name": "ModuleAnalyzer",
+        "kind": "class",
+        "lineno": 70,
+        "parent": null,
+        "docstring": "Analiza un m\u00f3dulo para extraer clases e imports relevantes."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 73,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Import",
+        "kind": "method",
+        "lineno": 79,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ImportFrom",
+        "kind": "method",
+        "lineno": 85,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_resolve_relative",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ClassDef",
+        "kind": "method",
+        "lineno": 111,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_FunctionDef",
+        "kind": "method",
+        "lineno": 122,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Assign",
+        "kind": "method",
+        "lineno": 129,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_AnnAssign",
+        "kind": "method",
+        "lineno": 138,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name",
+        "kind": "method",
+        "lineno": 143,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_collect_attribute",
+        "kind": "method",
+        "lineno": 154,
+        "parent": "ModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "InstantiationVisitor",
+        "kind": "class",
+        "lineno": 165,
+        "parent": null,
+        "docstring": "Detecta llamadas a constructores dentro de una clase."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 168,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "visit_Call",
+        "kind": "method",
+        "lineno": 171,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name",
+        "kind": "method",
+        "lineno": 177,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "collect_attribute",
+        "kind": "method",
+        "lineno": 185,
+        "parent": "InstantiationVisitor",
+        "docstring": null
+      },
+      {
+        "name": "_extract_type_names",
+        "kind": "function",
+        "lineno": 200,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_extract_references_from_assignment",
+        "kind": "function",
+        "lineno": 232,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name_simple",
+        "kind": "function",
+        "lineno": 251,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "build_class_graph",
+        "kind": "function",
+        "lineno": 270,
+        "parent": null,
+        "docstring": "Construye un grafo de relaciones de clases a partir del directorio dado.\n\nArgs:\n    root: ruta al workspace que se quiere analizar.\n\nReturns:\n    Diccionario serializable con nodos, aristas y m\u00e9tricas."
+      },
+      {
+        "name": "_analyze_modules",
+        "kind": "function",
+        "lineno": 328,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_module_name_from_path",
+        "kind": "function",
+        "lineno": 340,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_collect_definitions",
+        "kind": "function",
+        "lineno": 345,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_filter_modules",
+        "kind": "function",
+        "lineno": 354,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_build_edges_for_class",
+        "kind": "function",
+        "lineno": 378,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_resolve_reference",
+        "kind": "function",
+        "lineno": 433,
+        "parent": null,
+        "docstring": "Intenta resolver el nombre recibido contra las clases internas del proyecto.\n\nReturns:\n    (target_id, internal, display_name)"
+      },
+      {
+        "name": "_possible_qualified_names",
+        "kind": "function",
+        "lineno": 454,
+        "parent": null,
+        "docstring": "Genera nombres candidatos (fully-qualified) a partir de un nombre crudo.\n\nConsidera clases locales, alias de imports y nombres simples."
+      },
+      {
+        "name": "_count_by_type",
+        "kind": "function",
+        "lineno": 492,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/constants.py",
+    "relative": true,
+    "modified_at": "2025-10-30T05:22:44.574383+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "code_map/dependencies.py",
+    "relative": true,
+    "modified_at": "2025-10-29T18:14:27.796103+00:00",
+    "symbols": [
+      {
+        "name": "DependencySpec",
+        "kind": "class",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Describe una dependencia opcional y los m\u00f3dulos que deben importarse."
+      },
+      {
+        "name": "DependencyStatus",
+        "kind": "class",
+        "lineno": 27,
+        "parent": null,
+        "docstring": "Estado de disponibilidad para una dependencia opcional."
+      },
+      {
+        "name": "OptionalDependencyRegistry",
+        "kind": "class",
+        "lineno": 37,
+        "parent": null,
+        "docstring": "Carga perezosa de dependencias opcionales con memoizaci\u00f3n de su estado."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 40,
+        "parent": "OptionalDependencyRegistry",
+        "docstring": null
+      },
+      {
+        "name": "require",
+        "kind": "method",
+        "lineno": 46,
+        "parent": "OptionalDependencyRegistry",
+        "docstring": "Devuelve el m\u00f3dulo solicitado si la dependencia est\u00e1 disponible.\n\nSi la dependencia agrupa m\u00faltiples m\u00f3dulos y no se especifica `module`,\nse devuelve el primer m\u00f3dulo listado en la especificaci\u00f3n."
+      },
+      {
+        "name": "load",
+        "kind": "method",
+        "lineno": 63,
+        "parent": "OptionalDependencyRegistry",
+        "docstring": "Carga todos los m\u00f3dulos de una dependencia y devuelve el mapeo import_name -> m\u00f3dulo."
+      },
+      {
+        "name": "status",
+        "kind": "method",
+        "lineno": 69,
+        "parent": "OptionalDependencyRegistry",
+        "docstring": "Devuelve el estado de todas las dependencias o de una en particular."
+      },
+      {
+        "name": "_ensure_loaded",
+        "kind": "method",
+        "lineno": 80,
+        "parent": "OptionalDependencyRegistry",
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/events.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:29:57.123836+00:00",
+    "symbols": [
+      {
+        "name": "ChangeEventType",
+        "kind": "class",
+        "lineno": 14,
+        "parent": null,
+        "docstring": "Tipos de eventos emitidos por el watcher de archivos."
+      },
+      {
+        "name": "FileChangeEvent",
+        "kind": "class",
+        "lineno": 23,
+        "parent": null,
+        "docstring": "Evento normalizado proveniente del sistema de archivos."
+      },
+      {
+        "name": "normalize",
+        "kind": "method",
+        "lineno": 29,
+        "parent": "FileChangeEvent",
+        "docstring": "Devuelve una copia del evento con rutas absolutas."
+      },
+      {
+        "name": "ChangeBatch",
+        "kind": "class",
+        "lineno": 39,
+        "parent": null,
+        "docstring": "Agrupa eventos por tipo para procesarlos en bloque."
+      },
+      {
+        "name": "is_empty",
+        "kind": "method",
+        "lineno": 46,
+        "parent": "ChangeBatch",
+        "docstring": "Indica si el lote no contiene cambios."
+      },
+      {
+        "name": "__bool__",
+        "kind": "method",
+        "lineno": 50,
+        "parent": "ChangeBatch",
+        "docstring": "Permite evaluar el lote como booleano (no vac\u00edo)."
+      },
+      {
+        "name": "from_events",
+        "kind": "method",
+        "lineno": 55,
+        "parent": "ChangeBatch",
+        "docstring": "Crea un lote a partir de eventos individuales."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/html_analyzer.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:30:31.484100+00:00",
+    "symbols": [
+      {
+        "name": "HtmlAnalyzer",
+        "kind": "class",
+        "lineno": 16,
+        "parent": null,
+        "docstring": "Analiza documentos HTML para extraer elementos identificables."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 19,
+        "parent": "HtmlAnalyzer",
+        "docstring": "Inicializa BeautifulSoup si la dependencia opcional est\u00e1 disponible."
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 26,
+        "parent": "HtmlAnalyzer",
+        "docstring": "Analiza un archivo HTML y devuelve los elementos relevantes.\n\nArgs:\n    path: Ruta del archivo HTML a procesar.\n\nReturns:\n    Un resumen con los elementos detectados (ids y custom elements)."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/index.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:30:03.517885+00:00",
+    "symbols": [
+      {
+        "name": "SymbolIndex",
+        "kind": "class",
+        "lineno": 17,
+        "parent": null,
+        "docstring": "Mantiene un \u00edndice en memoria de los res\u00famenes de archivos analizados."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 20,
+        "parent": "SymbolIndex",
+        "docstring": null
+      },
+      {
+        "name": "update",
+        "kind": "method",
+        "lineno": 24,
+        "parent": "SymbolIndex",
+        "docstring": "Actualiza m\u00faltiples archivos en el \u00edndice."
+      },
+      {
+        "name": "update_file",
+        "kind": "method",
+        "lineno": 29,
+        "parent": "SymbolIndex",
+        "docstring": "Actualiza o inserta un \u00fanico resumen en el \u00edndice."
+      },
+      {
+        "name": "remove",
+        "kind": "method",
+        "lineno": 33,
+        "parent": "SymbolIndex",
+        "docstring": "Elimina un archivo del \u00edndice si existe."
+      },
+      {
+        "name": "get_file",
+        "kind": "method",
+        "lineno": 37,
+        "parent": "SymbolIndex",
+        "docstring": "Recupera el resumen asociado a una ruta concreta."
+      },
+      {
+        "name": "get_all",
+        "kind": "method",
+        "lineno": 41,
+        "parent": "SymbolIndex",
+        "docstring": "Devuelve la lista completa de res\u00famenes almacenados."
+      },
+      {
+        "name": "iter_symbols",
+        "kind": "method",
+        "lineno": 45,
+        "parent": "SymbolIndex",
+        "docstring": "Itera sobre todos los s\u00edmbolos indexados."
+      },
+      {
+        "name": "search",
+        "kind": "method",
+        "lineno": 50,
+        "parent": "SymbolIndex",
+        "docstring": "Busca s\u00edmbolos cuyo nombre contenga el t\u00e9rmino proporcionado."
+      },
+      {
+        "name": "get_tree",
+        "kind": "method",
+        "lineno": 61,
+        "parent": "SymbolIndex",
+        "docstring": "Construye el \u00e1rbol jer\u00e1rquico carpeta \u2192 archivo \u2192 s\u00edmbolos."
+      },
+      {
+        "name": "load_snapshot",
+        "kind": "method",
+        "lineno": 95,
+        "parent": "SymbolIndex",
+        "docstring": "Carga un snapshot y actualiza el \u00edndice con su contenido."
+      },
+      {
+        "name": "save_snapshot",
+        "kind": "method",
+        "lineno": 101,
+        "parent": "SymbolIndex",
+        "docstring": "Persiste el estado actual del \u00edndice en un snapshot."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/js_analyzer.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:30:25.787056+00:00",
+    "symbols": [
+      {
+        "name": "JsAnalyzer",
+        "kind": "class",
+        "lineno": 19,
+        "parent": null,
+        "docstring": "Analizador que extrae s\u00edmbolos JavaScript/JSX usando esprima."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 22,
+        "parent": "JsAnalyzer",
+        "docstring": "Inicializa el analizador y carga esprima si est\u00e1 disponible."
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 29,
+        "parent": "JsAnalyzer",
+        "docstring": "Analiza un archivo JavaScript/JSX y devuelve los s\u00edmbolos encontrados.\n\nArgs:\n    path: Ruta del archivo a analizar."
+      },
+      {
+        "name": "_collect_from_node",
+        "kind": "method",
+        "lineno": 83,
+        "parent": "JsAnalyzer",
+        "docstring": "Recorre un nodo del AST y acumula s\u00edmbolos relevantes."
+      },
+      {
+        "name": "_handle_variable_declarator",
+        "kind": "method",
+        "lineno": 153,
+        "parent": "JsAnalyzer",
+        "docstring": "Registra funciones declaradas mediante asignaciones de variables."
+      },
+      {
+        "name": "_method_name",
+        "kind": "method",
+        "lineno": 181,
+        "parent": "JsAnalyzer",
+        "docstring": "Obtiene el nombre legible de un m\u00e9todo de clase."
+      },
+      {
+        "name": "_build_comment_map",
+        "kind": "method",
+        "lineno": 192,
+        "parent": "JsAnalyzer",
+        "docstring": "Asocia comentarios finales con la l\u00ednea donde finalizan."
+      },
+      {
+        "name": "_docstring_for",
+        "kind": "method",
+        "lineno": 209,
+        "parent": "JsAnalyzer",
+        "docstring": "Busca un comentario inmediatamente anterior a la l\u00ednea indicada."
+      },
+      {
+        "name": "_clean_comment",
+        "kind": "method",
+        "lineno": 220,
+        "parent": "JsAnalyzer",
+        "docstring": "Limpia anotaciones JSDoc y devuelve texto plano."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/models.py",
+    "relative": true,
+    "modified_at": "2025-10-30T15:44:04.896183+00:00",
+    "symbols": [
+      {
+        "name": "SymbolKind",
+        "kind": "class",
+        "lineno": 15,
+        "parent": null,
+        "docstring": "Tipos de s\u00edmbolos soportados por el motor de an\u00e1lisis.\n\nEnum de tipo string para facilitar serializaci\u00f3n a JSON y comparaciones.\n\nValores:\n    FUNCTION: Funci\u00f3n o corrutina de nivel m\u00f3dulo\n    CLASS: Definici\u00f3n de clase\n    METHOD: M\u00e9todo dentro de una clase (incluye m\u00e9todos est\u00e1ticos/clase)\n    ELEMENT: Elemento HTML/DOM (para an\u00e1lisis de templates/HTML)\n\nNotes:\n    - Hereda de str para compatibilidad con JSON\n    - Extensible: agregar nuevos tipos (VARIABLE, CONSTANT, etc.)\n    - Usado en SymbolInfo.kind para clasificaci\u00f3n"
+      },
+      {
+        "name": "SymbolInfo",
+        "kind": "class",
+        "lineno": 40,
+        "parent": null,
+        "docstring": "Representa una funci\u00f3n libre, una clase o un m\u00e9todo detectado en un archivo.\n\nEstructura optimizada (slots=True) para representar s\u00edmbolos extra\u00eddos del\nc\u00f3digo fuente. `parent` se utiliza para enlazar m\u00e9todos con la clase que\nlos contiene, permitiendo reconstruir la jerarqu\u00eda.\n\nAttributes:\n    name (str): Nombre del s\u00edmbolo (funci\u00f3n, clase, m\u00e9todo)\n    kind (SymbolKind): Tipo de s\u00edmbolo (FUNCTION, CLASS, METHOD, ELEMENT)\n    path (Path): Ruta absoluta al archivo que contiene el s\u00edmbolo\n    lineno (int): N\u00famero de l\u00ednea donde inicia la definici\u00f3n (1-indexed)\n    parent (Optional[str]): Nombre de la clase padre (solo para m\u00e9todos)\n    docstring (Optional[str]): Docstring del s\u00edmbolo (si include_docstrings=True)\n\nExamples:\n    >>> # Funci\u00f3n de nivel m\u00f3dulo\n    >>> SymbolInfo(name=\"parse\", kind=SymbolKind.FUNCTION, path=Path(\"parser.py\"), lineno=42)\n\n    >>> # M\u00e9todo de clase\n    >>> SymbolInfo(name=\"connect\", kind=SymbolKind.METHOD, path=Path(\"db.py\"),\n    ...            lineno=15, parent=\"Database\")\n\nNotes:\n    - slots=True reduce uso de memoria (sin __dict__)\n    - parent=None indica s\u00edmbolo de nivel m\u00f3dulo\n    - lineno sigue convenci\u00f3n Python (empieza en 1)\n    - docstring=None si include_docstrings=False o no hay docstring"
+      },
+      {
+        "name": "AnalysisError",
+        "kind": "class",
+        "lineno": 80,
+        "parent": null,
+        "docstring": "Errores asociados al procesamiento de un archivo.\n\nRepresenta errores de sintaxis, encoding, o lectura encontrados durante\nel an\u00e1lisis de un archivo de c\u00f3digo fuente.\n\nAttributes:\n    message (str): Descripci\u00f3n del error\n    lineno (Optional[int]): N\u00famero de l\u00ednea donde ocurri\u00f3 el error (si aplica)\n    col_offset (Optional[int]): Columna donde ocurri\u00f3 el error (si aplica)\n\nNotes:\n    - lineno/col_offset son None para errores de lectura de archivo\n    - Para SyntaxError, lineno/col_offset vienen del parser de Python\n    - Permite continuar el an\u00e1lisis pese a errores en archivos individuales\n    - Usado en FileSummary.errors"
+      },
+      {
+        "name": "FileSummary",
+        "kind": "class",
+        "lineno": 105,
+        "parent": null,
+        "docstring": "Resumen de s\u00edmbolos y errores de un archivo concreto.\n\nAgrupa toda la informaci\u00f3n extra\u00edda de un \u00fanico archivo de c\u00f3digo fuente,\nincluyendo s\u00edmbolos detectados, errores encontrados y metadata.\n\nAttributes:\n    path (Path): Ruta absoluta al archivo analizado\n    symbols (List[SymbolInfo]): Lista de s\u00edmbolos extra\u00eddos (funciones, clases, m\u00e9todos)\n    errors (List[AnalysisError]): Lista de errores encontrados durante el an\u00e1lisis\n    modified_at (Optional[datetime]): Fecha de \u00faltima modificaci\u00f3n del archivo (UTC)\n\nMethods:\n    has_errors(): Verifica si el an\u00e1lisis encontr\u00f3 errores\n\nNotes:\n    - symbols puede estar vac\u00edo si el archivo no contiene definiciones\n    - errors vac\u00edo indica an\u00e1lisis exitoso\n    - modified_at=None indica que no se pudo obtener metadata del archivo\n    - Usado por ProjectScanner como unidad b\u00e1sica de an\u00e1lisis"
+      },
+      {
+        "name": "has_errors",
+        "kind": "method",
+        "lineno": 133,
+        "parent": "FileSummary",
+        "docstring": "Indica si el archivo contiene errores asociados al an\u00e1lisis.\n\nReturns:\n    bool: True si hay al menos un error, False si el an\u00e1lisis fue exitoso\n\nNotes:\n    - \u00datil para filtrar archivos con problemas\n    - No distingue entre tipos de error (sintaxis, encoding, lectura)"
+      },
+      {
+        "name": "ProjectTreeNode",
+        "kind": "class",
+        "lineno": 148,
+        "parent": null,
+        "docstring": "Nodo de la jerarqu\u00eda carpeta \u2192 archivo \u2192 s\u00edmbolos.\n\nRepresenta un elemento en el \u00e1rbol de estructura del proyecto. Puede ser\nun directorio (con hijos) o un archivo (con FileSummary).\n\nAttributes:\n    name (str): Nombre del archivo o directorio (sin path completo)\n    path (Path): Ruta absoluta al archivo o directorio\n    is_dir (bool): True si es directorio, False si es archivo\n    children (Dict[str, ProjectTreeNode]): Diccionario de nodos hijos (solo si is_dir=True)\n    file_summary (Optional[FileSummary]): Resumen de an\u00e1lisis (solo si is_dir=False)\n\nMethods:\n    add_child(): A\u00f1ade un nodo hijo a la colecci\u00f3n\n    ensure_child(): Obtiene o crea un nodo hijo\n\nNotes:\n    - Estructura recursiva para representar \u00e1rbol de directorios\n    - children solo tiene contenido si is_dir=True\n    - file_summary solo tiene contenido si is_dir=False\n    - Usado para construir representaci\u00f3n jer\u00e1rquica del proyecto"
+      },
+      {
+        "name": "add_child",
+        "kind": "method",
+        "lineno": 179,
+        "parent": "ProjectTreeNode",
+        "docstring": "A\u00f1ade un nodo hijo a la colecci\u00f3n actual.\n\nArgs:\n    node (ProjectTreeNode): Nodo hijo a a\u00f1adir\n\nNotes:\n    - Sobrescribe si ya existe un hijo con el mismo nombre\n    - Solo tiene sentido llamar en nodos con is_dir=True"
+      },
+      {
+        "name": "ensure_child",
+        "kind": "method",
+        "lineno": 192,
+        "parent": "ProjectTreeNode",
+        "docstring": "Obtiene un hijo existente o lo crea si a\u00fan no est\u00e1 registrado.\n\nArgs:\n    name (str): Nombre del nodo hijo\n    path (Path): Ruta absoluta al elemento\n    is_dir (bool): Si el elemento es un directorio\n\nReturns:\n    ProjectTreeNode: El nodo hijo (existente o reci\u00e9n creado)\n\nNotes:\n    - Operaci\u00f3n idempotente: safe para llamar m\u00faltiples veces\n    - No valida consistencia de is_dir con filesystem\n    - Usado durante construcci\u00f3n incremental del \u00e1rbol"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/scanner.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:20:05.398047+00:00",
+    "symbols": [
+      {
+        "name": "ProjectScanner",
+        "kind": "class",
+        "lineno": 47,
+        "parent": null,
+        "docstring": "Coordina los escaneos completos de una ruta ra\u00edz."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 50,
+        "parent": "ProjectScanner",
+        "docstring": "Inicializa el scanner.\n\nArgs:\n    root: La ruta ra\u00edz del proyecto a escanear.\n    analyzer: (Opcional) Un analizador de archivos personalizado para archivos .py.\n    analyzers: (Opcional) Un mapeo de extensiones de archivo a analizadores personalizados.\n    exclude_dirs: (Opcional) Una secuencia de nombres de directorios a excluir.\n    include_docstrings: (Opcional) Si es True, se incluir\u00e1n los docstrings en el an\u00e1lisis.\n    extensions: (Opcional) Una secuencia de extensiones de archivo a incluir en el escaneo."
+      },
+      {
+        "name": "scan",
+        "kind": "method",
+        "lineno": 105,
+        "parent": "ProjectScanner",
+        "docstring": "Ejecuta un recorrido completo del \u00e1rbol y devuelve res\u00famenes por archivo."
+      },
+      {
+        "name": "scan_and_update_index",
+        "kind": "method",
+        "lineno": 115,
+        "parent": "ProjectScanner",
+        "docstring": "Ejecuta un escaneo, actualiza el \u00edndice y opcionalmente persiste un snapshot.\n\nArgs:\n    index: El \u00edndice de s\u00edmbolos a actualizar.\n    persist: Si es True, se guardar\u00e1 un snapshot del \u00edndice.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Una lista de res\u00famenes de archivos."
+      },
+      {
+        "name": "hydrate_index_from_snapshot",
+        "kind": "method",
+        "lineno": 141,
+        "parent": "ProjectScanner",
+        "docstring": "Carga un snapshot (si existe) y lo aplica al \u00edndice antes de escanear.\n\nArgs:\n    index: El \u00edndice de s\u00edmbolos a hidratar.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Una lista de res\u00famenes de archivos del snapshot."
+      },
+      {
+        "name": "apply_change_batch",
+        "kind": "method",
+        "lineno": 161,
+        "parent": "ProjectScanner",
+        "docstring": "Reprocesa los archivos afectados por un lote de cambios y actualiza el \u00edndice.\n\nArgs:\n    batch: El lote de cambios a aplicar.\n    index: El \u00edndice de s\u00edmbolos a actualizar.\n    persist: Si es True, se guardar\u00e1 un snapshot del \u00edndice.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Un diccionario con las rutas de los archivos actualizados y eliminados."
+      },
+      {
+        "name": "_iter_supported_files",
+        "kind": "method",
+        "lineno": 214,
+        "parent": "ProjectScanner",
+        "docstring": "Genera rutas absolutas a cada archivo con extensi\u00f3n soportada."
+      },
+      {
+        "name": "_should_exclude",
+        "kind": "method",
+        "lineno": 228,
+        "parent": "ProjectScanner",
+        "docstring": "Determina si una ruta debe ser excluida del escaneo."
+      },
+      {
+        "name": "_default_store",
+        "kind": "method",
+        "lineno": 238,
+        "parent": "ProjectScanner",
+        "docstring": "Crea una instancia por defecto de SnapshotStore."
+      },
+      {
+        "name": "_within_root",
+        "kind": "method",
+        "lineno": 244,
+        "parent": "ProjectScanner",
+        "docstring": "Comprueba si una ruta est\u00e1 dentro de la ra\u00edz del proyecto."
+      },
+      {
+        "name": "_dedupe_paths",
+        "kind": "method",
+        "lineno": 252,
+        "parent": "ProjectScanner",
+        "docstring": "Elimina duplicados y rutas fuera de la ra\u00edz de una lista de rutas."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/scheduler.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:30:47.036220+00:00",
+    "symbols": [
+      {
+        "name": "_QueuedEvent",
+        "kind": "class",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Representa un evento pendiente dentro del debounce."
+      },
+      {
+        "name": "to_public",
+        "kind": "method",
+        "lineno": 27,
+        "parent": "_QueuedEvent",
+        "docstring": "Convierte el evento interno en un FileChangeEvent expuesto."
+      },
+      {
+        "name": "ChangeScheduler",
+        "kind": "class",
+        "lineno": 36,
+        "parent": null,
+        "docstring": "Acumula eventos del watcher, aplica debounce y entrega lotes listos para reprocesar."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 41,
+        "parent": "ChangeScheduler",
+        "docstring": null
+      },
+      {
+        "name": "enqueue",
+        "kind": "method",
+        "lineno": 53,
+        "parent": "ChangeScheduler",
+        "docstring": "A\u00f1ade un evento a la cola interna aplicando normalizaci\u00f3n."
+      },
+      {
+        "name": "drain",
+        "kind": "method",
+        "lineno": 69,
+        "parent": "ChangeScheduler",
+        "docstring": "Devuelve un `ChangeBatch` cuando haya pasado el debounce o si se fuerza.\nSi no hay eventos listos devuelve `None`."
+      },
+      {
+        "name": "pending_count",
+        "kind": "method",
+        "lineno": 90,
+        "parent": "ChangeScheduler",
+        "docstring": "Devuelve la cantidad de eventos pendientes en la cola."
+      },
+      {
+        "name": "clear",
+        "kind": "method",
+        "lineno": 95,
+        "parent": "ChangeScheduler",
+        "docstring": "Vac\u00eda la cola de eventos pendientes."
+      },
+      {
+        "name": "_collapse_events",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "ChangeScheduler",
+        "docstring": "Simplifica la secuencia de eventos acumulados en su forma m\u00ednima."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/server.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:20:41.446245+00:00",
+    "symbols": [
+      {
+        "name": "create_app",
+        "kind": "function",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Crea y configura la aplicaci\u00f3n FastAPI.\n\nArgs:\n    root: La ruta ra\u00edz del proyecto a escanear.\n\nReturns:\n    La instancia de la aplicaci\u00f3n FastAPI."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/settings.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:19:35.342878+00:00",
+    "symbols": [
+      {
+        "name": "_normalize_exclusions",
+        "kind": "function",
+        "lineno": 22,
+        "parent": null,
+        "docstring": "Combina las exclusiones por defecto con exclusiones adicionales."
+      },
+      {
+        "name": "AppSettings",
+        "kind": "class",
+        "lineno": 39,
+        "parent": null,
+        "docstring": "Define la configuraci\u00f3n de la aplicaci\u00f3n."
+      },
+      {
+        "name": "to_payload",
+        "kind": "method",
+        "lineno": 45,
+        "parent": "AppSettings",
+        "docstring": "Convierte la configuraci\u00f3n a un diccionario serializable."
+      },
+      {
+        "name": "with_updates",
+        "kind": "method",
+        "lineno": 54,
+        "parent": "AppSettings",
+        "docstring": "Crea una nueva instancia de AppSettings con actualizaciones."
+      },
+      {
+        "name": "settings_storage_path",
+        "kind": "function",
+        "lineno": 73,
+        "parent": null,
+        "docstring": "Devuelve la ruta del archivo de configuraci\u00f3n."
+      },
+      {
+        "name": "_load_settings_from_disk",
+        "kind": "function",
+        "lineno": 79,
+        "parent": null,
+        "docstring": "Carga la configuraci\u00f3n desde el disco."
+      },
+      {
+        "name": "_parse_env_flag",
+        "kind": "function",
+        "lineno": 120,
+        "parent": null,
+        "docstring": "Parsea una variable de entorno como un booleano."
+      },
+      {
+        "name": "_coerce_path",
+        "kind": "function",
+        "lineno": 132,
+        "parent": null,
+        "docstring": "Convierte un valor a una ruta absoluta."
+      },
+      {
+        "name": "load_settings",
+        "kind": "function",
+        "lineno": 139,
+        "parent": null,
+        "docstring": "Carga la configuraci\u00f3n de la aplicaci\u00f3n desde el disco y el entorno."
+      },
+      {
+        "name": "save_settings",
+        "kind": "function",
+        "lineno": 168,
+        "parent": null,
+        "docstring": "Guarda la configuraci\u00f3n en el disco."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/stage_toolkit.py",
+    "relative": true,
+    "modified_at": "2025-10-30T17:29:29.294651+00:00",
+    "symbols": [
+      {
+        "name": "FileStatus",
+        "kind": "class",
+        "lineno": 53,
+        "parent": null,
+        "docstring": "Representa el estado de un conjunto de archivos esperados."
+      },
+      {
+        "name": "complete",
+        "kind": "method",
+        "lineno": 61,
+        "parent": "FileStatus",
+        "docstring": null
+      },
+      {
+        "name": "_collect_file_status",
+        "kind": "function",
+        "lineno": 65,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_build_agent_payload",
+        "kind": "function",
+        "lineno": 77,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_detect_stage",
+        "kind": "function",
+        "lineno": 93,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_compute_status",
+        "kind": "function",
+        "lineno": 142,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "stage_status",
+        "kind": "function",
+        "lineno": 162,
+        "parent": null,
+        "docstring": "Obtiene el estado actual de los archivos stage-aware para un root dado."
+      },
+      {
+        "name": "run_initializer",
+        "kind": "function",
+        "lineno": 167,
+        "parent": null,
+        "docstring": "Ejecuta init_project.py contra el root indicado para instalar instrucciones."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/state.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:23:23.250089+00:00",
+    "symbols": [
+      {
+        "name": "AppState",
+        "kind": "class",
+        "lineno": 27,
+        "parent": null,
+        "docstring": "Estado compartido de la aplicaci\u00f3n FastAPI."
+      },
+      {
+        "name": "__post_init__",
+        "kind": "method",
+        "lineno": 39,
+        "parent": "AppState",
+        "docstring": null
+      },
+      {
+        "name": "startup",
+        "kind": "method",
+        "lineno": 45,
+        "parent": "AppState",
+        "docstring": "Inicializa el estado de la aplicaci\u00f3n."
+      },
+      {
+        "name": "shutdown",
+        "kind": "method",
+        "lineno": 67,
+        "parent": "AppState",
+        "docstring": "Detiene el estado de la aplicaci\u00f3n."
+      },
+      {
+        "name": "_scheduler_loop",
+        "kind": "method",
+        "lineno": 76,
+        "parent": "AppState",
+        "docstring": "Bucle principal del programador de cambios."
+      },
+      {
+        "name": "_serialize_changes",
+        "kind": "method",
+        "lineno": 94,
+        "parent": "AppState",
+        "docstring": "Serializa los cambios para la notificaci\u00f3n de eventos."
+      },
+      {
+        "name": "perform_full_scan",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "AppState",
+        "docstring": "Realiza un escaneo completo del proyecto."
+      },
+      {
+        "name": "to_relative",
+        "kind": "method",
+        "lineno": 118,
+        "parent": "AppState",
+        "docstring": "Convierte una ruta absoluta en una ruta relativa al root del proyecto."
+      },
+      {
+        "name": "resolve_path",
+        "kind": "method",
+        "lineno": 126,
+        "parent": "AppState",
+        "docstring": "Resuelve una ruta relativa en una ruta absoluta dentro del root del proyecto."
+      },
+      {
+        "name": "_within_root",
+        "kind": "method",
+        "lineno": 133,
+        "parent": "AppState",
+        "docstring": "Comprueba si una ruta est\u00e1 dentro del root del proyecto."
+      },
+      {
+        "name": "is_watcher_running",
+        "kind": "method",
+        "lineno": 141,
+        "parent": "AppState",
+        "docstring": "Comprueba si el observador de archivos est\u00e1 en ejecuci\u00f3n."
+      },
+      {
+        "name": "get_settings_payload",
+        "kind": "method",
+        "lineno": 145,
+        "parent": "AppState",
+        "docstring": "Obtiene el payload de configuraci\u00f3n para la API."
+      },
+      {
+        "name": "get_status_payload",
+        "kind": "method",
+        "lineno": 149,
+        "parent": "AppState",
+        "docstring": "Obtiene el payload de estado para la API."
+      },
+      {
+        "name": "update_settings",
+        "kind": "method",
+        "lineno": 158,
+        "parent": "AppState",
+        "docstring": "Actualiza la configuraci\u00f3n de la aplicaci\u00f3n."
+      },
+      {
+        "name": "_build_components",
+        "kind": "method",
+        "lineno": 188,
+        "parent": "AppState",
+        "docstring": "(Re)construye los componentes de la aplicaci\u00f3n a partir de la configuraci\u00f3n."
+      },
+      {
+        "name": "_apply_settings",
+        "kind": "method",
+        "lineno": 209,
+        "parent": "AppState",
+        "docstring": "Aplica la nueva configuraci\u00f3n a la aplicaci\u00f3n."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/state_reporter.py",
+    "relative": true,
+    "modified_at": "2025-10-30T11:19:11.267741+00:00",
+    "symbols": [
+      {
+        "name": "_serialize_capability",
+        "kind": "function",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Serializa un objeto AnalyzerCapability a un diccionario."
+      },
+      {
+        "name": "StateReporter",
+        "kind": "class",
+        "lineno": 32,
+        "parent": null,
+        "docstring": "Encapsula la construcci\u00f3n de payloads derivados del estado global."
+      },
+      {
+        "name": "settings_payload",
+        "kind": "method",
+        "lineno": 39,
+        "parent": "StateReporter",
+        "docstring": "Construye el payload de settings para la API.\n\nArgs:\n    watcher_active: True si el observador de archivos est\u00e1 activo.\n\nReturns:\n    Un diccionario con la configuraci\u00f3n actual de la aplicaci\u00f3n."
+      },
+      {
+        "name": "status_payload",
+        "kind": "method",
+        "lineno": 57,
+        "parent": "StateReporter",
+        "docstring": "Construye el payload de estado para la API.\n\nArgs:\n    watcher_active: True si el observador de archivos est\u00e1 activo.\n    last_full_scan: Fecha y hora del \u00faltimo escaneo completo.\n    last_event_batch: Fecha y hora del \u00faltimo lote de eventos procesado.\n    pending_events: N\u00famero de eventos de archivo pendientes de procesar.\n\nReturns:\n    Un diccionario con el estado actual de la aplicaci\u00f3n."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/ts_analyzer.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:30:58.024304+00:00",
+    "symbols": [
+      {
+        "name": "_TsParser",
+        "kind": "class",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Wrapper ligero sobre el parser de tree-sitter."
+      },
+      {
+        "name": "for_language",
+        "kind": "method",
+        "lineno": 23,
+        "parent": "_TsParser",
+        "docstring": "Construye un parser configurado para el lenguaje indicado."
+      },
+      {
+        "name": "TsAnalyzer",
+        "kind": "class",
+        "lineno": 35,
+        "parent": null,
+        "docstring": "Analizador basado en tree-sitter para archivos TypeScript/TSX."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 38,
+        "parent": "TsAnalyzer",
+        "docstring": "Inicializa el parser adecuado y comprueba la disponibilidad de dependencias."
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 54,
+        "parent": "TsAnalyzer",
+        "docstring": "Analiza un archivo TypeScript/TSX y devuelve los s\u00edmbolos detectados.\n\nArgs:\n    path: Ruta del archivo a analizar."
+      },
+      {
+        "name": "_collect_from_children",
+        "kind": "method",
+        "lineno": 87,
+        "parent": "TsAnalyzer",
+        "docstring": "Recorre recursivamente el \u00e1rbol sint\u00e1ctico para extraer s\u00edmbolos."
+      },
+      {
+        "name": "_extract_identifier",
+        "kind": "method",
+        "lineno": 145,
+        "parent": "TsAnalyzer",
+        "docstring": "Obtiene el identificador asociado a un nodo, si existe."
+      },
+      {
+        "name": "_find_child",
+        "kind": "method",
+        "lineno": 155,
+        "parent": "TsAnalyzer",
+        "docstring": "Busca el primer hijo del tipo indicado dentro de un nodo."
+      },
+      {
+        "name": "_handle_lexical_declaration",
+        "kind": "method",
+        "lineno": 162,
+        "parent": "TsAnalyzer",
+        "docstring": "Detecta asignaciones con funciones flecha o est\u00e1ndar y las registra."
+      },
+      {
+        "name": "_find_leading_comment",
+        "kind": "method",
+        "lineno": 196,
+        "parent": "TsAnalyzer",
+        "docstring": "Localiza comentarios inmediatamente anteriores a un nodo."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/uml_graph.py",
+    "relative": true,
+    "modified_at": "2025-10-31T12:22:07.299630+00:00",
+    "symbols": [
+      {
+        "name": "AttributeInfo",
+        "kind": "class",
+        "lineno": 15,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "MethodInfo",
+        "kind": "class",
+        "lineno": 22,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ClassModel",
+        "kind": "class",
+        "lineno": 29,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ModuleModel",
+        "kind": "class",
+        "lineno": 40,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "UMLModuleAnalyzer",
+        "kind": "class",
+        "lineno": 47,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 48,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Import",
+        "kind": "method",
+        "lineno": 54,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ImportFrom",
+        "kind": "method",
+        "lineno": 60,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_resolve_relative",
+        "kind": "method",
+        "lineno": 71,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_ClassDef",
+        "kind": "method",
+        "lineno": 82,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_FunctionDef",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_AnnAssign",
+        "kind": "method",
+        "lineno": 112,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "visit_Assign",
+        "kind": "method",
+        "lineno": 125,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_track_association",
+        "kind": "method",
+        "lineno": 146,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_expr_to_name",
+        "kind": "method",
+        "lineno": 151,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_collect_attribute",
+        "kind": "method",
+        "lineno": 164,
+        "parent": "UMLModuleAnalyzer",
+        "docstring": null
+      },
+      {
+        "name": "_is_optional",
+        "kind": "function",
+        "lineno": 175,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "build_uml_model",
+        "kind": "function",
+        "lineno": 187,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "build_uml_dot",
+        "kind": "function",
+        "lineno": 244,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "render_uml_svg",
+        "kind": "function",
+        "lineno": 279,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_analyze",
+        "kind": "function",
+        "lineno": 297,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_filter_modules",
+        "kind": "function",
+        "lineno": 309,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_collect_definitions",
+        "kind": "function",
+        "lineno": 323,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_resolve_bases",
+        "kind": "function",
+        "lineno": 332,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_resolve_associations",
+        "kind": "function",
+        "lineno": 348,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_resolve_reference",
+        "kind": "function",
+        "lineno": 366,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_possible_names",
+        "kind": "function",
+        "lineno": 373,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_escape_id",
+        "kind": "function",
+        "lineno": 400,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_build_node_label",
+        "kind": "function",
+        "lineno": 404,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/watcher.py",
+    "relative": true,
+    "modified_at": "2025-10-30T12:31:09.949396+00:00",
+    "symbols": [
+      {
+        "name": "_EventHandler",
+        "kind": "class",
+        "lineno": 42,
+        "parent": null,
+        "docstring": "Encapsula la conversi\u00f3n de eventos watchdog a ChangeEventType."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 45,
+        "parent": "_EventHandler",
+        "docstring": "Configura el manejador con la ra\u00edz monitoreada y filtros activos."
+      },
+      {
+        "name": "on_created",
+        "kind": "method",
+        "lineno": 58,
+        "parent": "_EventHandler",
+        "docstring": "Registra la creaci\u00f3n de un archivo con extensi\u00f3n soportada."
+      },
+      {
+        "name": "on_modified",
+        "kind": "method",
+        "lineno": 62,
+        "parent": "_EventHandler",
+        "docstring": "Registra la modificaci\u00f3n de un archivo con extensi\u00f3n soportada."
+      },
+      {
+        "name": "on_deleted",
+        "kind": "method",
+        "lineno": 66,
+        "parent": "_EventHandler",
+        "docstring": "Registra la eliminaci\u00f3n de un archivo con extensi\u00f3n soportada."
+      },
+      {
+        "name": "on_moved",
+        "kind": "method",
+        "lineno": 70,
+        "parent": "_EventHandler",
+        "docstring": "Registra el movimiento o renombrado de un archivo."
+      },
+      {
+        "name": "_dispatch",
+        "kind": "method",
+        "lineno": 74,
+        "parent": "_EventHandler",
+        "docstring": "Filtra y transforma el evento recibido antes de encolarlo."
+      },
+      {
+        "name": "_should_track",
+        "kind": "method",
+        "lineno": 101,
+        "parent": "_EventHandler",
+        "docstring": "Determina si la ruta debe generar eventos de cambio."
+      },
+      {
+        "name": "_within_root",
+        "kind": "method",
+        "lineno": 117,
+        "parent": "_EventHandler",
+        "docstring": "Comprueba si la ruta pertenece al \u00e1rbol monitoreado."
+      },
+      {
+        "name": "_is_excluded",
+        "kind": "method",
+        "lineno": 125,
+        "parent": "_EventHandler",
+        "docstring": "Verifica si alguna parte de la ruta est\u00e1 excluida."
+      },
+      {
+        "name": "WatcherService",
+        "kind": "class",
+        "lineno": 135,
+        "parent": null,
+        "docstring": "Servicio que gestiona el ciclo de vida de watchdog para un proyecto."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 138,
+        "parent": "WatcherService",
+        "docstring": "Inicializa el servicio con los filtros y extensiones relevantes."
+      },
+      {
+        "name": "is_running",
+        "kind": "method",
+        "lineno": 159,
+        "parent": "WatcherService",
+        "docstring": "Indica si el observador de archivos est\u00e1 activo."
+      },
+      {
+        "name": "start",
+        "kind": "method",
+        "lineno": 163,
+        "parent": "WatcherService",
+        "docstring": "Inicia el observador si watchdog est\u00e1 disponible."
+      },
+      {
+        "name": "stop",
+        "kind": "method",
+        "lineno": 180,
+        "parent": "WatcherService",
+        "docstring": "Detiene el observador y espera a que finalice."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "docs/ui_mockup.html",
+    "relative": true,
+    "modified_at": "2025-10-30T05:24:04.222861+00:00",
+    "symbols": [
+      {
+        "name": "dashboard",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "div",
+        "docstring": null
+      },
+      {
+        "name": "open-settings",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "button",
+        "docstring": null
+      },
+      {
+        "name": "rescan-btn",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "button",
+        "docstring": null
+      },
+      {
+        "name": "settings",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "div",
+        "docstring": null
+      },
+      {
+        "name": "back-dashboard",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "button",
+        "docstring": null
+      },
+      {
+        "name": "root-input",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "input",
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/dist/assets/index-CV1XqL5j.js",
+    "relative": true,
+    "modified_at": "2025-10-30T20:46:53.217326+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/dist/index.html",
+    "relative": true,
+    "modified_at": "2025-10-30T20:46:53.214483+00:00",
+    "symbols": [
+      {
+        "name": "root",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "div",
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/index.html",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.505630+00:00",
+    "symbols": [
+      {
+        "name": "root",
+        "kind": "element",
+        "lineno": 0,
+        "parent": "div",
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/App.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T10:29:03.383042+00:00",
+    "symbols": [
+      {
+        "name": "App",
+        "kind": "function",
+        "lineno": 14,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/api/client.ts",
+    "relative": true,
+    "modified_at": "2025-10-31T11:38:50.255148+00:00",
+    "symbols": [
+      {
+        "name": "buildUrl",
+        "kind": "function",
+        "lineno": 35,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "fetchJson",
+        "kind": "function",
+        "lineno": 61,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getTree",
+        "kind": "function",
+        "lineno": 91,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getFileSummary",
+        "kind": "function",
+        "lineno": 109,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "searchSymbols",
+        "kind": "function",
+        "lineno": 128,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "triggerRescan",
+        "kind": "function",
+        "lineno": 144,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getEventsUrl",
+        "kind": "function",
+        "lineno": 161,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getSettings",
+        "kind": "function",
+        "lineno": 178,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "updateSettings",
+        "kind": "function",
+        "lineno": 197,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "browseForRoot",
+        "kind": "function",
+        "lineno": 210,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getStageStatus",
+        "kind": "function",
+        "lineno": 219,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "initializeStageToolkit",
+        "kind": "function",
+        "lineno": 226,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getClassGraph",
+        "kind": "function",
+        "lineno": 236,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getClassUml",
+        "kind": "function",
+        "lineno": 260,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getClassUmlSvg",
+        "kind": "function",
+        "lineno": 279,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getStatus",
+        "kind": "function",
+        "lineno": 315,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getPreview",
+        "kind": "function",
+        "lineno": 319,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/api/queryKeys.ts",
+    "relative": true,
+    "modified_at": "2025-10-31T10:26:41.257200+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/api/types.ts",
+    "relative": true,
+    "modified_at": "2025-10-31T10:25:57.116948+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/ActivityFeed.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.508367+00:00",
+    "symbols": [
+      {
+        "name": "formatTimeAgo",
+        "kind": "function",
+        "lineno": 4,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ActivityFeed",
+        "kind": "function",
+        "lineno": 23,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/ClassGraphView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T08:58:00.869066+00:00",
+    "symbols": [
+      {
+        "name": "ClassGraphView",
+        "kind": "function",
+        "lineno": 16,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "toggleEdgeType",
+        "kind": "function",
+        "lineno": 50,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "EdgeList",
+        "kind": "function",
+        "lineno": 199,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "buildGraphData",
+        "kind": "function",
+        "lineno": 271,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "renderNode",
+        "kind": "function",
+        "lineno": 348,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/ClassUMLView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T12:36:09.693132+00:00",
+    "symbols": [
+      {
+        "name": "ClassUMLView",
+        "kind": "function",
+        "lineno": 28,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "clamp",
+        "kind": "function",
+        "lineno": 159,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handler",
+        "kind": "function",
+        "lineno": 295,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "parseSvgDimension",
+        "kind": "function",
+        "lineno": 402,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/CodeMapDashboard.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T17:30:13.402013+00:00",
+    "symbols": [
+      {
+        "name": "CodeMapDashboard",
+        "kind": "function",
+        "lineno": 10,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/DetailPanel.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T20:39:39.989746+00:00",
+    "symbols": [
+      {
+        "name": "DetailPanel",
+        "kind": "function",
+        "lineno": 20,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatDocstring",
+        "kind": "function",
+        "lineno": 206,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/HeaderBar.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T10:28:49.057955+00:00",
+    "symbols": [
+      {
+        "name": "HeaderBar",
+        "kind": "function",
+        "lineno": 12,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/HomeView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T10:29:27.652190+00:00",
+    "symbols": [
+      {
+        "name": "detectionBadgeLabel",
+        "kind": "function",
+        "lineno": 7,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "HomeView",
+        "kind": "function",
+        "lineno": 19,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/PreviewPane.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T20:39:56.441820+00:00",
+    "symbols": [
+      {
+        "name": "PreviewPane",
+        "kind": "function",
+        "lineno": 13,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/RescanButton.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.508461+00:00",
+    "symbols": [
+      {
+        "name": "RescanButton",
+        "kind": "function",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/SearchPanel.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T06:38:52.040542+00:00",
+    "symbols": [
+      {
+        "name": "SearchPanel",
+        "kind": "function",
+        "lineno": 7,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/SettingsView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T08:59:27.635606+00:00",
+    "symbols": [
+      {
+        "name": "extractCustomExcludes",
+        "kind": "function",
+        "lineno": 23,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "sortExcludes",
+        "kind": "function",
+        "lineno": 30,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "SettingsView",
+        "kind": "function",
+        "lineno": 34,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleSave",
+        "kind": "function",
+        "lineno": 107,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleAddExclude",
+        "kind": "function",
+        "lineno": 136,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleRemoveExclude",
+        "kind": "function",
+        "lineno": 159,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/Sidebar.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T06:39:02.865593+00:00",
+    "symbols": [
+      {
+        "name": "Sidebar",
+        "kind": "function",
+        "lineno": 13,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "TreeNodeItem",
+        "kind": "function",
+        "lineno": 82,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleClick",
+        "kind": "function",
+        "lineno": 97,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "filterTree",
+        "kind": "function",
+        "lineno": 147,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "matcher",
+        "kind": "function",
+        "lineno": 148,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "walk",
+        "kind": "function",
+        "lineno": 150,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/StageToolkitView.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T17:33:33.341708+00:00",
+    "symbols": [
+      {
+        "name": "formatList",
+        "kind": "function",
+        "lineno": 18,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "AgentStatusCard",
+        "kind": "function",
+        "lineno": 32,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "DocsStatusCard",
+        "kind": "function",
+        "lineno": 86,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "StageDetectionCard",
+        "kind": "function",
+        "lineno": 118,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "StageToolkitView",
+        "kind": "function",
+        "lineno": 168,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/StatusPanel.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T20:38:31.998451+00:00",
+    "symbols": [
+      {
+        "name": "formatRelative",
+        "kind": "function",
+        "lineno": 5,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "StatusPanel",
+        "kind": "function",
+        "lineno": 16,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "CapabilitySummary",
+        "kind": "function",
+        "lineno": 82,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/__tests__/PreviewPane.test.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T20:58:43.561345+00:00",
+    "symbols": [
+      {
+        "name": "createWrapper",
+        "kind": "function",
+        "lineno": 14,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/settings/DocstringsSection.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T18:36:18.750044+00:00",
+    "symbols": [
+      {
+        "name": "DocstringsSection",
+        "kind": "function",
+        "lineno": 7,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/settings/ExcludeDirsSection.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T21:04:04.820418+00:00",
+    "symbols": [
+      {
+        "name": "ExcludeDirsSection",
+        "kind": "function",
+        "lineno": 12,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleSubmit",
+        "kind": "function",
+        "lineno": 32,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/settings/RootPathSection.tsx",
+    "relative": true,
+    "modified_at": "2025-10-31T08:59:36.078679+00:00",
+    "symbols": [
+      {
+        "name": "RootPathSection",
+        "kind": "function",
+        "lineno": 10,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/settings/WatcherSection.tsx",
+    "relative": true,
+    "modified_at": "2025-10-30T05:23:33.935680+00:00",
+    "symbols": [
+      {
+        "name": "WatcherSection",
+        "kind": "function",
+        "lineno": 5,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/config/defaultExcludes.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T05:23:28.610648+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useClassGraphQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-31T05:54:07.153544+00:00",
+    "symbols": [
+      {
+        "name": "useClassGraphQuery",
+        "kind": "function",
+        "lineno": 12,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useClassUmlQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-31T11:39:42.960582+00:00",
+    "symbols": [
+      {
+        "name": "useClassUmlQuery",
+        "kind": "function",
+        "lineno": 11,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useEventStream.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T15:56:53.679920+00:00",
+    "symbols": [
+      {
+        "name": "useEventStream",
+        "kind": "function",
+        "lineno": 36,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleUpdate",
+        "kind": "function",
+        "lineno": 44,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useSettingsQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T06:35:03.172792+00:00",
+    "symbols": [
+      {
+        "name": "useSettingsQuery",
+        "kind": "function",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useStageInitMutation.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T17:30:46.497288+00:00",
+    "symbols": [
+      {
+        "name": "useStageInitMutation",
+        "kind": "function",
+        "lineno": 7,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useStageStatusQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T17:30:41.802248+00:00",
+    "symbols": [
+      {
+        "name": "useStageStatusQuery",
+        "kind": "function",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/hooks/useStatusQuery.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T06:35:10.241846+00:00",
+    "symbols": [
+      {
+        "name": "useStatusQuery",
+        "kind": "function",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/main.tsx",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.509197+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/setupTests.ts",
+    "relative": true,
+    "modified_at": "2025-10-29T20:58:22.410210+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/state/useActivityStore.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T15:56:52.636912+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/state/useSelectionStore.ts",
+    "relative": true,
+    "modified_at": "2025-10-30T06:38:31.534385+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/vite-env.d.ts",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.509524+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/vite.config.ts",
+    "relative": true,
+    "modified_at": "2025-10-29T20:58:13.176151+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "init_project.py",
+    "relative": true,
+    "modified_at": "2025-10-30T16:44:56.225108+00:00",
+    "symbols": [
+      {
+        "name": "run_claude_init",
+        "kind": "function",
+        "lineno": 16,
+        "parent": null,
+        "docstring": "Execute 'claude -p \"/init\"' to generate CLAUDE.md in the project directory.\n\nThis function invokes the Claude Code CLI tool to automatically generate a CLAUDE.md\nfile with project-specific context. It verifies the command exists, executes it with\na 2-minute timeout, and validates the output file was created.\n\nArgs:\n    project_path (Path): Path object pointing to the project directory where CLAUDE.md\n                        will be generated\n\nReturns:\n    bool: True if CLAUDE.md was successfully generated, False if the command failed,\n          timed out, or the file was not created\n\nRaises:\n    No exceptions raised - all errors are caught and logged with warnings\n\nNotes:\n    - Requires 'claude' command in PATH (Claude Code CLI)\n    - Automatically handles empty projects (where /init may not generate output)\n    - 2-minute timeout prevents hanging on large projects\n    - Non-blocking: warnings printed but execution continues on failure"
+      },
+      {
+        "name": "append_custom_instructions",
+        "kind": "function",
+        "lineno": 87,
+        "parent": null,
+        "docstring": "Append custom workflow instructions to CLAUDE.md.\n\nThis function reads the CUSTOM_INSTRUCTIONS.md template containing stage-aware\nworkflow instructions and appends it to an existing CLAUDE.md file. It checks\nfor duplicates to avoid appending multiple times.\n\nArgs:\n    claude_md_path (Path): Path object to the target CLAUDE.md file\n    custom_instructions_template (Path): Path object to CUSTOM_INSTRUCTIONS.md template\n                                        containing workflow instructions\n\nReturns:\n    bool: True if instructions were successfully appended or already present,\n          False if template/CLAUDE.md not found or write operation failed\n\nNotes:\n    - Idempotent: checks for existing instructions marker before appending\n    - Adds clear HTML comment marker for traceability\n    - Preserves existing CLAUDE.md content (append-only)\n    - Uses UTF-8 encoding to handle international characters"
+      },
+      {
+        "name": "replace_placeholders",
+        "kind": "function",
+        "lineno": 148,
+        "parent": null,
+        "docstring": "Replace placeholders in all .md files in dest_path.\n\nRecursively searches for all Markdown files and performs simple string\nreplacement for project-specific values like project name and dates.\n\nArgs:\n    dest_path (Path): Root directory to search for .md files\n    replacements (dict): Dictionary mapping placeholder strings to replacement values\n                        (e.g., {\"{{PROJECT_NAME}}\": \"my-project\"})\n\nReturns:\n    None\n\nNotes:\n    - Processes .md files recursively\n    - Uses UTF-8 encoding\n    - Modifies files in-place\n    - No validation of placeholder format"
+      },
+      {
+        "name": "detect_project_stage",
+        "kind": "function",
+        "lineno": 178,
+        "parent": null,
+        "docstring": "Import and run stage detection from assess_stage.py.\n\nDynamically imports the assess_stage module and runs analysis on the specified\nproject directory to determine its development maturity stage (1, 2, or 3).\n\nArgs:\n    project_path (str or Path): Path to the project directory to analyze\n\nReturns:\n    dict or None: Assessment dictionary containing:\n        - recommended_stage (int): 1 (Prototyping), 2 (Structuring), or 3 (Scaling)\n        - confidence (str): 'high', 'medium', or 'low'\n        - reasons (list): List of reasoning strings explaining the recommendation\n        - metrics (dict): Project metrics (file_count, lines_of_code, patterns, etc.)\n    Returns None if detection fails (module not found, analysis error, etc.)\n\nNotes:\n    - Requires assess_stage.py in same directory\n    - Graceful degradation: returns None on any error\n    - Non-blocking: errors logged as warnings"
+      },
+      {
+        "name": "update_current_phase_with_stage",
+        "kind": "function",
+        "lineno": 211,
+        "parent": null,
+        "docstring": "Update 01-current-phase.md with detected stage information.\n\nInjects or updates a \"Detected Stage\" section in the current-phase tracking file\nwith auto-detection results, including metrics, reasoning, and recommended actions.\n\nArgs:\n    current_phase_file (Path): Path to 01-current-phase.md file\n    assessment (dict): Assessment dictionary from detect_project_stage() containing\n                      stage, confidence, reasons, and metrics\n\nReturns:\n    bool: True if file was successfully updated, False if assessment is None,\n          file not found, or write operation failed\n\nNotes:\n    - Idempotent: replaces existing \"Detected Stage\" section if present\n    - Truncates reasoning to top 5 reasons for readability\n    - Adds timestamp for traceability\n    - Includes actionable next steps\n    - Uses regex for section replacement"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "mad-ideas/run_all_checks.py",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.510370+00:00",
+    "symbols": [
+      {
+        "name": "module_available",
+        "kind": "function",
+        "lineno": 21,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "exe_available",
+        "kind": "function",
+        "lineno": 24,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "run",
+        "kind": "function",
+        "lineno": 27,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "main",
+        "kind": "function",
+        "lineno": 36,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "testZone/example.py",
+    "relative": true,
+    "modified_at": "2025-10-29T11:39:17.510746+00:00",
+    "symbols": [
+      {
+        "name": "sum",
+        "kind": "function",
+        "lineno": 1,
+        "parent": null,
+        "docstring": "_summary_\n\nArgs:\n    a (_type_): _description_\n    b (_type_): _description_\n\nReturns:\n    _type_: _description_"
+      },
+      {
+        "name": "multiply",
+        "kind": "function",
+        "lineno": 13,
+        "parent": null,
+        "docstring": "_summary_\n\nArgs:\n    a (_type_): _description_\n    b (_type_): _description_\n\nReturns:\n    _type_: _description_"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "testZone/index.html",
+    "relative": true,
+    "modified_at": "2025-10-29T17:13:32.917681+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "tests/conftest.py",
+    "relative": true,
+    "modified_at": "2025-10-29T18:31:57.295412+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "tests/test_analysis_engine.py",
+    "relative": true,
+    "modified_at": "2025-10-30T05:23:08.949530+00:00",
+    "symbols": [
+      {
+        "name": "write_module",
+        "kind": "function",
+        "lineno": 17,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "FakeClock",
+        "kind": "class",
+        "lineno": 24,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 25,
+        "parent": "FakeClock",
+        "docstring": null
+      },
+      {
+        "name": "advance",
+        "kind": "method",
+        "lineno": 28,
+        "parent": "FakeClock",
+        "docstring": null
+      },
+      {
+        "name": "__call__",
+        "kind": "method",
+        "lineno": 31,
+        "parent": "FakeClock",
+        "docstring": null
+      },
+      {
+        "name": "test_project_scanner_extracts_functions_classes_and_methods",
+        "kind": "function",
+        "lineno": 35,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_file_analyzer_optionally_includes_docstrings",
+        "kind": "function",
+        "lineno": 68,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_symbol_index_builds_tree_structure",
+        "kind": "function",
+        "lineno": 103,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_project_scanner_handles_js_files",
+        "kind": "function",
+        "lineno": 128,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_project_scanner_handles_ts_files",
+        "kind": "function",
+        "lineno": 148,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_project_scanner_handles_html_files",
+        "kind": "function",
+        "lineno": 170,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_snapshot_store_persists_and_restores_summaries",
+        "kind": "function",
+        "lineno": 195,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_scanner_can_hydrate_index_from_snapshot",
+        "kind": "function",
+        "lineno": 215,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_change_scheduler_debounce_and_collapse",
+        "kind": "function",
+        "lineno": 232,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_scanner_apply_change_batch_updates_index",
+        "kind": "function",
+        "lineno": 263,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_scanner_apply_change_batch_handles_deletions",
+        "kind": "function",
+        "lineno": 282,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "tests/test_api.py",
+    "relative": true,
+    "modified_at": "2025-10-30T05:15:14.119479+00:00",
+    "symbols": [
+      {
+        "name": "write_file",
+        "kind": "function",
+        "lineno": 16,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "create_test_app",
+        "kind": "function",
+        "lineno": 23,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "api_client",
+        "kind": "function",
+        "lineno": 45,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_health_endpoint",
+        "kind": "function",
+        "lineno": 64,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_tree_endpoint_returns_structure",
+        "kind": "function",
+        "lineno": 70,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_files_endpoint_returns_summary",
+        "kind": "function",
+        "lineno": 78,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_search_endpoint_returns_results",
+        "kind": "function",
+        "lineno": 87,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_rescan_endpoint_triggers_scan",
+        "kind": "function",
+        "lineno": 94,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_get_settings_endpoint",
+        "kind": "function",
+        "lineno": 100,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_update_settings_toggle_docstrings",
+        "kind": "function",
+        "lineno": 110,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_update_settings_updates_exclude_dirs",
+        "kind": "function",
+        "lineno": 118,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_update_settings_invalid_root_returns_400",
+        "kind": "function",
+        "lineno": 128,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_status_endpoint_returns_metrics",
+        "kind": "function",
+        "lineno": 133,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_preview_endpoint_returns_html",
+        "kind": "function",
+        "lineno": 143,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_preview_endpoint_returns_plain_text",
+        "kind": "function",
+        "lineno": 153,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_preview_endpoint_missing_file_returns_404",
+        "kind": "function",
+        "lineno": 163,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  }
+]

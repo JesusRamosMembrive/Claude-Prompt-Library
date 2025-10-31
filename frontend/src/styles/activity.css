@@ -1,0 +1,39 @@
+.activity-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item {
+  align-items: flex-start;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(18, 21, 31, 0.85);
+  padding: 10px 12px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.activity-item > span:first-of-type {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-item.deleted {
+  border-color: rgba(249, 115, 22, 0.3);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.activity-time {
+  color: #717a96;
+  font-size: 11px;
+}

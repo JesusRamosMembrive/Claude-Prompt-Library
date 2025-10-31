@@ -125,6 +125,73 @@ def test_symbol_index_builds_tree_structure(tmp_path: Path) -> None:
     assert any(symbol.name == "Helper" for symbol in util_node.file_summary.symbols)
 
 
+def test_project_scanner_handles_js_files(tmp_path: Path) -> None:
+    pytest.importorskip("esprima")
+    write_module(tmp_path, "pkg/module.py", "def foo():\n    return 1")
+    write_module(
+        tmp_path,
+        "pkg/helpers.js",
+        "export function sum(a, b) { return a + b; }",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+
+    filenames = {summary.path.name for summary in results}
+    assert "helpers.js" in filenames
+
+    js_summary = next(summary for summary in results if summary.path.name == "helpers.js")
+    symbol_names = {symbol.name for symbol in js_summary.symbols}
+    assert "sum" in symbol_names
+
+
+def test_project_scanner_handles_ts_files(tmp_path: Path) -> None:
+    pytest.importorskip("tree_sitter_languages")
+    write_module(
+        tmp_path,
+        "pkg/service.ts",
+        """
+export class Service {
+  run(): void {}
+}
+
+export const handler = (value: number): number => value * 2;
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+
+    ts_summary = next(summary for summary in results if summary.path.name == "service.ts")
+    names = {symbol.name for symbol in ts_summary.symbols}
+    assert {"Service", "handler"} <= names
+
+
+def test_project_scanner_handles_html_files(tmp_path: Path) -> None:
+    pytest.importorskip("bs4")
+    write_module(
+        tmp_path,
+        "page/index.html",
+        """
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="app">Hello</div>
+    <custom-element></custom-element>
+  </body>
+</html>
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    summaries = scanner.scan()
+
+    html_summary = next(summary for summary in summaries if summary.path.name == "index.html")
+    names = {symbol.name for symbol in html_summary.symbols}
+    assert "app" in names
+    assert "custom-element" in names
+
+
 def test_snapshot_store_persists_and_restores_summaries(tmp_path: Path) -> None:
     module_path = write_module(tmp_path, "pkg/sample.py", "def foo():\n    return 1")
     scanner = ProjectScanner(tmp_path)
@@ -133,7 +200,7 @@ def test_snapshot_store_persists_and_restores_summaries(tmp_path: Path) -> None:
     store = SnapshotStore(tmp_path)
     store.save(summaries)
 
-    snapshot_file = tmp_path / ".cache" / "code-map.json"
+    snapshot_file = tmp_path / ".code-map" / "code-map.json"
     assert snapshot_file.exists()
 
     index = SymbolIndex(tmp_path)

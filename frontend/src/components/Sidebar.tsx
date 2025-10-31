@@ -12,7 +12,8 @@ const FILE_ICON = "📄";
 
 export function Sidebar(): JSX.Element {
   const [filter, setFilter] = useState("");
-  const select = useSelectionStore((state) => state.select);
+  const selectPath = useSelectionStore((state) => state.selectPath);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
   const selectedPath = useSelectionStore((state) => state.selectedPath);
 
   const { data, isLoading, isError, error } = useQuery({
@@ -34,7 +35,7 @@ export function Sidebar(): JSX.Element {
       <div className="panel-header">
         <h2>Proyecto</h2>
         {selectedPath && (
-          <button type="button" onClick={() => select(undefined)}>
+          <button type="button" onClick={clearSelection}>
             Limpiar selección
           </button>
         )}
@@ -86,7 +87,7 @@ function TreeNodeItem({
   depth: number;
 }): JSX.Element {
   const selectedPath = useSelectionStore((state) => state.selectedPath);
-  const select = useSelectionStore((state) => state.select);
+  const selectPath = useSelectionStore((state) => state.selectPath);
   const [expanded, setExpanded] = useState(true);
 
   const isDirectory = node.is_dir;
@@ -97,7 +98,7 @@ function TreeNodeItem({
     if (isDirectory) {
       setExpanded((value) => !value);
     } else {
-      select(node.path);
+      selectPath(node.path);
     }
   };
 

@@ -10,18 +10,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from .constants import META_DIR_NAME
 from .models import AnalysisError, FileSummary, SymbolInfo, SymbolKind
 
 
 class SnapshotStore:
-    """Gestiona snapshots en `<root>/.cache/code-map.json`."""
+    """Gestiona snapshots en `<root>/.code-map/code-map.json`."""
 
     def __init__(self, root: Path, filename: str = "code-map.json") -> None:
         self.root = Path(root).expanduser().resolve()
-        self.cache_dir = self.root / ".cache"
-        self.snapshot_path = self.cache_dir / filename
+        self.meta_dir = self.root / META_DIR_NAME
+        self.snapshot_path = self.meta_dir / filename
 
     def load(self) -> List[FileSummary]:
+        """Carga un snapshot desde el disco."""
         if not self.snapshot_path.exists():
             return []
 
@@ -39,15 +41,17 @@ class SnapshotStore:
         return summaries
 
     def save(self, summaries: Iterable[FileSummary]) -> None:
+        """Guarda un snapshot en el disco."""
         serializable = [self._serialize_file(summary) for summary in summaries]
         serializable.sort(key=lambda item: item["path"])
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.meta_dir.mkdir(parents=True, exist_ok=True)
         self.snapshot_path.write_text(
             json.dumps(serializable, ensure_ascii=True, indent=2),
             encoding="utf-8",
         )
 
     def _serialize_file(self, summary: FileSummary) -> Dict[str, Any]:
+        """Serializa un objeto FileSummary a un diccionario."""
         path = summary.path.resolve()
         try:
             relative_path = path.relative_to(self.root).as_posix()
@@ -65,6 +69,7 @@ class SnapshotStore:
         }
 
     def _serialize_symbol(self, symbol: SymbolInfo) -> Dict[str, Any]:
+        """Serializa un objeto SymbolInfo a un diccionario."""
         return {
             "name": symbol.name,
             "kind": symbol.kind.value,
@@ -74,6 +79,7 @@ class SnapshotStore:
         }
 
     def _serialize_error(self, error: AnalysisError) -> Dict[str, Any]:
+        """Serializa un objeto AnalysisError a un diccionario."""
         return {
             "message": error.message,
             "lineno": error.lineno,
@@ -81,6 +87,7 @@ class SnapshotStore:
         }
 
     def _deserialize_file(self, entry: Dict[str, Any]) -> Optional[FileSummary]:
+        """Deserializa un diccionario a un objeto FileSummary."""
         raw_path = entry.get("path")
         if not raw_path:
             return None
@@ -112,6 +119,7 @@ class SnapshotStore:
         )
 
     def _deserialize_symbol(self, item: Dict[str, Any], path: Path) -> SymbolInfo:
+        """Deserializa un diccionario a un objeto SymbolInfo."""
         kind_value = item.get("kind", SymbolKind.FUNCTION.value)
         return SymbolInfo(
             name=item.get("name", ""),
@@ -123,6 +131,7 @@ class SnapshotStore:
         )
 
     def _deserialize_error(self, item: Dict[str, Any]) -> AnalysisError:
+        """Deserializa un diccionario a un objeto AnalysisError."""
         return AnalysisError(
             message=item.get("message", ""),
             lineno=item.get("lineno"),

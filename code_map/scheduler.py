@@ -19,11 +19,13 @@ DEFAULT_DEBOUNCE_SECONDS = 0.25
 
 @dataclass(slots=True)
 class _QueuedEvent:
+    """Representa un evento pendiente dentro del debounce."""
     event_type: ChangeEventType
     src_path: Path
     dest_path: Optional[Path] = None
 
     def to_public(self) -> FileChangeEvent:
+        """Convierte el evento interno en un FileChangeEvent expuesto."""
         return FileChangeEvent(
             event_type=self.event_type,
             src_path=self.src_path,
@@ -55,6 +57,7 @@ class ChangeScheduler:
         *,
         dest_path: Optional[Path] = None,
     ) -> None:
+        """Añade un evento a la cola interna aplicando normalización."""
         event = _QueuedEvent(
             event_type=event_type,
             src_path=Path(src_path).resolve(),
@@ -85,16 +88,19 @@ class ChangeScheduler:
         return batch if not batch.is_empty() else None
 
     def pending_count(self) -> int:
+        """Devuelve la cantidad de eventos pendientes en la cola."""
         with self._lock:
             return len(self._queue)
 
     def clear(self) -> None:
+        """Vacía la cola de eventos pendientes."""
         with self._lock:
             self._queue.clear()
 
     def _collapse_events(
         self, events: Iterable[_QueuedEvent]
     ) -> Iterator[FileChangeEvent]:
+        """Simplifica la secuencia de eventos acumulados en su forma mínima."""
         state: Dict[Path, FileChangeEvent] = {}
 
         for event in events:

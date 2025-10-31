@@ -5,6 +5,7 @@ import { getFileSummary } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import type { SymbolInfo } from "../api/types";
 import { useSelectionStore } from "../state/useSelectionStore";
+import { PreviewPane } from "./PreviewPane";
 
 interface ClassWithMethods {
   symbol: SymbolInfo;
@@ -187,6 +188,15 @@ export function DetailPanel(): JSX.Element {
             Añade funciones o clases de nivel superior para visualizarlas aquí. Los
             métodos se agrupan automáticamente bajo su clase correspondiente.
           </p>
+        </div>
+      )}
+
+      {selectedPath && (
+        <div className="preview-container">
+          <h3 style={{ margin: "0 0 8px", color: "#7f869d", fontSize: "13px" }}>
+            Previsualización
+          </h3>
+          <PreviewPane path={selectedPath} />
         </div>
       )}
     </section>

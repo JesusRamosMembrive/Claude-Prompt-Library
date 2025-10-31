@@ -39,7 +39,7 @@ Hoy avanzamos tanto en la arquitectura backend como en la definición visual del
 - Diseñar/implementar modal de búsqueda global (`Ctrl+K`).
 
 ## Próximos pasos sugeridos
-1. Preparar scripts de arranque del backend (`uvicorn code_map.server:app --reload`), revisar logs del watcher y asegurar persistencia en `.cache`.
+1. Preparar scripts de arranque del backend (`uvicorn code_map.server:app --reload`), revisar logs del watcher y asegurar persistencia en `.code-map`.
 2. Documentar la API y configuración en README o /docs (cómo setear `CODE_MAP_ROOT`, cambiar docstrings, etc.).
 3. Iniciar implementación de frontend real (setup Vite, componentes base, integrar árbol con `/tree`).
 4. Plan para almacenar Settings (archivo YAML o endpoint en backend).

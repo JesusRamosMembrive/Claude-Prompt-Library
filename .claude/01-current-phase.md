@@ -424,3 +424,21 @@ New structure:
 
 **Last updated:** 2025-10-27
 **Next review:** Después de validation con proyectos reales
+
+## 🎯 Detected Stage: Stage 3 (High Confidence)
+
+**Auto-detected on:** 2025-10-30 20:21
+
+**Detection reasoning:**
+- Large codebase (68 files, ~7943 LOC)
+- Multiple patterns: Repository
+
+**Metrics:**
+- Files: 68
+- LOC: ~7943
+- Patterns: Repository
+
+**Recommended actions:**
+- Follow rules in `.claude/02-stage3-rules.md` (and `.codex/stage3-rules.md` if using Codex)
+- Use stage-aware subagents for guidance
+- Re-assess stage after significant changes

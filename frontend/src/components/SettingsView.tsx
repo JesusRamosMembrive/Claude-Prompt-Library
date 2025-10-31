@@ -1,91 +1,179 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  useMutation,
-  UseQueryResult,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
-import { updateSettings } from "../api/client";
-import type { SettingsPayload } from "../api/types";
+import { browseForRoot, updateSettings } from "../api/client";
+import type { SettingsPayload, SettingsUpdatePayload } from "../api/types";
 import { queryKeys } from "../api/queryKeys";
+import { DEFAULT_EXCLUDED_DIRS } from "../config/defaultExcludes";
 import { useActivityStore } from "../state/useActivityStore";
 import { useSelectionStore } from "../state/useSelectionStore";
+import { DocstringsSection } from "./settings/DocstringsSection";
+import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
+import { RootPathSection } from "./settings/RootPathSection";
+import { WatcherSection } from "./settings/WatcherSection";
 
 interface SettingsViewProps {
-  onBack: () => void;
   settingsQuery: UseQueryResult<SettingsPayload>;
 }
 
-export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.Element {
+const DEFAULT_EXCLUDES_LOWER = new Set(DEFAULT_EXCLUDED_DIRS.map((dir) => dir.toLowerCase()));
+
+function extractCustomExcludes(list?: string[]): string[] {
+  if (!list) {
+    return [];
+  }
+  return list.filter((dir) => !DEFAULT_EXCLUDES_LOWER.has(dir.toLowerCase()));
+}
+
+function sortExcludes(list: string[]): string[] {
+  return [...list].sort((a, b) => a.localeCompare(b));
+}
+
+export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element {
   const activityClear = useActivityStore((state) => state.clear);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const settings = settingsQuery.data;
-  const [formRoot, setFormRoot] = useState(settings?.root_path ?? "");
-  const [formDocstrings, setFormDocstrings] = useState(
-    settings?.include_docstrings ?? true,
+  const originalRoot = settings?.root_path ?? "";
+  const originalDoc = settings?.include_docstrings ?? true;
+  const originalCustomExcludes = useMemo(
+    () => sortExcludes(extractCustomExcludes(settings?.exclude_dirs)),
+    [settings?.exclude_dirs],
   );
+
+  const [formRoot, setFormRoot] = useState(originalRoot);
+  const [formDocstrings, setFormDocstrings] = useState(originalDoc);
+  const [customExcludes, setCustomExcludes] = useState<string[]>(originalCustomExcludes);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (settings) {
-      setFormRoot(settings.root_path);
-      setFormDocstrings(settings.include_docstrings);
+    if (!settings) {
+      return;
     }
-  }, [settings?.root_path, settings?.include_docstrings]);
+    setFormRoot(settings.root_path);
+    setFormDocstrings(settings.include_docstrings);
+    setCustomExcludes(sortExcludes(extractCustomExcludes(settings.exclude_dirs)));
+  }, [settings]);
 
   const mutation = useMutation({
     mutationFn: updateSettings,
     onSuccess: (result) => {
       queryClient.setQueryData(queryKeys.settings, result.settings);
       queryClient.invalidateQueries({ queryKey: queryKeys.tree });
+      queryClient.invalidateQueries({ queryKey: queryKeys.status });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
       if (result.updated.includes("root_path")) {
-        useSelectionStore.getState().select(undefined);
+        useSelectionStore.getState().clearSelection();
       }
+      setCustomExcludes(sortExcludes(extractCustomExcludes(result.settings.exclude_dirs)));
       setStatusMessage(
         result.updated.length > 0
           ? `Cambios aplicados: ${result.updated.join(", ")}`
-          : "No había cambios que guardar."
+          : "No había cambios que guardar.",
       );
     },
     onError: (error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : "Error desconocido";
+      const message = error instanceof Error ? error.message : "Error desconocido";
       setStatusMessage(`Error al guardar: ${message}`);
     },
   });
 
-  const originalRoot = settings?.root_path ?? "";
-  const originalDoc = settings?.include_docstrings ?? true;
+  const excludesChanged = useMemo(() => {
+    if (!settings) {
+      return false;
+    }
+    if (originalCustomExcludes.length !== customExcludes.length) {
+      return true;
+    }
+    return originalCustomExcludes.some((dir, index) => dir !== customExcludes[index]);
+  }, [settings, originalCustomExcludes, customExcludes]);
 
   const isDirty = useMemo(() => {
     if (!settings) {
       return false;
     }
-    return originalRoot !== formRoot.trim() || originalDoc !== formDocstrings;
-  }, [settings, originalRoot, formRoot, originalDoc, formDocstrings]);
+    if (originalRoot !== formRoot.trim()) {
+      return true;
+    }
+    if (originalDoc !== formDocstrings) {
+      return true;
+    }
+    return excludesChanged;
+  }, [settings, originalRoot, formRoot, originalDoc, formDocstrings, excludesChanged]);
 
   const handleSave = () => {
     if (!settings || !isDirty || mutation.isPending) {
       return;
     }
-    const payload: { root_path?: string; include_docstrings?: boolean } = {};
+
+    const payload: SettingsUpdatePayload = {};
     const trimmedRoot = formRoot.trim();
+
     if (trimmedRoot && trimmedRoot !== originalRoot) {
       payload.root_path = trimmedRoot;
     }
+
     if (formDocstrings !== originalDoc) {
       payload.include_docstrings = formDocstrings;
     }
+
+    if (excludesChanged) {
+      payload.exclude_dirs = customExcludes;
+    }
+
     if (Object.keys(payload).length === 0) {
       setStatusMessage("No hay cambios para guardar.");
       return;
     }
+
     setStatusMessage(null);
     mutation.mutate(payload);
   };
 
-  const excludeDirs = settings?.exclude_dirs ?? [];
+  const handleAddExclude = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { ok: false, error: "Escribe un nombre de directorio válido." };
+    }
+
+    if (/[\\/]/.test(trimmed)) {
+      return { ok: false, error: "Usa solo nombres de directorio, sin rutas ni separadores." };
+    }
+
+    const lowered = trimmed.toLowerCase();
+    if (DEFAULT_EXCLUDES_LOWER.has(lowered)) {
+      return { ok: false, error: "Ese directorio ya se excluye por defecto." };
+    }
+
+    if (customExcludes.some((dir) => dir.toLowerCase() === lowered)) {
+      return { ok: false, error: "Ese directorio ya está en tus exclusiones." };
+    }
+
+    setCustomExcludes((prev) => sortExcludes([...prev, trimmed]));
+    return { ok: true };
+  };
+
+  const handleRemoveExclude = (value: string) => {
+    setCustomExcludes((prev) => prev.filter((dir) => dir !== value));
+  };
+
+  const statusTone = statusMessage?.toLowerCase().startsWith("error") ? "error" : "info";
+  const isLoading = settingsQuery.isLoading;
+  const isMutating = mutation.isPending;
+  const browseMutation = useMutation({
+    mutationFn: browseForRoot,
+    onSuccess: (response) => {
+      setFormRoot(response.path);
+      setStatusMessage(`Directorio seleccionado: ${response.path}`);
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "No se pudo abrir el diálogo";
+      setStatusMessage(`Error al seleccionar directorio: ${message}`);
+    },
+  });
 
   return (
     <div className="settings-view">
@@ -98,16 +186,16 @@ export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.
           </div>
         </div>
         <div className="header-actions">
-          <button className="secondary-btn" type="button" onClick={onBack}>
+          <button className="secondary-btn" type="button" onClick={() => navigate("/")}>
             Volver al overview
           </button>
           <button
             className="primary-btn"
             type="button"
             onClick={handleSave}
-            disabled={!isDirty || mutation.isPending || settingsQuery.isLoading}
+            disabled={!isDirty || isMutating || isLoading}
           >
-            {mutation.isPending ? "Guardando…" : "Guardar cambios"}
+            {isMutating ? "Guardando…" : "Guardar cambios"}
           </button>
         </div>
       </header>
@@ -120,7 +208,13 @@ export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.
             No se pudo cargar la configuración. {String(settingsQuery.error)}
           </div>
         ) : statusMessage ? (
-          <span style={{ color: "#7dd3fc" }}>{statusMessage}</span>
+          <span
+            style={{
+              color: statusTone === "error" ? "#f97316" : "#7dd3fc",
+            }}
+          >
+            {statusMessage}
+          </span>
         ) : (
           <span>Los cambios se aplican y persisten en el backend.</span>
         )}
@@ -130,107 +224,30 @@ export function SettingsView({ onBack, settingsQuery }: SettingsViewProps): JSX.
       </div>
 
       <div className="settings-grid">
-        <section className="settings-card">
-          <h2>Ruta del proyecto</h2>
-          <p>Define el directorio raíz que será analizado por el backend.</p>
-          <div className="setting-row">
-            <div className="setting-info">
-              <strong>Ruta actual</strong>
-              <span>{settings?.absolute_root ?? formRoot}</span>
-            </div>
-            <div className="setting-controls">
-              <input
-                type="text"
-                value={formRoot}
-                onChange={(event) => setFormRoot(event.target.value)}
-                disabled={settingsQuery.isLoading}
-              />
-              <button type="button" disabled>
-                Cambiar...
-              </button>
-            </div>
-          </div>
-          <div className="setting-row">
-            <div className="setting-info">
-              <strong>Excluir directorios</strong>
-              <span>Se ignoran durante escaneos e índices.</span>
-            </div>
-            <div className="settings-tags">
-              {excludeDirs.map((tag) => (
-                <span className="settings-tag" key={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
+        <RootPathSection
+          absoluteRoot={settings?.absolute_root}
+          rootValue={formRoot}
+          disabled={isLoading || browseMutation.isPending}
+          onRootChange={setFormRoot}
+          onBrowse={() => browseMutation.mutate()}
+          browseDisabled={browseMutation.isPending || isMutating || isLoading}
+        />
 
-        <section className="settings-card">
-          <h2>Watcher y sincronización</h2>
-          <p>Controla cómo se aplican los cambios del sistema de archivos.</p>
-          <div className="toggle-row">
-            <div>
-              <strong>Watcher activo</strong>
-              <span>
-                {settings?.watcher_active
-                  ? "Reescanea en cuanto se detectan eventos."
-                  : "Watcher deshabilitado."}
-              </span>
-            </div>
-            <input type="checkbox" checked={settings?.watcher_active ?? false} readOnly />
-          </div>
-          <div className="toggle-row">
-            <div>
-              <strong>Auto-rescan</strong>
-              <span>Fuerza escaneos completos al detectar cambios mayores.</span>
-            </div>
-            <input type="checkbox" disabled />
-          </div>
-          <div className="toggle-row">
-            <div>
-              <strong>Persistir snapshots</strong>
-              <span>Guarda los resultados en `.cache` para iniciar más rápido.</span>
-            </div>
-            <input type="checkbox" checked readOnly />
-          </div>
-        </section>
+        <ExcludeDirsSection
+          defaultDirs={DEFAULT_EXCLUDED_DIRS}
+          customDirs={customExcludes}
+          disabled={isLoading || isMutating}
+          onAdd={handleAddExclude}
+          onRemove={handleRemoveExclude}
+        />
 
-        <section className="settings-card">
-          <h2>Visualización</h2>
-          <p>Ajusta cómo se muestran los símbolos en la interfaz.</p>
-          <div className="setting-row">
-            <div className="setting-info">
-              <strong>Modo de símbolos</strong>
-              <span>Agrupación principal para el explorador.</span>
-            </div>
-            <div className="setting-controls">
-              <select value="tree" disabled>
-                <option value="tree">Carpeta → archivo → símbolo</option>
-              </select>
-            </div>
-          </div>
-          <div className="toggle-row">
-            <div>
-              <strong>Mostrar docstrings</strong>
-              <span>
-                Controla si el analizador extrae docstrings para mostrarlos en la UI.
-              </span>
-            </div>
-            <input
-              type="checkbox"
-              checked={formDocstrings}
-              onChange={(event) => setFormDocstrings(event.target.checked)}
-              disabled={settingsQuery.isLoading}
-            />
-          </div>
-          <div className="toggle-row">
-            <div>
-              <strong>Tema oscuro</strong>
-              <span>Activa la paleta actual del workspace.</span>
-            </div>
-            <input type="checkbox" checked readOnly />
-          </div>
-        </section>
+        <WatcherSection watcherActive={settings?.watcher_active} />
+
+        <DocstringsSection
+          includeDocstrings={formDocstrings}
+          disabled={isLoading}
+          onToggleDocstrings={setFormDocstrings}
+        />
 
         <section className="settings-card">
           <h2>Próximamente</h2>

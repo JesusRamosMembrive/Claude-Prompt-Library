@@ -48,4 +48,141 @@ export interface SettingsPayload {
 export interface SettingsUpdatePayload {
   root_path?: string;
   include_docstrings?: boolean;
+  exclude_dirs?: string[];
+}
+
+export interface AnalyzerCapability {
+  key: string;
+  description: string;
+  extensions: string[];
+  available: boolean;
+  dependency?: string | null;
+  error?: string | null;
+  degraded_extensions: string[];
+}
+
+export interface StatusPayload {
+  root_path: string;
+  absolute_root: string;
+  watcher_active: boolean;
+  include_docstrings: boolean;
+  last_full_scan: string | null;
+  last_event_batch: string | null;
+  files_indexed: number;
+  symbols_indexed: number;
+  pending_events: number;
+  capabilities: AnalyzerCapability[];
+}
+
+export type StageAgentSelection = "claude" | "codex" | "both";
+
+export interface OptionalFilesStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+}
+
+export interface AgentInstallStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+  installed: boolean;
+  optional?: OptionalFilesStatus | null;
+}
+
+export interface DocsStatus {
+  expected: string[];
+  present: string[];
+  missing: string[];
+  complete: boolean;
+}
+
+export interface StageDetectionStatus {
+  available: boolean;
+  recommended_stage?: number | null;
+  confidence?: string | null;
+  reasons: string[];
+  metrics?: Record<string, unknown> | null;
+  error?: string | null;
+  checked_at?: string | null;
+}
+
+export interface StageStatusPayload {
+  root_path: string;
+  claude: AgentInstallStatus;
+  codex: AgentInstallStatus;
+  docs: DocsStatus;
+  detection: StageDetectionStatus;
+}
+
+export interface StageInitPayload {
+  agents: StageAgentSelection;
+}
+
+export interface StageInitResponse {
+  success: boolean;
+  exit_code: number;
+  command: string[];
+  stdout: string;
+  stderr: string;
+  status: StageStatusPayload;
+}
+
+export interface BrowseDirectoryResponse {
+  path: string;
+}
+
+export interface ClassGraphNode {
+  id: string;
+  name: string;
+  module: string;
+  file: string;
+}
+
+export interface ClassGraphEdge {
+  source: string;
+  target: string;
+  type: "inherits" | "instantiates" | "references";
+  internal: boolean;
+  raw_target: string;
+}
+
+export interface ClassGraphStats {
+  nodes: number;
+  edges: number;
+  edges_by_type: Record<string, number>;
+}
+
+export interface ClassGraphResponse {
+  nodes: ClassGraphNode[];
+  edges: ClassGraphEdge[];
+  stats: ClassGraphStats;
+}
+
+export interface UMLAttribute {
+  name: string;
+  type?: string | null;
+  optional: boolean;
+}
+
+export interface UMLMethod {
+  name: string;
+  parameters: string[];
+  returns?: string | null;
+}
+
+export interface UMLClass {
+  id: string;
+  name: string;
+  module: string;
+  file: string;
+  bases: string[];
+  attributes: UMLAttribute[];
+  methods: UMLMethod[];
+  associations: string[];
+}
+
+export interface UMLDiagramResponse {
+  classes: UMLClass[];
+  stats: Record<string, number>;
 }

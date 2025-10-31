@@ -5,7 +5,6 @@ Aplicación FastAPI principal.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -19,23 +18,17 @@ from .settings import load_settings, save_settings
 from .api.routes import router as api_router
 
 
-def _env_flag(name: str, default: bool = False) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
-
-
 def create_app(root: Optional[str | Path] = None) -> FastAPI:
-    root_path = Path(
-        root
-        or os.environ.get("CODE_MAP_ROOT", "")
-        or Path.cwd()
-    ).expanduser().resolve()
+    """
+    Crea y configura la aplicación FastAPI.
 
-    include_docstrings = _env_flag("CODE_MAP_INCLUDE_DOCSTRINGS", True)
+    Args:
+        root: La ruta raíz del proyecto a escanear.
 
-    settings = load_settings(root_path, default_include_docstrings=include_docstrings)
+    Returns:
+        La instancia de la aplicación FastAPI.
+    """
+    settings = load_settings(root_override=root)
     scheduler = ChangeScheduler()
 
     state = AppState(
