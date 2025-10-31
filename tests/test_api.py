@@ -165,3 +165,16 @@ def test_preview_endpoint_missing_file_returns_404(tmp_path: Path) -> None:
     with TestClient(app) as client:
         response = client.get("/preview", params={"path": "unknown/file.md"})
         assert response.status_code == 404
+
+
+def test_linters_discovery_endpoint(api_client: TestClient) -> None:
+    response = api_client.get("/linters/discovery")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["root_path"]
+    expected = {"ruff", "black", "mypy", "bandit", "pytest", "pytest_cov", "pre_commit"}
+    tool_keys = {tool["key"] for tool in payload["tools"]}
+    assert expected <= tool_keys
+    assert all(isinstance(tool["installed"], bool) for tool in payload["tools"])
+    assert any(rule["key"] == "max_file_length" for rule in payload["custom_rules"])
+    assert isinstance(payload["notifications"], list)

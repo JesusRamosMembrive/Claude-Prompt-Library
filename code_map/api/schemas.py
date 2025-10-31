@@ -187,6 +187,46 @@ class StageInitResponse(BaseModel):
     status: StageStatusResponse
 
 
+class LinterToolSchema(BaseModel):
+    """Estado de una herramienta estándar de linters."""
+    key: str
+    name: str
+    description: str
+    installed: bool
+    version: Optional[str] = None
+    command_path: Optional[str] = None
+    homepage: Optional[str] = None
+    error: Optional[str] = None
+
+
+class LinterCustomRuleSchema(BaseModel):
+    """Descripción de una regla de calidad personalizada."""
+    key: str
+    name: str
+    description: str
+    enabled: bool = True
+    threshold: Optional[int] = None
+    configurable: bool = True
+
+
+class NotificationChannelSchema(BaseModel):
+    """Canal disponible para notificaciones de escritorio."""
+    key: str
+    name: str
+    available: bool
+    description: Optional[str] = None
+    command: Optional[str] = None
+
+
+class LintersDiscoveryResponse(BaseModel):
+    """Payload con el resultado del discovery de linters."""
+    root_path: str
+    generated_at: datetime
+    tools: List[LinterToolSchema] = Field(default_factory=list)
+    custom_rules: List[LinterCustomRuleSchema] = Field(default_factory=list)
+    notifications: List[NotificationChannelSchema] = Field(default_factory=list)
+
+
 class BrowseDirectoryResponse(BaseModel):
     """Respuesta al seleccionar un directorio en el servidor."""
     path: str

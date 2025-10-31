@@ -2,7 +2,7 @@
   {
     "path": "assess_stage.py",
     "relative": true,
-    "modified_at": "2025-10-30T15:42:21.547371+00:00",
+    "modified_at": "2025-10-31T12:37:21.625553+00:00",
     "symbols": [
       {
         "name": "should_ignore",
@@ -59,21 +59,21 @@
   {
     "path": "claude_assess.py",
     "relative": true,
-    "modified_at": "2025-10-30T15:42:43.121542+00:00",
+    "modified_at": "2025-10-31T12:37:21.625658+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/__init__.py",
     "relative": true,
-    "modified_at": "2025-10-29T18:26:58.891913+00:00",
+    "modified_at": "2025-10-31T12:37:21.625658+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/analyzer.py",
     "relative": true,
-    "modified_at": "2025-10-30T15:43:19.167826+00:00",
+    "modified_at": "2025-10-31T12:37:21.625658+00:00",
     "symbols": [
       {
         "name": "get_modified_time",
@@ -151,7 +151,7 @@
   {
     "path": "code_map/analyzer_registry.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:23:58.669265+00:00",
+    "modified_at": "2025-10-31T12:37:21.626621+00:00",
     "symbols": [
       {
         "name": "AnalyzerCapability",
@@ -250,7 +250,7 @@
   {
     "path": "code_map/api/analysis.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:21:02.550360+00:00",
+    "modified_at": "2025-10-31T12:37:21.626631+00:00",
     "symbols": [
       {
         "name": "health",
@@ -307,7 +307,7 @@
   {
     "path": "code_map/api/deps.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:22:00.322666+00:00",
+    "modified_at": "2025-10-31T12:37:21.627631+00:00",
     "symbols": [
       {
         "name": "get_app_state",
@@ -322,7 +322,7 @@
   {
     "path": "code_map/api/graph.py",
     "relative": true,
-    "modified_at": "2025-10-31T11:37:13.055345+00:00",
+    "modified_at": "2025-10-31T12:37:21.627631+00:00",
     "symbols": [
       {
         "name": "get_class_graph",
@@ -349,9 +349,24 @@
     "errors": []
   },
   {
+    "path": "code_map/api/linters.py",
+    "relative": true,
+    "modified_at": "2025-10-31T13:15:15.429616+00:00",
+    "symbols": [
+      {
+        "name": "get_linters_discovery",
+        "kind": "function",
+        "lineno": 19,
+        "parent": null,
+        "docstring": "Devuelve el resultado del proceso de discovery de herramientas de calidad."
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/api/preview.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:21:19.232449+00:00",
+    "modified_at": "2025-10-31T12:37:21.628631+00:00",
     "symbols": [
       {
         "name": "preview_file",
@@ -366,14 +381,14 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-10-30T19:56:40.175033+00:00",
+    "modified_at": "2025-10-31T13:15:29.970718+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-10-31T10:22:35.033875+00:00",
+    "modified_at": "2025-10-31T13:15:06.558555+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -523,114 +538,142 @@
         "docstring": "Respuesta tras ejecutar init_project.py."
       },
       {
-        "name": "BrowseDirectoryResponse",
+        "name": "LinterToolSchema",
         "kind": "class",
         "lineno": 190,
+        "parent": null,
+        "docstring": "Estado de una herramienta est\u00e1ndar de linters."
+      },
+      {
+        "name": "LinterCustomRuleSchema",
+        "kind": "class",
+        "lineno": 202,
+        "parent": null,
+        "docstring": "Descripci\u00f3n de una regla de calidad personalizada."
+      },
+      {
+        "name": "NotificationChannelSchema",
+        "kind": "class",
+        "lineno": 212,
+        "parent": null,
+        "docstring": "Canal disponible para notificaciones de escritorio."
+      },
+      {
+        "name": "LintersDiscoveryResponse",
+        "kind": "class",
+        "lineno": 221,
+        "parent": null,
+        "docstring": "Payload con el resultado del discovery de linters."
+      },
+      {
+        "name": "BrowseDirectoryResponse",
+        "kind": "class",
+        "lineno": 230,
         "parent": null,
         "docstring": "Respuesta al seleccionar un directorio en el servidor."
       },
       {
         "name": "ClassGraphNode",
         "kind": "class",
-        "lineno": 195,
+        "lineno": 235,
         "parent": null,
         "docstring": "Nodo del grafo de clases."
       },
       {
         "name": "ClassGraphEdge",
         "kind": "class",
-        "lineno": 203,
+        "lineno": 243,
         "parent": null,
         "docstring": "Arista del grafo de clases."
       },
       {
         "name": "ClassGraphStats",
         "kind": "class",
-        "lineno": 212,
+        "lineno": 252,
         "parent": null,
         "docstring": "M\u00e9tricas del grafo generado."
       },
       {
         "name": "ClassGraphResponse",
         "kind": "class",
-        "lineno": 219,
+        "lineno": 259,
         "parent": null,
         "docstring": "Respuesta completa del grafo de clases."
       },
       {
         "name": "UMLAttribute",
         "kind": "class",
-        "lineno": 226,
+        "lineno": 266,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLMethod",
         "kind": "class",
-        "lineno": 232,
+        "lineno": 272,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLClass",
         "kind": "class",
-        "lineno": 238,
+        "lineno": 278,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLDiagramResponse",
         "kind": "class",
-        "lineno": 249,
+        "lineno": 289,
         "parent": null,
         "docstring": null
       },
       {
         "name": "serialize_symbol",
         "kind": "function",
-        "lineno": 254,
+        "lineno": 294,
         "parent": null,
         "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
       },
       {
         "name": "serialize_error",
         "kind": "function",
-        "lineno": 267,
+        "lineno": 307,
         "parent": null,
         "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
       },
       {
         "name": "serialize_summary",
         "kind": "function",
-        "lineno": 276,
+        "lineno": 316,
         "parent": null,
         "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
       },
       {
         "name": "serialize_tree",
         "kind": "function",
-        "lineno": 288,
+        "lineno": 328,
         "parent": null,
         "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
       },
       {
         "name": "serialize_search_results",
         "kind": "function",
-        "lineno": 314,
+        "lineno": 354,
         "parent": null,
         "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
       },
       {
         "name": "serialize_settings",
         "kind": "function",
-        "lineno": 319,
+        "lineno": 359,
         "parent": null,
         "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
       },
       {
         "name": "serialize_status",
         "kind": "function",
-        "lineno": 325,
+        "lineno": 365,
         "parent": null,
         "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
       }
@@ -640,7 +683,7 @@
   {
     "path": "code_map/api/settings.py",
     "relative": true,
-    "modified_at": "2025-10-31T06:07:19.193387+00:00",
+    "modified_at": "2025-10-31T12:37:21.629353+00:00",
     "symbols": [
       {
         "name": "get_settings",
@@ -676,7 +719,7 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-10-30T17:29:37.187715+00:00",
+    "modified_at": "2025-10-31T12:37:21.630114+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
@@ -698,7 +741,7 @@
   {
     "path": "code_map/cache.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:20:26.814165+00:00",
+    "modified_at": "2025-10-31T12:37:21.630114+00:00",
     "symbols": [
       {
         "name": "SnapshotStore",
@@ -776,7 +819,7 @@
   {
     "path": "code_map/class_graph.py",
     "relative": true,
-    "modified_at": "2025-10-31T08:59:50.223769+00:00",
+    "modified_at": "2025-10-31T12:37:21.630605+00:00",
     "symbols": [
       {
         "name": "ClassInfo",
@@ -1008,14 +1051,14 @@
   {
     "path": "code_map/constants.py",
     "relative": true,
-    "modified_at": "2025-10-30T05:22:44.574383+00:00",
+    "modified_at": "2025-10-31T12:37:21.630605+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/dependencies.py",
     "relative": true,
-    "modified_at": "2025-10-29T18:14:27.796103+00:00",
+    "modified_at": "2025-10-31T12:37:21.630631+00:00",
     "symbols": [
       {
         "name": "DependencySpec",
@@ -1079,7 +1122,7 @@
   {
     "path": "code_map/events.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:29:57.123836+00:00",
+    "modified_at": "2025-10-31T12:37:21.630631+00:00",
     "symbols": [
       {
         "name": "ChangeEventType",
@@ -1136,7 +1179,7 @@
   {
     "path": "code_map/html_analyzer.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:30:31.484100+00:00",
+    "modified_at": "2025-10-31T12:37:21.630631+00:00",
     "symbols": [
       {
         "name": "HtmlAnalyzer",
@@ -1165,7 +1208,7 @@
   {
     "path": "code_map/index.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:30:03.517885+00:00",
+    "modified_at": "2025-10-31T12:37:21.631511+00:00",
     "symbols": [
       {
         "name": "SymbolIndex",
@@ -1257,7 +1300,7 @@
   {
     "path": "code_map/js_analyzer.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:30:25.787056+00:00",
+    "modified_at": "2025-10-31T12:37:21.631631+00:00",
     "symbols": [
       {
         "name": "JsAnalyzer",
@@ -1326,9 +1369,173 @@
     "errors": []
   },
   {
+    "path": "code_map/linters/__init__.py",
+    "relative": true,
+    "modified_at": "2025-10-31T13:21:28.365352+00:00",
+    "symbols": [
+      {
+        "name": "linters_discovery_payload",
+        "kind": "function",
+        "lineno": 39,
+        "parent": null,
+        "docstring": "Obtiene el payload listo para consumir por la API con informaci\u00f3n de linters."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/linters/discovery.py",
+    "relative": true,
+    "modified_at": "2025-10-31T13:14:28.760294+00:00",
+    "symbols": [
+      {
+        "name": "ToolDefinition",
+        "kind": "class",
+        "lineno": 20,
+        "parent": null,
+        "docstring": "Definici\u00f3n b\u00e1sica de una herramienta de calidad est\u00e1ndar."
+      },
+      {
+        "name": "ToolStatus",
+        "kind": "class",
+        "lineno": 32,
+        "parent": null,
+        "docstring": "Estado detectado para una herramienta est\u00e1ndar."
+      },
+      {
+        "name": "CustomRuleStatus",
+        "kind": "class",
+        "lineno": 46,
+        "parent": null,
+        "docstring": "Descripci\u00f3n de una regla personalizada implementada por el proyecto."
+      },
+      {
+        "name": "NotificationChannelStatus",
+        "kind": "class",
+        "lineno": 58,
+        "parent": null,
+        "docstring": "Canales disponibles para notificaciones locales."
+      },
+      {
+        "name": "_safe_get_version",
+        "kind": "function",
+        "lineno": 137,
+        "parent": null,
+        "docstring": "Obtiene la versi\u00f3n de un paquete sin propagar excepciones.\n\nDevuelve una tupla (version, error)."
+      },
+      {
+        "name": "_detect_tool",
+        "kind": "function",
+        "lineno": 151,
+        "parent": null,
+        "docstring": "Calcula el estado de instalaci\u00f3n de una herramienta est\u00e1ndar."
+      },
+      {
+        "name": "_detect_standard_tools",
+        "kind": "function",
+        "lineno": 183,
+        "parent": null,
+        "docstring": "Eval\u00faa el estado de todas las herramientas est\u00e1ndar."
+      },
+      {
+        "name": "_detect_notifications",
+        "kind": "function",
+        "lineno": 188,
+        "parent": null,
+        "docstring": "Determina los canales de notificaci\u00f3n disponibles dependiendo del SO."
+      },
+      {
+        "name": "_build_payload",
+        "kind": "function",
+        "lineno": 232,
+        "parent": null,
+        "docstring": "Construye el payload base para la API."
+      },
+      {
+        "name": "discover_linters",
+        "kind": "function",
+        "lineno": 246,
+        "parent": null,
+        "docstring": "Ejecuta el proceso de descubrimiento en un hilo separado para no bloquear el event loop."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/linters/report_schema.py",
+    "relative": true,
+    "modified_at": "2025-10-31T13:21:22.935310+00:00",
+    "symbols": [
+      {
+        "name": "CheckStatus",
+        "kind": "class",
+        "lineno": 17,
+        "parent": null,
+        "docstring": "Posibles estados de una verificaci\u00f3n."
+      },
+      {
+        "name": "Severity",
+        "kind": "class",
+        "lineno": 27,
+        "parent": null,
+        "docstring": "Niveles de severidad para incidencias."
+      },
+      {
+        "name": "IssueDetail",
+        "kind": "class",
+        "lineno": 38,
+        "parent": null,
+        "docstring": "Detalle de una incidencia reportada por un linter o regla personalizada."
+      },
+      {
+        "name": "ToolRunResult",
+        "kind": "class",
+        "lineno": 53,
+        "parent": null,
+        "docstring": "Resultado de ejecutar una herramienta est\u00e1ndar (ruff, black, etc.)."
+      },
+      {
+        "name": "CustomRuleResult",
+        "kind": "class",
+        "lineno": 72,
+        "parent": null,
+        "docstring": "Resultado de una regla personalizada (ej. longitud de archivo)."
+      },
+      {
+        "name": "CoverageSnapshot",
+        "kind": "class",
+        "lineno": 86,
+        "parent": null,
+        "docstring": "M\u00e9tricas de cobertura de tests (si aplica)."
+      },
+      {
+        "name": "ReportSummary",
+        "kind": "class",
+        "lineno": 97,
+        "parent": null,
+        "docstring": "Resumen agregando informaci\u00f3n para tarjetas en la UI."
+      },
+      {
+        "name": "ChartData",
+        "kind": "class",
+        "lineno": 115,
+        "parent": null,
+        "docstring": "Datos preparados para visualizaciones r\u00e1pidas en frontend."
+      },
+      {
+        "name": "LintersReport",
+        "kind": "class",
+        "lineno": 126,
+        "parent": null,
+        "docstring": "Payload completo para representar la salida del pipeline de linters."
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/models.py",
     "relative": true,
-    "modified_at": "2025-10-30T15:44:04.896183+00:00",
+    "modified_at": "2025-10-31T12:37:21.632070+00:00",
     "symbols": [
       {
         "name": "SymbolKind",
@@ -1392,7 +1599,7 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:20:05.398047+00:00",
+    "modified_at": "2025-10-31T12:37:21.633644+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
@@ -1477,7 +1684,7 @@
   {
     "path": "code_map/scheduler.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:30:47.036220+00:00",
+    "modified_at": "2025-10-31T12:37:21.633867+00:00",
     "symbols": [
       {
         "name": "_QueuedEvent",
@@ -1548,7 +1755,7 @@
   {
     "path": "code_map/server.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:20:41.446245+00:00",
+    "modified_at": "2025-10-31T12:37:21.634581+00:00",
     "symbols": [
       {
         "name": "create_app",
@@ -1563,7 +1770,7 @@
   {
     "path": "code_map/settings.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:19:35.342878+00:00",
+    "modified_at": "2025-10-31T12:37:21.634631+00:00",
     "symbols": [
       {
         "name": "_normalize_exclusions",
@@ -1641,7 +1848,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-10-30T17:29:29.294651+00:00",
+    "modified_at": "2025-10-31T12:37:21.635665+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -1705,7 +1912,7 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:23:23.250089+00:00",
+    "modified_at": "2025-10-31T12:37:21.635988+00:00",
     "symbols": [
       {
         "name": "AppState",
@@ -1825,7 +2032,7 @@
   {
     "path": "code_map/state_reporter.py",
     "relative": true,
-    "modified_at": "2025-10-30T11:19:11.267741+00:00",
+    "modified_at": "2025-10-31T12:37:21.636523+00:00",
     "symbols": [
       {
         "name": "_serialize_capability",
@@ -1861,7 +2068,7 @@
   {
     "path": "code_map/ts_analyzer.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:30:58.024304+00:00",
+    "modified_at": "2025-10-31T12:37:21.636631+00:00",
     "symbols": [
       {
         "name": "_TsParser",
@@ -1939,7 +2146,7 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-10-31T12:22:07.299630+00:00",
+    "modified_at": "2025-10-31T12:37:21.637000+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
@@ -2150,7 +2357,7 @@
   {
     "path": "code_map/watcher.py",
     "relative": true,
-    "modified_at": "2025-10-30T12:31:09.949396+00:00",
+    "modified_at": "2025-10-31T12:37:21.637000+00:00",
     "symbols": [
       {
         "name": "_EventHandler",
@@ -2263,7 +2470,7 @@
   {
     "path": "docs/ui_mockup.html",
     "relative": true,
-    "modified_at": "2025-10-30T05:24:04.222861+00:00",
+    "modified_at": "2025-10-31T12:37:21.639631+00:00",
     "symbols": [
       {
         "name": "dashboard",
@@ -2350,7 +2557,7 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T10:29:03.383042+00:00",
+    "modified_at": "2025-10-31T12:37:21.641631+00:00",
     "symbols": [
       {
         "name": "App",
@@ -2365,7 +2572,7 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-10-31T11:38:50.255148+00:00",
+    "modified_at": "2025-10-31T12:37:21.642784+00:00",
     "symbols": [
       {
         "name": "buildUrl",
@@ -2492,14 +2699,14 @@
   {
     "path": "frontend/src/api/queryKeys.ts",
     "relative": true,
-    "modified_at": "2025-10-31T10:26:41.257200+00:00",
+    "modified_at": "2025-10-31T12:37:21.642784+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-10-31T10:25:57.116948+00:00",
+    "modified_at": "2025-10-31T12:37:21.642784+00:00",
     "symbols": [],
     "errors": []
   },
@@ -2528,7 +2735,7 @@
   {
     "path": "frontend/src/components/ClassGraphView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T08:58:00.869066+00:00",
+    "modified_at": "2025-10-31T12:37:21.642784+00:00",
     "symbols": [
       {
         "name": "ClassGraphView",
@@ -2571,7 +2778,7 @@
   {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:36:09.693132+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -2607,7 +2814,7 @@
   {
     "path": "frontend/src/components/CodeMapDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:13.402013+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "CodeMapDashboard",
@@ -2622,7 +2829,7 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T20:39:39.989746+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
@@ -2644,7 +2851,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T10:28:49.057955+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -2659,7 +2866,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T10:29:27.652190+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -2681,7 +2888,7 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T20:39:56.441820+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "PreviewPane",
@@ -2711,7 +2918,7 @@
   {
     "path": "frontend/src/components/SearchPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T06:38:52.040542+00:00",
+    "modified_at": "2025-10-31T12:37:21.643631+00:00",
     "symbols": [
       {
         "name": "SearchPanel",
@@ -2726,7 +2933,7 @@
   {
     "path": "frontend/src/components/SettingsView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T08:59:27.635606+00:00",
+    "modified_at": "2025-10-31T12:37:21.644631+00:00",
     "symbols": [
       {
         "name": "extractCustomExcludes",
@@ -2776,7 +2983,7 @@
   {
     "path": "frontend/src/components/Sidebar.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T06:39:02.865593+00:00",
+    "modified_at": "2025-10-31T12:37:21.644631+00:00",
     "symbols": [
       {
         "name": "Sidebar",
@@ -2826,7 +3033,7 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T17:33:33.341708+00:00",
+    "modified_at": "2025-10-31T12:37:21.644631+00:00",
     "symbols": [
       {
         "name": "formatList",
@@ -2869,7 +3076,7 @@
   {
     "path": "frontend/src/components/StatusPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T20:38:31.998451+00:00",
+    "modified_at": "2025-10-31T12:37:21.644631+00:00",
     "symbols": [
       {
         "name": "formatRelative",
@@ -2898,7 +3105,7 @@
   {
     "path": "frontend/src/components/__tests__/PreviewPane.test.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T20:58:43.561345+00:00",
+    "modified_at": "2025-10-31T12:37:21.645580+00:00",
     "symbols": [
       {
         "name": "createWrapper",
@@ -2913,7 +3120,7 @@
   {
     "path": "frontend/src/components/settings/DocstringsSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T18:36:18.750044+00:00",
+    "modified_at": "2025-10-31T12:37:21.645718+00:00",
     "symbols": [
       {
         "name": "DocstringsSection",
@@ -2928,7 +3135,7 @@
   {
     "path": "frontend/src/components/settings/ExcludeDirsSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T21:04:04.820418+00:00",
+    "modified_at": "2025-10-31T12:37:21.645801+00:00",
     "symbols": [
       {
         "name": "ExcludeDirsSection",
@@ -2950,7 +3157,7 @@
   {
     "path": "frontend/src/components/settings/RootPathSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T08:59:36.078679+00:00",
+    "modified_at": "2025-10-31T12:37:21.645801+00:00",
     "symbols": [
       {
         "name": "RootPathSection",
@@ -2965,7 +3172,7 @@
   {
     "path": "frontend/src/components/settings/WatcherSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-30T05:23:33.935680+00:00",
+    "modified_at": "2025-10-31T12:37:21.645801+00:00",
     "symbols": [
       {
         "name": "WatcherSection",
@@ -2980,14 +3187,14 @@
   {
     "path": "frontend/src/config/defaultExcludes.ts",
     "relative": true,
-    "modified_at": "2025-10-30T05:23:28.610648+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/hooks/useClassGraphQuery.ts",
     "relative": true,
-    "modified_at": "2025-10-31T05:54:07.153544+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useClassGraphQuery",
@@ -3002,7 +3209,7 @@
   {
     "path": "frontend/src/hooks/useClassUmlQuery.ts",
     "relative": true,
-    "modified_at": "2025-10-31T11:39:42.960582+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useClassUmlQuery",
@@ -3017,7 +3224,7 @@
   {
     "path": "frontend/src/hooks/useEventStream.ts",
     "relative": true,
-    "modified_at": "2025-10-30T15:56:53.679920+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useEventStream",
@@ -3039,7 +3246,7 @@
   {
     "path": "frontend/src/hooks/useSettingsQuery.ts",
     "relative": true,
-    "modified_at": "2025-10-30T06:35:03.172792+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useSettingsQuery",
@@ -3054,7 +3261,7 @@
   {
     "path": "frontend/src/hooks/useStageInitMutation.ts",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:46.497288+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStageInitMutation",
@@ -3069,7 +3276,7 @@
   {
     "path": "frontend/src/hooks/useStageStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-10-30T17:30:41.802248+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStageStatusQuery",
@@ -3084,7 +3291,7 @@
   {
     "path": "frontend/src/hooks/useStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-10-30T06:35:10.241846+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStatusQuery",
@@ -3106,21 +3313,21 @@
   {
     "path": "frontend/src/setupTests.ts",
     "relative": true,
-    "modified_at": "2025-10-29T20:58:22.410210+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/state/useActivityStore.ts",
     "relative": true,
-    "modified_at": "2025-10-30T15:56:52.636912+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/state/useSelectionStore.ts",
     "relative": true,
-    "modified_at": "2025-10-30T06:38:31.534385+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [],
     "errors": []
   },
@@ -3134,14 +3341,14 @@
   {
     "path": "frontend/vite.config.ts",
     "relative": true,
-    "modified_at": "2025-10-29T20:58:13.176151+00:00",
+    "modified_at": "2025-10-31T12:37:21.649928+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "init_project.py",
     "relative": true,
-    "modified_at": "2025-10-30T16:44:56.225108+00:00",
+    "modified_at": "2025-10-31T12:37:21.649928+00:00",
     "symbols": [
       {
         "name": "run_claude_init",
@@ -3242,21 +3449,21 @@
   {
     "path": "testZone/index.html",
     "relative": true,
-    "modified_at": "2025-10-29T17:13:32.917681+00:00",
+    "modified_at": "2025-10-31T12:37:21.651740+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "tests/conftest.py",
     "relative": true,
-    "modified_at": "2025-10-29T18:31:57.295412+00:00",
+    "modified_at": "2025-10-31T12:37:21.651740+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "tests/test_analysis_engine.py",
     "relative": true,
-    "modified_at": "2025-10-30T05:23:08.949530+00:00",
+    "modified_at": "2025-10-31T12:37:21.652631+00:00",
     "symbols": [
       {
         "name": "write_module",
@@ -3376,7 +3583,7 @@
   {
     "path": "tests/test_api.py",
     "relative": true,
-    "modified_at": "2025-10-30T05:15:14.119479+00:00",
+    "modified_at": "2025-10-31T13:15:50.242860+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -3487,6 +3694,13 @@
         "name": "test_preview_endpoint_missing_file_returns_404",
         "kind": "function",
         "lineno": 163,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "test_linters_discovery_endpoint",
+        "kind": "function",
+        "lineno": 170,
         "parent": null,
         "docstring": null
       }
