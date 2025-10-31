@@ -1939,215 +1939,208 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-10-31T11:45:38.202502+00:00",
+    "modified_at": "2025-10-31T12:22:07.299630+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
         "kind": "class",
-        "lineno": 14,
+        "lineno": 15,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MethodInfo",
         "kind": "class",
-        "lineno": 21,
+        "lineno": 22,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClassModel",
         "kind": "class",
-        "lineno": 28,
+        "lineno": 29,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ModuleModel",
         "kind": "class",
-        "lineno": 39,
+        "lineno": 40,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLModuleAnalyzer",
         "kind": "class",
-        "lineno": 46,
+        "lineno": 47,
         "parent": null,
         "docstring": null
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 47,
+        "lineno": 48,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_Import",
         "kind": "method",
-        "lineno": 53,
+        "lineno": 54,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_ImportFrom",
         "kind": "method",
-        "lineno": 59,
+        "lineno": 60,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_resolve_relative",
         "kind": "method",
-        "lineno": 70,
+        "lineno": 71,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_ClassDef",
         "kind": "method",
-        "lineno": 81,
+        "lineno": 82,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_FunctionDef",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 100,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_AnnAssign",
         "kind": "method",
-        "lineno": 111,
+        "lineno": 112,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_Assign",
         "kind": "method",
-        "lineno": 124,
+        "lineno": 125,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_track_association",
         "kind": "method",
-        "lineno": 145,
+        "lineno": 146,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_expr_to_name",
         "kind": "method",
-        "lineno": 150,
+        "lineno": 151,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_collect_attribute",
         "kind": "method",
-        "lineno": 163,
+        "lineno": 164,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_is_optional",
         "kind": "function",
-        "lineno": 174,
+        "lineno": 175,
         "parent": null,
         "docstring": null
       },
       {
         "name": "build_uml_model",
         "kind": "function",
-        "lineno": 186,
+        "lineno": 187,
         "parent": null,
         "docstring": null
       },
       {
         "name": "build_uml_dot",
         "kind": "function",
-        "lineno": 243,
+        "lineno": 244,
         "parent": null,
         "docstring": null
       },
       {
         "name": "render_uml_svg",
         "kind": "function",
-        "lineno": 278,
+        "lineno": 279,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_analyze",
         "kind": "function",
-        "lineno": 296,
+        "lineno": 297,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_filter_modules",
         "kind": "function",
-        "lineno": 308,
+        "lineno": 309,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_definitions",
         "kind": "function",
-        "lineno": 322,
+        "lineno": 323,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_bases",
         "kind": "function",
-        "lineno": 331,
+        "lineno": 332,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_associations",
         "kind": "function",
-        "lineno": 347,
+        "lineno": 348,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_reference",
         "kind": "function",
-        "lineno": 365,
+        "lineno": 366,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_possible_names",
         "kind": "function",
-        "lineno": 372,
+        "lineno": 373,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_escape_id",
         "kind": "function",
-        "lineno": 399,
+        "lineno": 400,
         "parent": null,
         "docstring": null
       },
       {
-        "name": "_escape_label",
+        "name": "_build_node_label",
         "kind": "function",
-        "lineno": 403,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "_build_record_label",
-        "kind": "function",
-        "lineno": 407,
+        "lineno": 404,
         "parent": null,
         "docstring": null
       }
@@ -2578,7 +2571,7 @@
   {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:06:51.326793+00:00",
+    "modified_at": "2025-10-31T12:36:09.693132+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -2590,21 +2583,21 @@
       {
         "name": "clamp",
         "kind": "function",
-        "lineno": 157,
+        "lineno": 159,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handler",
         "kind": "function",
-        "lineno": 259,
+        "lineno": 295,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parseSvgDimension",
         "kind": "function",
-        "lineno": 364,
+        "lineno": 402,
         "parent": null,
         "docstring": null
       }

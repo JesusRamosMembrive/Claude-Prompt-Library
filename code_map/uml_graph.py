@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import html
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -245,14 +246,14 @@ def build_uml_dot(model: Dict[str, object]) -> str:
     lines: List[str] = [
         "digraph UML {",
         "  rankdir=LR;",
-        '  graph [fontname="Inter", fontsize=11];',
-        '  node [shape=record, fontname="Inter", fontsize=10, margin="0.2,0.1"];',
-        '  edge [fontname="Inter", fontsize=9];',
+        '  graph [fontname="Inter", fontsize=11, overlap=false, splines=true, nodesep=0.6, ranksep=1.1, pad="0.3", margin=0];',
+        '  node [shape=box, style="rounded,filled", fontname="Inter", fontsize=11, color="#1f2937", fillcolor="#111827", fontcolor="#e2e8f0", width=1.6, height=0.6, margin="0.12,0.06"];',
+        '  edge [fontname="Inter", fontsize=9, color="#475569"];',
     ]
 
     for cls in classes:
         node_id = _escape_id(cls["id"])
-        label = _build_record_label(cls)
+        label = _build_node_label(cls)
         lines.append(f"  {node_id} [label={label}];")
 
     for cls in classes:
@@ -400,41 +401,9 @@ def _escape_id(value: str) -> str:
     return '"' + value.replace('"', '\\"') + '"'
 
 
-def _escape_label(text: str) -> str:
-    return text.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
-
-
-def _build_record_label(cls: dict) -> str:
-    name = _escape_label(cls["name"])
-    module = _escape_label(cls["module"])
-    attrs = cls.get("attributes", [])
-    methods = cls.get("methods", [])
-
-    if attrs:
-        attr_lines = [
-            _escape_label(
-                f"{attr['name']}{'?' if attr.get('optional') else ''}{(': ' + attr['type']) if attr.get('type') else ''}"
-            )
-            for attr in attrs
-        ]
-    else:
-        attr_lines = ["«no attributes»"]
-
-    if methods:
-        method_lines = [
-            _escape_label(
-                f"{method['name']}({', '.join(method.get('parameters', []))})"
-                + (f" → {method['returns']}" if method.get('returns') else "")
-            )
-            for method in methods
-        ]
-    else:
-        method_lines = ["«no methods»"]
-
-    label = "{{{name}|{module}|{attrs}|{methods}}}".format(
-        name=name,
-        module=module,
-        attrs="\\l".join(attr_lines) + "\\l",
-        methods="\\l".join(method_lines) + "\\l",
-    )
-    return '"' + label + '"'
+def _build_node_label(cls: dict) -> str:
+    name = html.escape(cls.get("name", ""))
+    module = html.escape(cls.get("module", ""))
+    if module:
+        return f'<<b>{name}</b><br/><font point-size="9">{module}</font>>'
+    return f'<<b>{name}</b>>'

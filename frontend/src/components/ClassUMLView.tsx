@@ -12,8 +12,8 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { useClassUmlQuery } from "../hooks/useClassUmlQuery";
 
 const DEFAULT_PREFIXES = "";
-const UML_ZOOM_MIN = 0.2;
-const UML_ZOOM_MAX = 3.2;
+const UML_ZOOM_MIN = 0.05;
+const UML_ZOOM_MAX = 4;
 const UML_ZOOM_STEP = 0.05;
 
 interface UmlSvgHandle {
@@ -95,7 +95,9 @@ export function ClassUMLView(): JSX.Element {
               className="link-btn"
               onClick={() => {
                 svgHandleRef.current?.resetView();
+                setZoom(1);
               }}
+              disabled={!svgMarkup}
             >
               Reset
             </button>
@@ -156,7 +158,7 @@ const MAX_ZOOM = UML_ZOOM_MAX;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const initialOffset = { x: 0, y: 32 };
+const initialOffset = { x: 0, y: 0 };
 
 const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function UmlSvgContainer(
   { svg, onStateChange },
@@ -165,6 +167,7 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoomState] = useState(1);
   const [offset, setOffsetState] = useState(initialOffset);
+  const [contentOrigin, setContentOrigin] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const panState = useRef<{
     pointerId: number;
     startX: number;
@@ -172,7 +175,14 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
     originX: number;
     originY: number;
   } | null>(null);
-  const fitState = useRef<{ zoom: number; offset: { x: number; y: number } } | null>(null);
+  const fitState = useRef<
+    | {
+        zoom: number;
+        offset: { x: number; y: number };
+        origin: { x: number; y: number };
+      }
+    | null
+  >(null);
   const zoomRef = useRef(1);
   const [isPanning, setIsPanning] = useState(false);
 
@@ -220,27 +230,53 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
       return;
     }
     const view = svgElement.viewBox?.baseVal;
-    const rawWidth = view?.width || parseSvgDimension(svgElement.getAttribute("width"));
-    const rawHeight = view?.height || parseSvgDimension(svgElement.getAttribute("height"));
-    if (!rawWidth || !rawHeight) {
+    const rawWidth =
+      view?.width || parseSvgDimension(svgElement.getAttribute("width")) || 0;
+    const rawHeight =
+      view?.height || parseSvgDimension(svgElement.getAttribute("height")) || 0;
+    let bbox: DOMRect | null = null;
+    try {
+      const candidate = svgElement.getBBox();
+      if (Number.isFinite(candidate.x) && Number.isFinite(candidate.y)) {
+        bbox = candidate;
+      }
+    } catch {
+      bbox = null;
+    }
+    const contentWidth = bbox?.width && bbox.width > 0 ? bbox.width : rawWidth;
+    const contentHeight = bbox?.height && bbox.height > 0 ? bbox.height : rawHeight;
+    if (!contentWidth || !contentHeight) {
       return;
     }
-    const fitZoom = clamp(containerRect.width / rawWidth, MIN_ZOOM, MAX_ZOOM);
-    const offsetX = (containerRect.width - rawWidth * fitZoom) / 2;
-    const offsetY = Math.max((containerRect.height - rawHeight * fitZoom) / 2, 32);
+    const desiredZoom = 1;
+    const fitZoom = clamp(desiredZoom, MIN_ZOOM, MAX_ZOOM);
+    const scaledWidth = contentWidth * fitZoom;
+    const scaledHeight = contentHeight * fitZoom;
+    const fitsHorizontally = scaledWidth <= containerRect.width;
+    const fitsVertically = scaledHeight <= containerRect.height;
+    const offsetX = containerRect.width / 2 - scaledWidth / 2;
+    const offsetY = containerRect.height / 2 - scaledHeight / 2;
+    const origin = {
+      x: bbox?.x ?? 0,
+      y: bbox?.y ?? 0,
+    };
     const next = {
       zoom: fitZoom,
       offset: {
-        x: offsetX,
+        x: Number.isFinite(offsetX) ? offsetX : initialOffset.x,
         y: Number.isFinite(offsetY) ? offsetY : initialOffset.y,
       },
+      origin,
     };
     fitState.current = next;
+    zoomRef.current = next.zoom;
     setZoomState(next.zoom);
     setOffsetState(next.offset);
+    setContentOrigin(origin);
     panState.current = null;
     setIsPanning(false);
-  }, []);
+    onStateChange?.({ zoom: next.zoom });
+  }, [onStateChange]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(updateFitState);
@@ -331,12 +367,14 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
         } else {
           setZoomState(fitState.current.zoom);
           setOffsetState(fitState.current.offset);
+          setContentOrigin(fitState.current.origin);
           panState.current = null;
           setIsPanning(false);
+          onStateChange?.({ zoom: fitState.current.zoom });
         }
       },
     }),
-    [applyZoom, updateFitState],
+    [applyZoom, onStateChange, updateFitState],
   );
 
   return (
@@ -352,7 +390,7 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
       <div
         className="uml-svg-inner"
         style={{
-          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom}) translate(${-contentOrigin.x}px, ${-contentOrigin.y}px)`,
           transformOrigin: "top left",
         }}
         dangerouslySetInnerHTML={content}
