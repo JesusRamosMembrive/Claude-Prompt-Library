@@ -25,9 +25,11 @@ export function HeaderBar({
     : `${filesIndexed ?? 0} archivos indexados`;
 
   const navLinks = [
+    { to: "/overview", label: "Overview" },
     { to: "/", label: "Inicio" },
     { to: "/stage-toolkit", label: "Stage Toolkit" },
     { to: "/code-map", label: "Code Map" },
+    { to: "/prompts", label: "Prompts" },
     { to: "/class-graph", label: "Class Graph" },
     { to: "/class-uml", label: "Class UML" },
     { to: "/linters", label: "Linters" },

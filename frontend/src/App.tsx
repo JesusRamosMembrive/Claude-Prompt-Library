@@ -7,6 +7,8 @@ import { StageToolkitView } from "./components/StageToolkitView";
 import { ClassGraphView } from "./components/ClassGraphView";
 import { ClassUMLView } from "./components/ClassUMLView";
 import { LintersView } from "./components/LintersView";
+import { OverviewDashboard } from "./components/OverviewDashboard";
+import { PromptLibraryView } from "./components/PromptLibraryView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -36,6 +38,21 @@ export function App(): JSX.Element {
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
                 <HomeView statusQuery={statusQuery} />
+              </>
+            }
+          />
+          <Route
+            path="/overview"
+            element={
+              <>
+                <HeaderBar
+                  title="Overview general"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <OverviewDashboard statusQuery={statusQuery} />
               </>
             }
           />
@@ -96,6 +113,21 @@ export function App(): JSX.Element {
                   filesIndexed={statusQuery.data?.files_indexed}
                 />
                 <ClassUMLView />
+              </>
+            }
+          />
+          <Route
+            path="/prompts"
+            element={
+              <>
+                <HeaderBar
+                  title="Prompt Library"
+                  watcherActive={watcherActive}
+                  rootPath={rootPath}
+                  lastFullScan={statusQuery.data?.last_full_scan}
+                  filesIndexed={statusQuery.data?.files_indexed}
+                />
+                <PromptLibraryView />
               </>
             }
           />

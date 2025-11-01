@@ -52,14 +52,6 @@ export function HomeView({
             Asegura que los agentes sigan las reglas del proyecto con el Stage Toolkit o explora el
             código con el Code Map enriquecido.
           </p>
-          <div className="home-hero__cta">
-            <Link to="/stage-toolkit" className="primary-btn hero-cta">
-              Abrir Stage Toolkit
-            </Link>
-            <Link to="/code-map" className="secondary-btn hero-cta">
-              Entrar a Code Map
-            </Link>
-          </div>
           <dl className="home-summary">
             <div>
               <dt>Root configurado</dt>
@@ -186,6 +178,17 @@ export function HomeView({
             </p>
           </div>
           <span className="home-card-cta">Ver UML →</span>
+        </Link>
+
+        <Link to="/linters" className="home-card">
+          <div className="home-card-body">
+            <h3>Linters</h3>
+            <p>
+              Revisa el estado de los linters configurados, últimos resultados y logs para mantener
+              la calidad del código.
+            </p>
+          </div>
+          <span className="home-card-cta">Ver Linters →</span>
         </Link>
       </section>
     </div>
