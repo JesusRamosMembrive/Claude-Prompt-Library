@@ -225,8 +225,8 @@ export function StageToolkitView(): JSX.Element {
           <div>
             <h2>Inicializar o reinstalar instrucciones</h2>
             <p>
-              Ejecuta <code>init_project.py --existing</code> sobre el workspace actual con los
-              agentes seleccionados.
+              Ejecuta <code>init_project.py --existing</code> (puedes añadir <code>--dry-run</code>
+              para ensayar) sobre el workspace actual con los agentes seleccionados.
             </p>
           </div>
         </header>

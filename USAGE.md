@@ -71,6 +71,9 @@ python init_project.py [OPTIONS] <project_path>
 
 - `--existing` - Add framework to existing project and auto-detect stage
 - `--detect-only` - Only detect stage, don't initialize framework
+- `--agent {claude|codex|both}` - Choose which assistants to configure (default: both)
+- `--dry-run` - Print the planned changes without modifying the filesystem
+- `--log-level LEVEL` - Adjust logging verbosity (`INFO`, `DEBUG`, etc.)
 - `-h, --help` - Show help message
 
 #### **Examples**
@@ -84,6 +87,12 @@ python init_project.py --existing ~/projects/my-existing-app
 
 # Quick stage check
 python init_project.py --detect-only .
+
+# Preview actions without writing
+python init_project.py my-app --dry-run
+
+# Verbose run for troubleshooting
+python init_project.py --existing ~/projects/my-existing-app --log-level DEBUG
 ```
 
 #### **What It Does**
@@ -110,10 +119,14 @@ python init_project.py --detect-only .
    - Creates basic template if not
    - Appends custom workflow instructions
 
-5. **Auto-detects stage** (with `--existing`):
+5. **Auto-detects stage** (always runs):
    - Analyzes codebase metrics
    - Detects patterns and architecture
-   - Updates `01-current-phase.md` with results
+   - Updates `01-current-phase.md` with results when available
+
+6. **Dry-run aware:**
+   - With `--dry-run` all filesystem writes are skipped
+   - Reports the files that would be copied or updated
 
 ---
 
@@ -349,6 +362,16 @@ nano .claude/02-stage2-rules.md
 
 Changes apply immediately to Claude Code in next session.
 
+### Controlling the Linter Pipeline
+
+The backend runs the linters automatically after scans. Tune its behaviour with environment variables before launching the API:
+
+- `CODE_MAP_DISABLE_LINTERS=1` — Skip the pipeline entirely.
+- `CODE_MAP_LINTERS_TOOLS=ruff,pytest` — Execute only the listed tools (comma separated, use lowercase keys).
+- `CODE_MAP_LINTERS_MAX_PROJECT_FILES=2000` — Skip runs when the project exceeds this many files.
+- `CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB=200` — Skip when the workspace size (in MiB) is above the threshold.
+- `CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS=300` — Minimum number of seconds between automatic runs; defaults to 180.
+
 ---
 
 ## 🔧 Troubleshooting
@@ -380,6 +403,15 @@ Changes apply immediately to Claude Code in next session.
 1. Verify project path exists
 2. Check write permissions
 3. Ensure assess_stage.py is in same directory
+
+### Issue: Preview endpoint returns 413 or 415
+
+**Symptoms:** `/preview` responds with "Archivo demasiado grande" or "Tipo de archivo no compatible".
+
+**Solutions:**
+1. Ensure the file is smaller than 512 KiB (preview limit).
+2. Only text-based formats are allowed (`text/*`, JSON, XML, JavaScript).
+3. Convert binary assets to a downloadable link instead of relying on the preview API.
 
 ### Issue: Subagents not working
 

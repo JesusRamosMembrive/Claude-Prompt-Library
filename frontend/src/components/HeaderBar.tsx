@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { RescanButton } from "./RescanButton";
 
-interface HeaderBarProps {
+export interface HeaderBarProps {
   watcherActive?: boolean;
   rootPath?: string;
   lastFullScan?: string | null;

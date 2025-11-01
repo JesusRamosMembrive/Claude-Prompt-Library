@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from code_map import ChangeScheduler
+from code_map.api.preview import MAX_PREVIEW_BYTES
 from code_map.api.routes import router
 from code_map.linters import (
     ChartData,
@@ -32,6 +34,13 @@ def write_file(root: Path, relative: str, content: str) -> Path:
     target = root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content.strip() + "\n", encoding="utf-8")
+    return target
+
+
+def write_binary(root: Path, relative: str, data: bytes) -> Path:
+    target = root / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
     return target
 
 
@@ -259,6 +268,36 @@ def test_preview_endpoint_missing_file_returns_404(tmp_path: Path) -> None:
     with TestClient(app) as client:
         response = client.get("/preview", params={"path": "unknown/file.md"})
         assert response.status_code == 404
+
+
+def test_preview_endpoint_handles_json(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    write_file(tmp_path, "data/sample.json", '{"hello": "world"}')
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "data/sample.json"})
+        assert response.status_code == 200
+        assert response.headers.get("content-type") == "application/json; charset=utf-8"
+        payload = json.loads(response.text)
+        assert payload == {"hello": "world"}
+
+
+def test_preview_endpoint_rejects_large_file(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    large_content = "x" * (MAX_PREVIEW_BYTES + 10)
+    write_file(tmp_path, "logs/big.log", large_content)
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "logs/big.log"})
+        assert response.status_code == 413
+        assert "demasiado grande" in response.json()["detail"].lower()
+
+
+def test_preview_endpoint_rejects_binary_file(tmp_path: Path) -> None:
+    app, _state = create_test_app(tmp_path)
+    write_binary(tmp_path, "images/logo.png", b"\x89PNG\r\n\x1a\n" + b"0" * 100)
+    with TestClient(app) as client:
+        response = client.get("/preview", params={"path": "images/logo.png"})
+        assert response.status_code == 415
+        assert "no compatible" in response.json()["detail"].lower()
 
 
 def test_linters_discovery_endpoint(api_client: TestClient) -> None:

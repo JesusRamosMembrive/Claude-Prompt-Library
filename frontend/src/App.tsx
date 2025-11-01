@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { HeaderBar } from "./components/HeaderBar";
 import { HomeView } from "./components/HomeView";
 import { CodeMapDashboard } from "./components/CodeMapDashboard";
 import { SettingsView } from "./components/SettingsView";
@@ -9,6 +8,7 @@ import { ClassUMLView } from "./components/ClassUMLView";
 import { LintersView } from "./components/LintersView";
 import { OverviewDashboard } from "./components/OverviewDashboard";
 import { PromptLibraryView } from "./components/PromptLibraryView";
+import { AppLayout } from "./components/AppLayout";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -21,6 +21,16 @@ export function App(): JSX.Element {
 
   const rootPath = statusQuery.data?.root_path ?? settingsQuery.data?.root_path ?? "";
   const watcherActive = statusQuery.data?.watcher_active ?? false;
+  const headerBase = {
+    watcherActive,
+    rootPath,
+    lastFullScan: statusQuery.data?.last_full_scan ?? null,
+    filesIndexed: statusQuery.data?.files_indexed,
+  };
+
+  const withLayout = (title: string, element: JSX.Element) => (
+    <AppLayout headerProps={{ ...headerBase, title }}>{element}</AppLayout>
+  );
 
   return (
     <BrowserRouter>
@@ -28,125 +38,40 @@ export function App(): JSX.Element {
         <Routes>
           <Route
             path="/"
-            element={
-              <>
-                <HeaderBar
-                  title="Stage-Aware Workspace"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <HomeView statusQuery={statusQuery} />
-              </>
-            }
+            element={withLayout("Stage-Aware Workspace", <HomeView statusQuery={statusQuery} />)}
           />
           <Route
             path="/overview"
-            element={
-              <>
-                <HeaderBar
-                  title="Overview general"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <OverviewDashboard statusQuery={statusQuery} />
-              </>
-            }
+            element={withLayout("Overview general", <OverviewDashboard statusQuery={statusQuery} />)}
           />
           <Route
             path="/code-map"
-            element={
-              <>
-                <HeaderBar
-                  title="Code Map"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <CodeMapDashboard statusQuery={statusQuery} />
-              </>
-            }
+            element={withLayout("Code Map", <CodeMapDashboard statusQuery={statusQuery} />)}
           />
           <Route
             path="/stage-toolkit"
-            element={
-              <>
-                <HeaderBar
-                  title="Project Stage Toolkit"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <StageToolkitView />
-              </>
-            }
+            element={withLayout("Project Stage Toolkit", <StageToolkitView />)}
           />
           <Route
             path="/class-graph"
-            element={
-              <>
-                <HeaderBar
-                  title="Class Graph"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <ClassGraphView />
-              </>
-            }
+            element={withLayout("Class Graph", <ClassGraphView />)}
           />
           <Route
             path="/class-uml"
-            element={
-              <>
-                <HeaderBar
-                  title="Class UML"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <ClassUMLView />
-              </>
-            }
+            element={withLayout("Class UML", <ClassUMLView />)}
           />
           <Route
             path="/prompts"
-            element={
-              <>
-                <HeaderBar
-                  title="Prompt Library"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <PromptLibraryView />
-              </>
-            }
+            element={withLayout("Prompt Library", <PromptLibraryView />)}
           />
           <Route
             path="/linters"
-            element={
-              <>
-                <HeaderBar
-                  title="Linters & Calidad"
-                  watcherActive={watcherActive}
-                  rootPath={rootPath}
-                  lastFullScan={statusQuery.data?.last_full_scan}
-                  filesIndexed={statusQuery.data?.files_indexed}
-                />
-                <LintersView />
-              </>
-            }
+            element={withLayout("Linters & Calidad", <LintersView />)}
           />
-          <Route path="/settings" element={<SettingsView settingsQuery={settingsQuery} />} />
+          <Route
+            path="/settings"
+            element={withLayout("Settings", <SettingsView settingsQuery={settingsQuery} />)}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
