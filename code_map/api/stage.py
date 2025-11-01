@@ -20,7 +20,7 @@ router = APIRouter(prefix="/stage", tags=["stage"])
 @router.get("/status", response_model=StageStatusResponse)
 async def get_stage_status(state: AppState = Depends(get_app_state)) -> StageStatusResponse:
     """Devuelve el estado actual de los archivos Stage-Aware del proyecto."""
-    payload = await stage_status(state.settings.root_path)
+    payload = await stage_status(state.settings.root_path, index=state.index)
     return StageStatusResponse(**payload)
 
 
