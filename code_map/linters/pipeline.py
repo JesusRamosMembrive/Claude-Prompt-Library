@@ -13,7 +13,7 @@ from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 from xml.etree import ElementTree
 
 from ..scanner import DEFAULT_EXCLUDED_DIRS
@@ -52,6 +52,22 @@ class ToolSpec:
     command: List[str]
     parser: Optional[IssueParser] = None
     timeout: int = 300
+
+
+@dataclass(frozen=True)
+class LinterRunOptions:
+    """Configuración opcional para ajustar la ejecución del pipeline."""
+
+    enabled_tools: Optional[Set[str]] = None
+    max_project_files: Optional[int] = None
+    max_project_bytes: Optional[int] = None
+
+    @staticmethod
+    def from_names(names: Optional[Iterable[str]]) -> Optional[Set[str]]:
+        if not names:
+            return None
+        normalized = {name.strip().lower() for name in names if name.strip()}
+        return normalized or None
 
 
 def _which(command: str) -> Optional[str]:
@@ -447,14 +463,44 @@ def _aggregate_summary(
     return summary, chart_data, metrics, severity_counter
 
 
-def run_linters_pipeline(root: Path) -> LintersReport:
+def run_linters_pipeline(root: Path, options: Optional[LinterRunOptions] = None) -> LintersReport:
     """Ejecuta las herramientas estándar y devuelve un reporte completo."""
     resolved_root = Path(root).expanduser().resolve()
     start = time.perf_counter()
 
+    selected_specs = _select_tool_specs(options)
+    if not selected_specs:
+        return _build_skipped_report(
+            resolved_root,
+            reason="No hay herramientas de linters habilitadas. Ajusta CODE_MAP_LINTERS_TOOLS para ejecutar el pipeline.",
+        )
+
+    if options and (options.max_project_files is not None or options.max_project_bytes is not None):
+        stats = _collect_project_stats(resolved_root)
+        if options.max_project_files is not None and stats["files"] > options.max_project_files:
+            return _build_skipped_report(
+                resolved_root,
+                reason=(
+                    f"Pipeline omitido: {stats['files']} archivos exceden el limite "
+                    f"de {options.max_project_files} (CODE_MAP_LINTERS_MAX_PROJECT_FILES)."
+                ),
+                stats=stats,
+            )
+        if options.max_project_bytes is not None and stats["bytes"] > options.max_project_bytes:
+            limit_mb = options.max_project_bytes / (1024 * 1024)
+            total_mb = stats["bytes"] / (1024 * 1024)
+            return _build_skipped_report(
+                resolved_root,
+                reason=(
+                    f"Pipeline omitido: tamaño total {total_mb:.1f} MiB excede el limite "
+                    f"de {limit_mb:.1f} MiB (CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB)."
+                ),
+                stats=stats,
+            )
+
     tool_results: List[ToolRunResult] = []
     coverage_snapshot: Optional[CoverageSnapshot] = None
-    for spec in TOOL_SPECS:
+    for spec in selected_specs:
         tool_result, coverage = _execute_tool(resolved_root, spec)
         tool_results.append(tool_result)
         if coverage:
@@ -498,4 +544,68 @@ def run_linters_pipeline(root: Path) -> LintersReport:
         metrics=metrics,
         chart_data=chart_data,
         notes=notes,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers for optional throttling / filtering
+
+
+def _select_tool_specs(options: Optional[LinterRunOptions]) -> Tuple[ToolSpec, ...]:
+    if not options or options.enabled_tools is None:
+        return TOOL_SPECS
+
+    enabled = {name.lower() for name in options.enabled_tools}
+    filtered = tuple(spec for spec in TOOL_SPECS if spec.key.lower() in enabled)
+    return filtered
+
+
+def _collect_project_stats(root: Path) -> Dict[str, float]:
+    total_files = 0
+    total_bytes = 0
+    for path in root.rglob("*"):
+        if path.is_dir():
+            continue
+        try:
+            relative = path.relative_to(root)
+        except ValueError:
+            relative = path
+        if _should_skip(relative):
+            continue
+        total_files += 1
+        try:
+            total_bytes += path.stat().st_size
+        except OSError:
+            continue
+    return {"files": float(total_files), "bytes": float(total_bytes)}
+
+
+def _build_skipped_report(root: Path, reason: str, *, stats: Optional[Dict[str, float]] = None) -> LintersReport:
+    resolved_root = Path(root).expanduser().resolve()
+    now = datetime.now(timezone.utc)
+    summary = ReportSummary(
+        overall_status=CheckStatus.SKIPPED,
+        total_checks=0,
+        checks_passed=0,
+        checks_warned=0,
+        checks_failed=0,
+        duration_ms=0,
+        issues_total=0,
+        critical_issues=0,
+    )
+    metrics = {"skip_reason": reason}
+    if stats:
+        metrics.update({f"project_{key}": value for key, value in stats.items()})
+
+    chart_data = ChartData(issues_by_tool={}, issues_by_severity={}, top_offenders=[])
+    return LintersReport(
+        root_path=str(resolved_root),
+        generated_at=now,
+        summary=summary,
+        tools=[],
+        custom_rules=[],
+        coverage=None,
+        metrics=metrics,
+        chart_data=chart_data,
+        notes=[reason],
     )

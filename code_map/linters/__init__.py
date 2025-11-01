@@ -22,7 +22,7 @@ from .report_schema import (
     report_from_dict,
     report_to_dict,
 )
-from .pipeline import run_linters_pipeline
+from .pipeline import LinterRunOptions, run_linters_pipeline
 from .storage import (
     StoredLintersReport,
     StoredNotification,
@@ -51,6 +51,7 @@ __all__ = [
     "report_to_dict",
     "report_from_dict",
     "run_linters_pipeline",
+    "LinterRunOptions",
     "record_linters_report",
     "get_linters_report",
     "get_latest_linters_report",

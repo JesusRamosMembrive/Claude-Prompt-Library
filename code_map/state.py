@@ -8,10 +8,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from .cache import SnapshotStore
 from .index import SymbolIndex
@@ -25,10 +26,28 @@ from .linters import (
     record_linters_report,
     record_notification,
     run_linters_pipeline,
+    LinterRunOptions,
 )
 from .state_reporter import StateReporter
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_enabled_tools_env(raw: Optional[str]) -> Optional[Set[str]]:
+    if not raw:
+        return None
+    tokens = {token.strip().lower() for token in raw.split(",") if token.strip()}
+    return tokens or None
+
+
+def _parse_int_env(raw: Optional[str]) -> Optional[int]:
+    if raw is None:
+        return None
+    try:
+        value = int(raw.strip())
+    except ValueError:
+        return None
+    return value if value >= 0 else None
 
 
 @dataclass
@@ -56,6 +75,26 @@ class AppState:
             "yes",
             "on",
         }
+        tools_env = os.environ.get("CODE_MAP_LINTERS_TOOLS")
+        enabled_tools = _parse_enabled_tools_env(tools_env)
+        max_files_env = os.environ.get("CODE_MAP_LINTERS_MAX_PROJECT_FILES")
+        max_size_env = os.environ.get("CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB")
+        min_interval_env = os.environ.get("CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS")
+
+        max_project_files = _parse_int_env(max_files_env)
+        max_project_size_mb = _parse_int_env(max_size_env)
+        max_project_bytes = max_project_size_mb * 1024 * 1024 if max_project_size_mb else None
+
+        min_interval = _parse_int_env(min_interval_env)
+        self._linters_min_interval = max(0, min_interval or 180)
+
+        self._linters_options = LinterRunOptions(
+            enabled_tools=enabled_tools,
+            max_project_files=max_project_files,
+            max_project_bytes=max_project_bytes,
+        )
+        self._linters_last_run: Optional[datetime] = None
+        self._linters_timer: Optional[asyncio.Task[None]] = None
         self.last_linters_report_id: Optional[int] = None
         self._build_components()
 
@@ -87,6 +126,11 @@ class AppState:
         logger.info("Deteniendo estado de la app")
         self._stop_event.set()
         self._linters_pending = False
+        if self._linters_timer:
+            self._linters_timer.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._linters_timer
+            self._linters_timer = None
         if self._linters_task:
             await self._linters_task
         if self._scheduler_task:
@@ -138,23 +182,43 @@ class AppState:
         self._schedule_linters_pipeline()
         return len(summaries)
 
-    def _schedule_linters_pipeline(self) -> None:
+    def _schedule_linters_pipeline(self, *, force: bool = False) -> None:
         """Programa la ejecución del pipeline de linters."""
         if self._linters_disabled:
             return
         if self._linters_task and not self._linters_task.done():
             self._linters_pending = True
             return
+        if not force:
+            if self.scheduler.pending_count() > 0:
+                self._linters_pending = True
+                return
+
+            if self._linters_min_interval and self._linters_last_run is not None:
+                elapsed = (datetime.now(timezone.utc) - self._linters_last_run).total_seconds()
+                remaining = self._linters_min_interval - elapsed
+                if remaining > 0:
+                    self._linters_pending = True
+                    if self._linters_timer is None or self._linters_timer.done():
+                        self._linters_timer = asyncio.create_task(self._schedule_linters_pipeline_later(remaining))
+                    return
+
+        self._linters_pending = False
         self._linters_task = asyncio.create_task(self._run_linters_pipeline())
 
     async def _run_linters_pipeline(self) -> None:
         """Ejecuta el pipeline de linters y persiste el resultado."""
         try:
-            report = await asyncio.to_thread(run_linters_pipeline, self.settings.root_path)
+            report = await asyncio.to_thread(
+                run_linters_pipeline,
+                self.settings.root_path,
+                options=self._linters_options,
+            )
             report_id = record_linters_report(report)
             self.last_linters_report_id = report_id
             summary = report.summary
             status = summary.overall_status
+            self._linters_last_run = datetime.now(timezone.utc)
 
             if status in {CheckStatus.FAIL, CheckStatus.WARN, CheckStatus.SKIPPED}:
                 if status == CheckStatus.FAIL:
@@ -192,9 +256,22 @@ class AppState:
             logger.exception("Error al ejecutar el pipeline de linters")
         finally:
             self._linters_task = None
+            if self._linters_timer and self._linters_timer.done():
+                self._linters_timer = None
             if self._linters_pending:
                 self._linters_pending = False
                 self._schedule_linters_pipeline()
+
+    async def _schedule_linters_pipeline_later(self, delay: float) -> None:
+        try:
+            await asyncio.sleep(max(delay, 0))
+            if self._stop_event.is_set():
+                return
+            self._linters_timer = None
+            self._schedule_linters_pipeline(force=True)
+        except asyncio.CancelledError:
+            self._linters_timer = None
+            raise
 
     def to_relative(self, path: Path) -> str:
         """Convierte una ruta absoluta en una ruta relativa al root del proyecto."""
