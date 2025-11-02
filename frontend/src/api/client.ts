@@ -14,6 +14,12 @@ import type {
   LintersReportRecord,
   LintersReportListItem,
   LintersNotificationEntry,
+  OllamaStatusPayload,
+  OllamaStartPayload,
+  OllamaStartResponse,
+  OllamaTestPayload,
+  OllamaTestResponse,
+  OllamaTestErrorDetail,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -108,6 +114,17 @@ async function fetchJsonNullable<T>(
   }
 
   return (await response.json()) as T;
+}
+
+export class OllamaTestError extends Error {
+  status: number;
+  detail?: OllamaTestErrorDetail;
+
+  constructor(message: string, status: number, detail?: OllamaTestErrorDetail) {
+    super(message);
+    this.status = status;
+    this.detail = detail;
+  }
 }
 
 /**
@@ -251,6 +268,92 @@ export function browseForRoot(): Promise<BrowseDirectoryResponse> {
  */
 export function getStageStatus(): Promise<StageStatusPayload> {
   return fetchJson<StageStatusPayload>("/stage/status");
+}
+
+/**
+ * Obtiene el estado del servidor Ollama (instalación, servicio y modelos).
+ */
+export function getOllamaStatus(): Promise<OllamaStatusPayload> {
+  return fetchJson<OllamaStatusPayload>("/integrations/ollama/status");
+}
+
+/**
+ * Solicita al backend iniciar el servidor Ollama.
+ */
+export async function startOllama(payload: OllamaStartPayload): Promise<OllamaStartResponse> {
+  const response = await fetch(buildUrl("/integrations/ollama/start"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let detailMessage = `No se pudo iniciar Ollama (${response.status})`;
+    const body = await response.text().catch(() => "");
+    if (body) {
+      try {
+        const parsed = JSON.parse(body);
+        const candidate = (parsed && parsed.detail) ?? parsed;
+        if (candidate && typeof candidate === "object" && candidate.message) {
+          detailMessage = String(candidate.message);
+        }
+      } catch {
+        // sin acción, mantenemos mensaje genérico
+      }
+    }
+    throw new Error(detailMessage);
+  }
+
+  return (await response.json()) as OllamaStartResponse;
+}
+
+/**
+ * Ejecuta una petición de chat simple contra Ollama para comprobar conectividad.
+ */
+export async function testOllamaChat(payload: OllamaTestPayload): Promise<OllamaTestResponse> {
+  const response = await fetch(buildUrl("/integrations/ollama/test"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const bodyText = await response.text().catch(() => "");
+
+  if (!response.ok) {
+    let detail: OllamaTestErrorDetail | undefined;
+    if (bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        const candidate = (parsed && parsed.detail) ?? parsed;
+        if (candidate && typeof candidate === "object") {
+          detail = candidate as OllamaTestErrorDetail;
+        }
+      } catch {
+        // Ignorar errores de parseo, enviamos mensaje genérico.
+      }
+    }
+
+    const message =
+      detail?.message ?? `Ollama test request failed (${response.status})`;
+    throw new OllamaTestError(message, response.status, detail);
+  }
+
+  if (!bodyText) {
+    throw new OllamaTestError("Respuesta vacía de Ollama.", response.status);
+  }
+
+  try {
+    return JSON.parse(bodyText) as OllamaTestResponse;
+  } catch {
+    throw new OllamaTestError(
+      "Respuesta inválida del servidor al parsear JSON.",
+      response.status
+    );
+  }
 }
 
 /**

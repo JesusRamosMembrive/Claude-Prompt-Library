@@ -115,6 +115,68 @@ export interface StageStatusPayload {
   detection: StageDetectionStatus;
 }
 
+export interface OllamaModelInfo {
+  name: string;
+  size_bytes?: number | null;
+  size_human?: string | null;
+  digest?: string | null;
+  modified_at?: string | null;
+  format?: string | null;
+}
+
+export interface OllamaStatus {
+  installed: boolean;
+  running: boolean;
+  models: OllamaModelInfo[];
+  version?: string | null;
+  binary_path?: string | null;
+  endpoint?: string | null;
+  warning?: string | null;
+  error?: string | null;
+}
+
+export interface OllamaStatusPayload {
+  status: OllamaStatus;
+  checked_at: string;
+}
+
+export interface OllamaTestPayload {
+  model: string;
+  prompt: string;
+  system_prompt?: string;
+  endpoint?: string;
+  timeout_seconds?: number;
+}
+
+export interface OllamaTestResponse {
+  success: boolean;
+  model: string;
+  endpoint: string;
+  latency_ms: number;
+  message: string;
+  raw: Record<string, unknown>;
+}
+
+export interface OllamaTestErrorDetail {
+  message?: string;
+  endpoint?: string;
+  original_error?: string;
+  status_code?: number | null;
+}
+
+export interface OllamaStartPayload {
+  timeout_seconds?: number;
+}
+
+export interface OllamaStartResponse {
+  started: boolean;
+  already_running: boolean;
+  endpoint: string;
+  process_id?: number | null;
+  status: OllamaStatus;
+  checked_at: string;
+}
+
 export interface StageInitPayload {
   agents: StageAgentSelection;
 }

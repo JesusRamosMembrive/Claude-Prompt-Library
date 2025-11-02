@@ -200,6 +200,144 @@ def test_rescan_endpoint_triggers_scan(api_client: TestClient, tmp_path: Path) -
     assert response.json()["files"] >= 1
 
 
+def test_ollama_status_endpoint_returns_payload(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaDiscovery, OllamaStatus
+
+    fake_timestamp = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    fake_status = OllamaStatus(
+        installed=True,
+        running=False,
+        models=[],
+        version="0.1.0",
+        binary_path="/usr/bin/ollama",
+        endpoint="http://127.0.0.1:11434",
+        warning=None,
+        error=None,
+    )
+
+    def fake_discover(*, timeout: float = 1.5) -> OllamaDiscovery:  # type: ignore[override]
+        return OllamaDiscovery(status=fake_status, checked_at=fake_timestamp)
+
+    monkeypatch.setattr(integrations_module, "discover_ollama", fake_discover)
+
+    response = api_client.get("/integrations/ollama/status")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"]["installed"] is True
+    assert payload["status"]["running"] is False
+    returned_ts = payload["checked_at"]
+    parsed = datetime.fromisoformat(returned_ts.replace("Z", "+00:00"))
+    assert parsed == fake_timestamp
+
+
+def test_ollama_start_endpoint_returns_payload(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaStartResult, OllamaStatus
+
+    fake_status = OllamaStatus(
+        installed=True,
+        running=True,
+        models=[],
+        version="0.1.0",
+        binary_path="/usr/bin/ollama",
+        endpoint="http://127.0.0.1:11434",
+        warning=None,
+        error=None,
+    )
+    fake_result = OllamaStartResult(
+        started=True,
+        already_running=False,
+        endpoint=fake_status.endpoint,
+        process_id=1234,
+        status=fake_status,
+        checked_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    )
+
+    def fake_start(**kwargs):
+        return fake_result
+
+    monkeypatch.setattr(integrations_module, "start_ollama_server", fake_start)
+
+    response = api_client.post("/integrations/ollama/start", json={})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["started"] is True
+    assert payload["process_id"] == 1234
+    assert payload["status"]["running"] is True
+
+
+def test_ollama_start_endpoint_handles_error(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaStartError
+
+    def fake_start(**kwargs):
+        raise OllamaStartError(
+            "fallo al iniciar",
+            endpoint="http://127.0.0.1:11434",
+            original_error="missing binary",
+        )
+
+    monkeypatch.setattr(integrations_module, "start_ollama_server", fake_start)
+
+    response = api_client.post("/integrations/ollama/start", json={})
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail["message"] == "fallo al iniciar"
+    assert detail["endpoint"] == "http://127.0.0.1:11434"
+
+
+def test_ollama_test_endpoint_returns_response(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations.ollama_service import OllamaChatResponse
+
+    def fake_chat_with_ollama(**kwargs) -> OllamaChatResponse:
+        return OllamaChatResponse(
+            model=kwargs["model"],
+            message="Hola mundo",
+            raw={"message": {"content": "Hola mundo"}},
+            latency_ms=42.5,
+            endpoint="http://127.0.0.1:11434",
+        )
+
+    monkeypatch.setattr(integrations_module, "chat_with_ollama", fake_chat_with_ollama)
+
+    response = api_client.post(
+        "/integrations/ollama/test",
+        json={"model": "llama3", "prompt": "ping"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["model"] == "llama3"
+    assert payload["message"] == "Hola mundo"
+    assert "raw" in payload
+
+
+def test_ollama_test_endpoint_handles_error(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaChatError
+
+    def fake_chat_with_ollama(**kwargs):
+        raise OllamaChatError(
+            "fallo de red",
+            endpoint="http://127.0.0.1:11434",
+            original_error="connection refused",
+            status_code=None,
+        )
+
+    monkeypatch.setattr(integrations_module, "chat_with_ollama", fake_chat_with_ollama)
+
+    response = api_client.post(
+        "/integrations/ollama/test",
+        json={"model": "llama3", "prompt": "ping"},
+    )
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail["message"] == "fallo de red"
+    assert detail["endpoint"] == "http://127.0.0.1:11434"
+
+
 def test_get_settings_endpoint(api_client: TestClient) -> None:
     response = api_client.get("/settings")
     assert response.status_code == 200

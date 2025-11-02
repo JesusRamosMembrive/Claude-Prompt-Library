@@ -6,7 +6,7 @@ Esquemas Pydantic para serializar respuestas de la API.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -171,6 +171,68 @@ class StageStatusResponse(BaseModel):
     codex: AgentInstallStatus
     docs: DocsStatus
     detection: StageDetectionStatus
+
+
+class OllamaModelSchema(BaseModel):
+    """Modelo disponible en Ollama."""
+    name: str
+    size_bytes: Optional[int] = None
+    size_human: Optional[str] = None
+    digest: Optional[str] = None
+    modified_at: Optional[datetime] = None
+    format: Optional[str] = None
+
+
+class OllamaStatusSchema(BaseModel):
+    """Estado detectado para Ollama."""
+    installed: bool
+    running: bool
+    models: List[OllamaModelSchema] = Field(default_factory=list)
+    version: Optional[str] = None
+    binary_path: Optional[str] = None
+    endpoint: Optional[str] = None
+    warning: Optional[str] = None
+    error: Optional[str] = None
+
+
+class OllamaStatusResponse(BaseModel):
+    """Respuesta con el estado actual de Ollama."""
+    status: OllamaStatusSchema
+    checked_at: datetime
+
+
+class OllamaStartRequest(BaseModel):
+    """Petición para iniciar el servidor Ollama."""
+    timeout_seconds: Optional[float] = Field(default=None, ge=1.0, le=60.0)
+
+
+class OllamaStartResponse(BaseModel):
+    """Respuesta tras intentar iniciar Ollama."""
+    started: bool
+    already_running: bool
+    endpoint: str
+    process_id: Optional[int] = None
+    status: OllamaStatusSchema
+    checked_at: datetime
+
+
+class OllamaTestRequest(BaseModel):
+    """Petición para realizar un chat de prueba con Ollama."""
+    model: str = Field(..., min_length=1)
+    prompt: str = Field(..., min_length=1)
+    system_prompt: Optional[str] = None
+    endpoint: Optional[str] = None
+    timeout_seconds: Optional[float] = Field(default=None, ge=1.0, le=120.0)
+
+
+class OllamaTestResponse(BaseModel):
+    """Respuesta tras ejecutar una prueba de chat contra Ollama."""
+    success: bool
+    model: str
+    endpoint: str
+    latency_ms: float
+    message: str
+    raw: Dict[str, Any]
 
 
 class StageInitRequest(BaseModel):
