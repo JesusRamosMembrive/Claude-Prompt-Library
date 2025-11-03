@@ -252,8 +252,6 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
     const fitZoom = clamp(desiredZoom, MIN_ZOOM, MAX_ZOOM);
     const scaledWidth = contentWidth * fitZoom;
     const scaledHeight = contentHeight * fitZoom;
-    const fitsHorizontally = scaledWidth <= containerRect.width;
-    const fitsVertically = scaledHeight <= containerRect.height;
     const offsetX = containerRect.width / 2 - scaledWidth / 2;
     const offsetY = containerRect.height / 2 - scaledHeight / 2;
     const origin = {

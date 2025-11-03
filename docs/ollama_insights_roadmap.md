@@ -3,22 +3,22 @@
 ## Configuración y opción del usuario
 - [x] Añadir preferencia en el backend para activar/desactivar los insights automáticos de Ollama.
 - [x] Exponer la configuración en la API (`GET/PUT /settings`) e incluir flags para modelo y frecuencia.
-- [ ] Crear controles en el frontend Stage Toolkit para activar la característica, seleccionar modelo y definir frecuencia.
-- [ ] Guardar la selección en el estado frontend y sincronizarla con el backend.
+- [x] Crear controles en el frontend Stage Toolkit para activar la característica, seleccionar modelo y definir frecuencia.
+- [x] Guardar la selección en el estado frontend y sincronizarla con el backend.
 
 ## Pipeline backend de insights
-- [ ] Implementar un scheduler asincrónico que ejecute el pipeline cuando la preferencia esté habilitada.
-- [ ] Preparar prompts detallados con:
-  - [ ] Resumen del último reporte de linters.
-  - [ ] Estado Stage y recomendaciones actuales.
-  - [ ] Cambios recientes relevantes (si hay acceso al snapshot).
-- [ ] Crear un endpoint específico (`POST /integrations/ollama/analyze`) para ejecuciones bajo demanda.
-- [ ] Serializar y persistir resultados (p.ej. tabla de “insights” reutilizando el esquema de notificaciones).
+- [x] Implementar un scheduler asincrónico que ejecute el pipeline cuando la preferencia esté habilitada.
+- [x] Preparar prompts detallados con:
+  - [x] Resumen del último reporte de linters.
+  - [x] Estado Stage y recomendaciones actuales.
+  - [x] Cambios recientes relevantes (si hay acceso al snapshot).
+- [x] Crear un endpoint específico (`POST /integrations/ollama/analyze`) para ejecuciones bajo demanda.
+- [x] Serializar y persistir resultados (p.ej. tabla de “insights” reutilizando el esquema de notificaciones).
 
 ## Frontend: presentación de insights
-- [ ] Construir una vista/panel dentro del Stage Toolkit que muestre las últimas recomendaciones de Ollama.
-- [ ] Incluir estado de ejecución (última vez, próxima corrida programada, modelo usado).
-- [ ] Permitir ejecutar el análisis manualmente desde la UI (botón “Generar ahora”).
+- [x] Construir una vista/panel dentro del Stage Toolkit que muestre las últimas recomendaciones de Ollama.
+- [x] Incluir estado de ejecución (última vez, próxima corrida programada, modelo usado).
+- [x] Permitir ejecutar el análisis manualmente desde la UI (botón “Generar ahora”).
 - [ ] Añadir filtros o categorías (refactor, linters, patrones) para que el usuario navegue fácilmente por los resultados.
 
 ## Manejo de errores y control

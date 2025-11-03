@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from contextlib import asynccontextmanager
@@ -442,6 +443,75 @@ def test_update_settings_updates_ollama_insights_details(api_client: TestClient)
     assert body["settings"]["ollama_insights_frequency_minutes"] == 45
 
 
+def test_ollama_analyze_endpoint_generates_insight(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.insights import OllamaInsightResult
+
+    generated_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+    def fake_run(**kwargs) -> OllamaInsightResult:
+        return OllamaInsightResult(
+            model=kwargs.get("model", "default"),
+            generated_at=generated_at,
+            message="Acciones sugeridas",
+            raw=SimpleNamespace(raw={"ok": True}),
+        )
+
+    recorded = {}
+
+    def fake_record(**kwargs):
+        recorded.update(kwargs)
+        return 1
+
+    monkeypatch.setattr(integrations_module, "run_ollama_insights", fake_run)
+    monkeypatch.setattr(integrations_module, "record_insight", fake_record)
+
+    state: AppState = api_client.app.state.app_state  # type: ignore[attr-defined]
+    original_scheduler = state._schedule_insights_pipeline
+    original_context = state._build_insights_context
+
+    from types import MethodType
+
+    async def fake_context_method(self):  # type: ignore[no-untyped-def]
+        return "Contexto de prueba"
+
+    state._schedule_insights_pipeline = MethodType(lambda self, *args, **kwargs: None, state)  # type: ignore[assignment]
+    state._build_insights_context = MethodType(fake_context_method, state)  # type: ignore[assignment]
+
+    try:
+        response = api_client.post(
+            "/integrations/ollama/analyze",
+            json={"model": "gpt-oss:test", "timeout_seconds": 30},
+        )
+    finally:
+        state._schedule_insights_pipeline = original_scheduler  # type: ignore[assignment]
+        state._build_insights_context = original_context  # type: ignore[assignment]
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["model"] == "gpt-oss:test"
+    assert payload["message"] == "Acciones sugeridas"
+    assert recorded["model"] == "gpt-oss:test"
+
+
+def test_ollama_insights_history_endpoint(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.insights import StoredInsight
+
+    items = [
+        StoredInsight(id=1, model="gpt-oss:latest", message="abc", generated_at=datetime(2024, 1, 1, tzinfo=timezone.utc), root_path=None),
+        StoredInsight(id=2, model="gpt-mini", message="def", generated_at=datetime(2024, 1, 2, tzinfo=timezone.utc), root_path=None),
+    ]
+
+    monkeypatch.setattr(integrations_module, "list_insights", lambda limit, root_path: items[:limit])
+
+    response = api_client.get("/integrations/ollama/insights", params={"limit": 1})
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["model"] == "gpt-oss:latest"
+
+
 def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
     response = api_client.put("/settings", json={"exclude_dirs": ["build", "dist"]})
     assert response.status_code == 200
@@ -467,6 +537,8 @@ def test_status_endpoint_returns_metrics(api_client: TestClient) -> None:
     assert payload["ollama_insights_enabled"] in {True, False}
     assert "ollama_insights_model" in payload
     assert "ollama_insights_frequency_minutes" in payload
+    assert "ollama_insights_last_run" in payload
+    assert "ollama_insights_next_run" in payload
     assert isinstance(payload["capabilities"], list)
 
 

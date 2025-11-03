@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 
 import type {
@@ -9,11 +10,15 @@ import type {
   OllamaStatus,
   OllamaModelInfo,
 } from "../api/types";
+import { updateSettings, triggerOllamaInsights } from "../api/client";
+import { queryKeys } from "../api/queryKeys";
 import { useStageInitMutation } from "../hooks/useStageInitMutation";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useOllamaStatusQuery } from "../hooks/useOllamaStatusQuery";
 import { useOllamaTestMutation } from "../hooks/useOllamaTestMutation";
 import { useOllamaStartMutation } from "../hooks/useOllamaStartMutation";
+import { useSettingsQuery } from "../hooks/useSettingsQuery";
+import { useOllamaInsightsQuery } from "../hooks/useOllamaInsightsQuery";
 
 const AGENT_OPTIONS: { value: StageAgentSelection; label: string }[] = [
   { value: "both", label: "Claude + Codex" },
@@ -282,6 +287,9 @@ export function StageToolkitView(): JSX.Element {
   const ollamaStatusQuery = useOllamaStatusQuery();
   const ollamaTestMutation = useOllamaTestMutation();
   const ollamaStartMutation = useOllamaStartMutation();
+  const settingsQuery = useSettingsQuery();
+  const queryClient = useQueryClient();
+  const insightsQuery = useOllamaInsightsQuery(10);
 
   const [selection, setSelection] = useState<StageAgentSelection>("both");
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("");
@@ -292,6 +300,10 @@ export function StageToolkitView(): JSX.Element {
   const [ollamaEndpoint, setOllamaEndpoint] = useState<string>("");
   const [ollamaTimeout, setOllamaTimeout] = useState<string>("180");
   const [ollamaEndpointTouched, setOllamaEndpointTouched] = useState<boolean>(false);
+  const [insightsEnabled, setInsightsEnabled] = useState<boolean>(false);
+  const [insightsModel, setInsightsModel] = useState<string>("");
+  const [insightsFrequency, setInsightsFrequency] = useState<string>("60");
+  const [insightsStatus, setInsightsStatus] = useState<string | null>(null);
 
   const stageStatus = statusQuery.data;
   const initResult = initMutation.data;
@@ -367,6 +379,13 @@ export function StageToolkitView(): JSX.Element {
   const showOllamaDetectionWarning = !ollamaStatusQuery.isLoading && !isOllamaDetected;
   const showOllamaOfflineWarning =
     !ollamaStatusQuery.isLoading && isOllamaDetected && !isOllamaRunning;
+  const settings = settingsQuery.data;
+  const settingsLoading = settingsQuery.isLoading;
+  const insightsHistory = insightsQuery.data ?? [];
+  const insightsLastRunRaw = statusQuery.data?.ollama_insights_last_run ?? null;
+  const insightsNextRunRaw = statusQuery.data?.ollama_insights_next_run ?? null;
+  const insightsLastRun = insightsLastRunRaw ? new Date(insightsLastRunRaw) : null;
+  const insightsNextRun = insightsNextRunRaw ? new Date(insightsNextRunRaw) : null;
 
   const currentAgentLabel = useMemo(
     () => AGENT_OPTIONS.find((option) => option.value === selection)?.label ?? "Claude + Codex",
@@ -385,6 +404,104 @@ export function StageToolkitView(): JSX.Element {
         },
       },
     );
+  };
+
+  useEffect(() => {
+    if (!settings) {
+      return;
+    }
+    setInsightsEnabled(settings.ollama_insights_enabled);
+    setInsightsModel(settings.ollama_insights_model ?? "");
+    setInsightsFrequency(
+      settings.ollama_insights_frequency_minutes !== null
+        ? String(settings.ollama_insights_frequency_minutes)
+        : "60",
+    );
+  }, [settings]);
+
+  const originalInsightsEnabled = settings?.ollama_insights_enabled ?? false;
+  const originalInsightsModel = settings?.ollama_insights_model ?? "";
+  const originalInsightsFrequency =
+    settings?.ollama_insights_frequency_minutes !== null &&
+    settings?.ollama_insights_frequency_minutes !== undefined
+      ? String(settings?.ollama_insights_frequency_minutes)
+      : null;
+
+  const trimmedInsightsModel = insightsModel.trim();
+  const parsedInsightsFrequency = useMemo(() => {
+    const raw = insightsFrequency.trim();
+    if (!raw) {
+      return null;
+    }
+    const value = Number.parseInt(raw, 10);
+    return Number.isFinite(value) ? value : null;
+  }, [insightsFrequency]);
+
+  const isFrequencyValid =
+    !insightsEnabled ||
+    insightsFrequency.trim().length === 0 ||
+    (parsedInsightsFrequency !== null &&
+      parsedInsightsFrequency >= 1 &&
+      parsedInsightsFrequency <= 1440);
+
+  const insightsChanges: Record<string, unknown> = {};
+  if (insightsEnabled !== originalInsightsEnabled) {
+    insightsChanges.ollama_insights_enabled = insightsEnabled;
+  }
+  if (trimmedInsightsModel !== originalInsightsModel) {
+    insightsChanges.ollama_insights_model = trimmedInsightsModel || null;
+  }
+  if (
+    (parsedInsightsFrequency === null && originalInsightsFrequency !== null) ||
+    (parsedInsightsFrequency !== null && String(parsedInsightsFrequency) !== originalInsightsFrequency)
+  ) {
+    insightsChanges.ollama_insights_frequency_minutes =
+      parsedInsightsFrequency !== null ? parsedInsightsFrequency : null;
+  }
+
+  const hasInsightsChanges = Object.keys(insightsChanges).length > 0;
+
+  const insightsMutation = useMutation({
+    mutationFn: updateSettings,
+    onSuccess: (result) => {
+      queryClient.setQueryData(queryKeys.settings, result.settings);
+      queryClient.invalidateQueries({ queryKey: queryKeys.status });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
+      queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(10) });
+      setInsightsStatus(
+        result.updated.length > 0
+          ? `Preferencias actualizadas (${result.updated.join(", ")})`
+          : "No había cambios que guardar.",
+      );
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Error desconocido";
+      setInsightsStatus(`Error al guardar: ${message}`);
+    },
+  });
+
+  const manualInsightsMutation = useMutation({
+    mutationFn: (input: { model?: string; timeout_seconds?: number } | undefined) =>
+      triggerOllamaInsights(input),
+    onSuccess: (result) => {
+      const timestamp = new Date(result.generated_at).toLocaleString();
+      setInsightsStatus(`Insight generado (${timestamp}).`);
+      queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(10) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.status });
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "No se pudo generar el insight.";
+      setInsightsStatus(`Error al generar insight: ${message}`);
+    },
+  });
+
+  const handleInsightsSave = () => {
+    if (!isFrequencyValid || insightsMutation.isPending || !hasInsightsChanges) {
+      return;
+    }
+    setInsightsStatus(null);
+    insightsMutation.mutate(insightsChanges);
   };
 
   useEffect(() => {
@@ -513,6 +630,164 @@ export function StageToolkitView(): JSX.Element {
             ) : null}
           </>
         )}
+      </section>
+
+      <section className="stage-section">
+        <header className="stage-section-header">
+          <div>
+            <h2>Insights automáticos con Ollama</h2>
+            <p>
+              Permite que Ollama genere recomendaciones periódicas sobre refactors, linters y estrategias.
+            </p>
+          </div>
+        </header>
+
+        <article className="stage-card">
+          {settingsLoading ? (
+            <p className="stage-info">Cargando preferencias…</p>
+          ) : (
+            <>
+              <div className="stage-form-field stage-toggle-field">
+                <span>Activar insights</span>
+                <label className="stage-switch">
+                  <input
+                    type="checkbox"
+                    checked={insightsEnabled}
+                    onChange={(event) => setInsightsEnabled(event.target.checked)}
+                    disabled={insightsMutation.isPending}
+                  />
+                  <span className="stage-switch-slider" aria-hidden="true" />
+                </label>
+              </div>
+
+              <div className="stage-form-field">
+                <span>Modelo preferido</span>
+                <input
+                  className="stage-input"
+                  type="text"
+                  list="ollama-insights-models"
+                  value={insightsModel}
+                  onChange={(event) => setInsightsModel(event.target.value)}
+                  placeholder="Ej. gpt-oss:latest"
+                  disabled={!insightsEnabled || insightsMutation.isPending}
+                />
+                <datalist id="ollama-insights-models">
+                  {availableOllamaModels.map((model) => (
+                    <option value={model} key={`insights-model-${model}`} />
+                  ))}
+                </datalist>
+                <p className="stage-hint">
+                  Puedes escribir cualquier modelo disponible en tu instalación de Ollama.
+                </p>
+              </div>
+
+              <div className="stage-form-field">
+                <span>Frecuencia (minutos)</span>
+                <input
+                  className="stage-input"
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={insightsFrequency}
+                  onChange={(event) => setInsightsFrequency(event.target.value)}
+                  disabled={!insightsEnabled || insightsMutation.isPending}
+                />
+                {!isFrequencyValid ? (
+                  <p className="stage-error">
+                    Introduce un número entre 1 y 1440 minutos o deja el campo vacío.
+                  </p>
+                ) : (
+                  <p className="stage-hint">
+                    Define cada cuánto se ejecutarán los análisis. Déjalo vacío para usar el valor por defecto (60 min).
+                  </p>
+                )}
+              </div>
+
+              <div className="stage-form-actions">
+                <button
+                  className="primary-btn"
+                  type="button"
+                  onClick={handleInsightsSave}
+                  disabled={
+                    insightsMutation.isPending ||
+                    !hasInsightsChanges ||
+                    !isFrequencyValid
+                  }
+                >
+                  {insightsMutation.isPending ? "Guardando…" : "Guardar preferencias"}
+                </button>
+                <button
+                  className="secondary-btn"
+                  type="button"
+                  onClick={() => {
+                    if (!settings) {
+                      return;
+                    }
+                    setInsightsEnabled(settings.ollama_insights_enabled);
+                    setInsightsModel(settings.ollama_insights_model ?? "");
+                    setInsightsFrequency(
+                      settings.ollama_insights_frequency_minutes !== null
+                        ? String(settings.ollama_insights_frequency_minutes)
+                        : "60",
+                    );
+                    setInsightsStatus("Restablecido a los valores actuales.");
+                  }}
+                  disabled={insightsMutation.isPending}
+                >
+                  Deshacer cambios
+                </button>
+              </div>
+              {insightsStatus ? (
+                <p className="stage-info">{insightsStatus}</p>
+              ) : null}
+              <div className="stage-form-field">
+                <span>Historial reciente</span>
+                {insightsQuery.isLoading ? (
+                  <p className="stage-info">Recuperando insights generados…</p>
+                ) : insightsHistory.length === 0 ? (
+                  <p className="stage-hint">
+                    No se han registrado insights todavía. Genera uno manualmente o espera a la próxima ejecución automática.
+                  </p>
+                ) : (
+                  <ul className="stage-list stage-insights-list">
+                    {insightsHistory.map((entry) => (
+                      <li key={entry.id}>
+                        <strong>{entry.model}</strong>
+                        <span> · {new Date(entry.generated_at).toLocaleString()}</span>
+                        <p className="stage-insight-message">{entry.message}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="stage-form-actions">
+                <button
+                  className="secondary-btn"
+                  type="button"
+                  onClick={() => {
+                    const payload = trimmedInsightsModel
+                      ? { model: trimmedInsightsModel || undefined }
+                      : undefined;
+                    manualInsightsMutation.mutate(payload);
+                  }}
+                  disabled={manualInsightsMutation.isPending}
+                >
+                  {manualInsightsMutation.isPending ? "Generando…" : "Generar ahora"}
+                </button>
+                {insightsLastRun ? (
+                  <p className="stage-hint">
+                    Última ejecución: {insightsLastRun.toLocaleString()}
+                    {insightsNextRun ? ` · Próxima estimada: ${insightsNextRun.toLocaleString()}` : ""}
+                  </p>
+                ) : (
+                  <p className="stage-hint">
+                    Aún no se han ejecutado insights automáticamente.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </article>
       </section>
 
       <section className="stage-section">

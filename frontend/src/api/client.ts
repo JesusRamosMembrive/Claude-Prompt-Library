@@ -20,6 +20,8 @@ import type {
   OllamaTestPayload,
   OllamaTestResponse,
   OllamaTestErrorDetail,
+  OllamaInsightEntry,
+  OllamaInsightsResponse,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -354,6 +356,27 @@ export async function testOllamaChat(payload: OllamaTestPayload): Promise<Ollama
       response.status
     );
   }
+}
+
+/**
+ * Recupera el historial reciente de insights generados con Ollama.
+ */
+export function getOllamaInsights(limit = 20): Promise<OllamaInsightEntry[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return fetchJson(`/integrations/ollama/insights?${params.toString()}`);
+}
+
+export function triggerOllamaInsights(payload?: {
+  model?: string;
+  timeout_seconds?: number;
+}): Promise<OllamaInsightsResponse> {
+  return fetchJson("/integrations/ollama/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload ?? {}),
+  });
 }
 
 /**

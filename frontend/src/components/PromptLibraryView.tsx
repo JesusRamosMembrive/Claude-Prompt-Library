@@ -79,7 +79,7 @@ export function PromptLibraryView(): JSX.Element {
       category: selectedPrompt.category ?? "",
       notes: selectedPrompt.notes ?? "",
     });
-  }, [selectedPrompt?.id]);
+  }, [selectedPrompt]);
 
   useEffect(() => {
     if (copyState === "idle") {

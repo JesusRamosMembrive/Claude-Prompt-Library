@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from ..integrations import (
     OllamaChatError,
@@ -19,12 +19,19 @@ from ..integrations import (
     discover_ollama,
     start_ollama_server,
 )
+from ..insights import run_ollama_insights, list_insights
+from ..insights.storage import record_insight
+from ..state import AppState
+from .deps import get_app_state
 from .schemas import (
     OllamaStartRequest,
     OllamaStartResponse,
     OllamaStatusResponse,
     OllamaTestRequest,
     OllamaTestResponse,
+    OllamaInsightsRequest,
+    OllamaInsightsResponse,
+    OllamaInsightEntry,
 )
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
@@ -105,3 +112,73 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
         message=result.message,
         raw=result.raw,
     )
+
+
+@router.post("/ollama/analyze", response_model=OllamaInsightsResponse)
+async def generate_ollama_insights(
+    payload: OllamaInsightsRequest,
+    state: AppState = Depends(get_app_state),
+) -> OllamaInsightsResponse:
+    """Genera insights manualmente usando la configuración actual."""
+
+    model = payload.model or state.settings.ollama_insights_model
+    if not model:
+        raise HTTPException(status_code=400, detail="No hay modelo configurado para ejecutar insights.")
+
+    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else 180.0
+
+    context = await state._build_insights_context()
+
+    try:
+        result = await asyncio.to_thread(
+            run_ollama_insights,
+            model=model,
+            root_path=state.settings.root_path,
+            endpoint=None,
+            context=context,
+            timeout=timeout,
+        )
+    except OllamaChatError as exc:
+        detail = {
+            "message": str(exc),
+            "endpoint": exc.endpoint,
+            "original_error": exc.original_error,
+            "status_code": exc.status_code,
+        }
+        raise HTTPException(status_code=502, detail=detail) from exc
+
+    record_insight(
+        model=result.model,
+        message=result.message,
+        raw=result.raw.raw,
+        root_path=state.settings.root_path,
+    )
+    state._insights_last_run = result.generated_at
+    state._schedule_insights_pipeline()
+
+    return OllamaInsightsResponse(
+        model=result.model,
+        generated_at=result.generated_at,
+        message=result.message,
+    )
+
+
+@router.get("/ollama/insights", response_model=List[OllamaInsightEntry])
+async def list_ollama_insights_endpoint(
+    limit: int = 20,
+    state: AppState = Depends(get_app_state),
+) -> List[OllamaInsightEntry]:
+    entries = await asyncio.to_thread(
+        list_insights,
+        limit=max(1, min(limit, 100)),
+        root_path=state.settings.root_path,
+    )
+    return [
+        OllamaInsightEntry(
+            id=entry.id,
+            model=entry.model,
+            message=entry.message,
+            generated_at=entry.generated_at,
+        )
+        for entry in entries
+    ]

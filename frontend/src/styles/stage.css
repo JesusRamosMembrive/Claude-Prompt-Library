@@ -259,6 +259,74 @@
   font-size: 0.85rem;
 }
 
+.stage-toggle-field {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stage-toggle-field span {
+  font-weight: 600;
+  color: #cbd5f5;
+}
+
+.stage-switch {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 24px;
+  align-items: center;
+}
+
+.stage-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.stage-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.stage-switch-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  transition: transform 0.2s ease;
+}
+
+.stage-switch input:checked + .stage-switch-slider {
+  background-color: rgba(59, 130, 246, 0.7);
+}
+
+.stage-switch input:checked + .stage-switch-slider::before {
+  transform: translateX(22px);
+}
+
+.stage-insights-list {
+  gap: 12px;
+}
+
+.stage-insight-message {
+  margin: 6px 0 0;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
 .stage-details {
   margin-top: 12px;
 }

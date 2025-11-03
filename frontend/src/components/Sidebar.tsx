@@ -12,7 +12,6 @@ const FILE_ICON = "📄";
 
 export function Sidebar(): JSX.Element {
   const [filter, setFilter] = useState("");
-  const selectPath = useSelectionStore((state) => state.selectPath);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
   const selectedPath = useSelectionStore((state) => state.selectedPath);
 

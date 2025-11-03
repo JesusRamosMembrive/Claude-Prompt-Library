@@ -129,6 +129,8 @@ class StatusResponse(BaseModel):
     ollama_insights_enabled: bool
     ollama_insights_model: Optional[str]
     ollama_insights_frequency_minutes: Optional[int]
+    ollama_insights_last_run: Optional[datetime]
+    ollama_insights_next_run: Optional[datetime]
     last_full_scan: Optional[datetime]
     last_event_batch: Optional[datetime]
     files_indexed: int
@@ -247,6 +249,34 @@ class OllamaTestResponse(BaseModel):
     latency_ms: float
     message: str
     raw: Dict[str, Any]
+
+
+class OllamaInsightsRequest(BaseModel):
+    """Petición para generar insights manualmente."""
+
+    model: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        description="Modelo a utilizar (por defecto usa el configurado en settings).",
+    )
+    timeout_seconds: Optional[float] = Field(default=180.0, ge=1.0, le=600.0)
+
+
+class OllamaInsightsResponse(BaseModel):
+    """Respuesta tras generar insights manualmente."""
+
+    model: str
+    generated_at: datetime
+    message: str
+
+
+class OllamaInsightEntry(BaseModel):
+    """Elemento individual dentro del historial de insights."""
+
+    id: int
+    model: str
+    message: str
+    generated_at: datetime
 
 
 class StageInitRequest(BaseModel):

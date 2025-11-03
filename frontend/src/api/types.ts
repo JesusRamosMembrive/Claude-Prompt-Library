@@ -75,6 +75,8 @@ export interface StatusPayload {
   ollama_insights_enabled: boolean;
   ollama_insights_model: string | null;
   ollama_insights_frequency_minutes: number | null;
+  ollama_insights_last_run: string | null;
+  ollama_insights_next_run: string | null;
   last_full_scan: string | null;
   last_event_batch: string | null;
   files_indexed: number;
@@ -188,6 +190,19 @@ export interface OllamaStartResponse {
   process_id?: number | null;
   status: OllamaStatus;
   checked_at: string;
+}
+
+export interface OllamaInsightEntry {
+  id: number;
+  model: string;
+  message: string;
+  generated_at: string;
+}
+
+export interface OllamaInsightsResponse {
+  model: string;
+  generated_at: string;
+  message: string;
 }
 
 export interface StageInitPayload {

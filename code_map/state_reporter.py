@@ -64,6 +64,8 @@ class StateReporter:
         last_full_scan: Optional[datetime],
         last_event_batch: Optional[datetime],
         pending_events: int,
+        insights_last_run: Optional[datetime],
+        insights_next_run: Optional[datetime],
     ) -> Dict[str, Any]:
         """
         Construye el payload de estado para la API.
@@ -90,6 +92,8 @@ class StateReporter:
             "ollama_insights_enabled": self.settings.ollama_insights_enabled,
             "ollama_insights_model": self.settings.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
+            "ollama_insights_last_run": insights_last_run,
+            "ollama_insights_next_run": insights_next_run,
             "last_full_scan": last_full_scan,
             "last_event_batch": last_event_batch,
             "files_indexed": total_files,
