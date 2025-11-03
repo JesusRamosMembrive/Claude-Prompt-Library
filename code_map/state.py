@@ -319,12 +319,14 @@ class AppState:
         root_path: Optional[Path] = None,
         include_docstrings: Optional[bool] = None,
         exclude_dirs: Optional[Iterable[str]] = None,
+        ollama_insights_enabled: Optional[bool] = None,
     ) -> List[str]:
         """Actualiza la configuración de la aplicación."""
         new_settings = self.settings.with_updates(
             root_path=root_path,
             include_docstrings=include_docstrings,
             exclude_dirs=exclude_dirs,
+            ollama_insights_enabled=ollama_insights_enabled,
         )
         updated_fields: List[str] = []
         if new_settings.root_path != self.settings.root_path:
@@ -335,6 +337,8 @@ class AppState:
             updated_fields.append("include_docstrings")
         if new_settings.exclude_dirs != self.settings.exclude_dirs:
             updated_fields.append("exclude_dirs")
+        if new_settings.ollama_insights_enabled != self.settings.ollama_insights_enabled:
+            updated_fields.append("ollama_insights_enabled")
 
         if not updated_fields:
             return []

@@ -53,6 +53,7 @@ async def update_settings(
             root_path=root_path,
             include_docstrings=payload.include_docstrings,
             exclude_dirs=payload.exclude_dirs,
+            ollama_insights_enabled=payload.ollama_insights_enabled,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

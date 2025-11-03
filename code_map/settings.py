@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 import sqlite3
 from pathlib import Path
 from typing import Iterable, Mapping, Optional, Tuple
+import logging
 
 from .constants import META_DIR_NAME
 from .scanner import DEFAULT_EXCLUDED_DIRS
@@ -19,6 +20,7 @@ ENV_ROOT_PATH = "CODE_MAP_ROOT"
 ENV_INCLUDE_DOCSTRINGS = "CODE_MAP_INCLUDE_DOCSTRINGS"
 ENV_DB_PATH = "CODE_MAP_DB_PATH"
 ENV_DISABLE_LINTERS = "CODE_MAP_DISABLE_LINTERS"
+SETTINGS_VERSION = 2
 DB_FILENAME = "state.db"
 
 
@@ -44,6 +46,7 @@ class AppSettings:
     root_path: Path
     exclude_dirs: Tuple[str, ...] = field(default_factory=tuple)
     include_docstrings: bool = True
+    ollama_insights_enabled: bool = False
 
     def to_payload(self) -> dict:
         """Convierte la configuración a un diccionario serializable."""
@@ -51,7 +54,8 @@ class AppSettings:
             "root_path": str(self.root_path),
             "exclude_dirs": list(self.exclude_dirs),
             "include_docstrings": self.include_docstrings,
-            "version": 1,
+            "ollama_insights_enabled": self.ollama_insights_enabled,
+            "version": SETTINGS_VERSION,
         }
 
     def with_updates(
@@ -60,6 +64,7 @@ class AppSettings:
         root_path: Path | None = None,
         include_docstrings: bool | None = None,
         exclude_dirs: Iterable[str] | None = None,
+        ollama_insights_enabled: bool | None = None,
     ) -> "AppSettings":
         """Crea una nueva instancia de AppSettings con actualizaciones."""
         return AppSettings(
@@ -69,6 +74,11 @@ class AppSettings:
                 include_docstrings
                 if include_docstrings is not None
                 else self.include_docstrings
+            ),
+            ollama_insights_enabled=(
+                ollama_insights_enabled
+                if ollama_insights_enabled is not None
+                else self.ollama_insights_enabled
             ),
         )
 
@@ -119,6 +129,7 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
             root_path TEXT NOT NULL,
             exclude_dirs TEXT NOT NULL,
             include_docstrings INTEGER NOT NULL,
+            ollama_insights_enabled INTEGER NOT NULL DEFAULT 0,
             updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
         )
         """
@@ -175,6 +186,18 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
         """
     )
 
+    # Asegurar columna ollama_insights_enabled en instalaciones existentes.
+    cursor = connection.execute("PRAGMA table_info(app_settings)")
+    columns = {row["name"] for row in cursor.fetchall()}
+    if "ollama_insights_enabled" not in columns:
+        try:
+            connection.execute(
+                "ALTER TABLE app_settings ADD COLUMN ollama_insights_enabled INTEGER NOT NULL DEFAULT 0"
+            )
+            connection.commit()
+        except sqlite3.OperationalError:
+            pass
+
     connection.commit()
 
 
@@ -186,9 +209,16 @@ def _load_settings_from_db(
 ) -> Optional[AppSettings]:
     """Carga la configuración desde la base de datos SQLite si existe."""
     with open_database(env={ENV_DB_PATH: str(db_path)}) as connection:
-        cursor = connection.execute(
-            "SELECT root_path, exclude_dirs, include_docstrings FROM app_settings WHERE id = 1"
-        )
+        insights_supported = True
+        try:
+            cursor = connection.execute(
+                "SELECT root_path, exclude_dirs, include_docstrings, ollama_insights_enabled FROM app_settings WHERE id = 1"
+            )
+        except sqlite3.OperationalError:
+            insights_supported = False
+            cursor = connection.execute(
+                "SELECT root_path, exclude_dirs, include_docstrings FROM app_settings WHERE id = 1"
+            )
         row = cursor.fetchone()
         if row is None:
             return None
@@ -202,12 +232,18 @@ def _load_settings_from_db(
             data = []
 
         include_flag = bool(row["include_docstrings"]) if row["include_docstrings"] is not None else default_include_docstrings
+        if insights_supported and "ollama_insights_enabled" in row.keys():
+            insights_raw = row["ollama_insights_enabled"]
+            insights_flag = bool(insights_raw) if insights_raw is not None else False
+        else:
+            insights_flag = False
         effective_root = stored_root if stored_root.exists() else default_root
 
         return AppSettings(
             root_path=effective_root,
             exclude_dirs=_normalize_exclusions(data),
             include_docstrings=include_flag,
+            ollama_insights_enabled=insights_flag,
         )
 
 
@@ -215,22 +251,56 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
     """Persiste la configuración actual en SQLite."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with open_database(env={ENV_DB_PATH: str(db_path)}) as connection:
-        connection.execute(
-            """
-            INSERT INTO app_settings (id, root_path, exclude_dirs, include_docstrings, updated_at)
-            VALUES (1, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-            ON CONFLICT(id) DO UPDATE SET
-                root_path = excluded.root_path,
-                exclude_dirs = excluded.exclude_dirs,
-                include_docstrings = excluded.include_docstrings,
-                updated_at = excluded.updated_at
-            """,
-            (
-                str(settings.root_path),
-                json.dumps(list(settings.exclude_dirs)),
-                1 if settings.include_docstrings else 0,
-            ),
-        )
+        cursor = connection.execute("PRAGMA table_info(app_settings)")
+        columns = {row["name"] for row in cursor.fetchall()}
+        has_insights_column = "ollama_insights_enabled" in columns
+
+        if not has_insights_column:
+            try:
+                connection.execute(
+                    "ALTER TABLE app_settings ADD COLUMN ollama_insights_enabled INTEGER NOT NULL DEFAULT 0"
+                )
+                connection.commit()
+                has_insights_column = True
+            except sqlite3.OperationalError:
+                has_insights_column = False
+
+        if has_insights_column:
+            connection.execute(
+                """
+                INSERT INTO app_settings (id, root_path, exclude_dirs, include_docstrings, ollama_insights_enabled, updated_at)
+                VALUES (1, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+                ON CONFLICT(id) DO UPDATE SET
+                    root_path = excluded.root_path,
+                    exclude_dirs = excluded.exclude_dirs,
+                    include_docstrings = excluded.include_docstrings,
+                    ollama_insights_enabled = excluded.ollama_insights_enabled,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    str(settings.root_path),
+                    json.dumps(list(settings.exclude_dirs)),
+                    1 if settings.include_docstrings else 0,
+                    1 if settings.ollama_insights_enabled else 0,
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO app_settings (id, root_path, exclude_dirs, include_docstrings, updated_at)
+                VALUES (1, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+                ON CONFLICT(id) DO UPDATE SET
+                    root_path = excluded.root_path,
+                    exclude_dirs = excluded.exclude_dirs,
+                    include_docstrings = excluded.include_docstrings,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    str(settings.root_path),
+                    json.dumps(list(settings.exclude_dirs)),
+                    1 if settings.include_docstrings else 0,
+                ),
+            )
         connection.commit()
 
 
@@ -261,6 +331,7 @@ def load_settings(
             root_path=base_root,
             exclude_dirs=_normalize_exclusions(),
             include_docstrings=default_include,
+            ollama_insights_enabled=False,
         )
         _save_settings_to_db(db_path, settings)
 
@@ -276,4 +347,8 @@ def load_settings(
 def save_settings(settings: AppSettings, *, env: Optional[Mapping[str, str]] = None) -> None:
     """Guarda la configuración en el disco."""
     db_path = database_path(env)
-    _save_settings_to_db(db_path, settings)
+    try:
+        _save_settings_to_db(db_path, settings)
+    except sqlite3.OperationalError as exc:
+        logger.warning("No se pudo guardar la configuración en %s: %s", db_path, exc)
+logger = logging.getLogger(__name__)

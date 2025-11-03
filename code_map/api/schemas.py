@@ -82,6 +82,7 @@ class SettingsResponse(BaseModel):
     absolute_root: str
     exclude_dirs: List[str]
     include_docstrings: bool
+    ollama_insights_enabled: bool
     watcher_active: bool
 
 
@@ -90,6 +91,7 @@ class SettingsUpdateRequest(BaseModel):
     root_path: Optional[str] = None
     include_docstrings: Optional[bool] = None
     exclude_dirs: Optional[List[str]] = None
+    ollama_insights_enabled: Optional[bool] = None
 
 
 class SettingsUpdateResponse(BaseModel):
@@ -115,6 +117,7 @@ class StatusResponse(BaseModel):
     absolute_root: str
     watcher_active: bool
     include_docstrings: bool
+    ollama_insights_enabled: bool
     last_full_scan: Optional[datetime]
     last_event_batch: Optional[datetime]
     files_indexed: int

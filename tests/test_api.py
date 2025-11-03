@@ -404,6 +404,7 @@ def test_get_settings_endpoint(api_client: TestClient) -> None:
     assert payload["root_path"]
     assert payload["absolute_root"].startswith("/")
     assert payload["include_docstrings"] is True
+    assert payload["ollama_insights_enabled"] is False
     assert "exclude_dirs" in payload
 
 
@@ -413,6 +414,14 @@ def test_update_settings_toggle_docstrings(api_client: TestClient) -> None:
     body = response.json()
     assert "include_docstrings" in body["updated"]
     assert body["settings"]["include_docstrings"] is False
+
+
+def test_update_settings_toggle_ollama_insights(api_client: TestClient) -> None:
+    response = api_client.put("/settings", json={"ollama_insights_enabled": True})
+    assert response.status_code == 200
+    body = response.json()
+    assert "ollama_insights_enabled" in body["updated"]
+    assert body["settings"]["ollama_insights_enabled"] is True
 
 
 def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
@@ -437,6 +446,7 @@ def test_status_endpoint_returns_metrics(api_client: TestClient) -> None:
     assert payload["files_indexed"] >= 1
     assert "symbols_indexed" in payload
     assert payload["watcher_active"] in {True, False}
+    assert payload["ollama_insights_enabled"] in {True, False}
     assert isinstance(payload["capabilities"], list)
 
 

@@ -50,6 +50,7 @@ class StateReporter:
             "root_path": self.settings.root_path.as_posix(),
             "exclude_dirs": list(self.settings.exclude_dirs),
             "include_docstrings": self.settings.include_docstrings,
+            "ollama_insights_enabled": self.settings.ollama_insights_enabled,
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
         }
@@ -84,6 +85,7 @@ class StateReporter:
             "absolute_root": str(self.settings.root_path),
             "watcher_active": watcher_active,
             "include_docstrings": self.settings.include_docstrings,
+            "ollama_insights_enabled": self.settings.ollama_insights_enabled,
             "last_full_scan": last_full_scan,
             "last_event_batch": last_event_batch,
             "files_indexed": total_files,
