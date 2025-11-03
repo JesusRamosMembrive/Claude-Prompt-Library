@@ -51,6 +51,34 @@ export CODE_MAP_ROOT=/path/al/proyecto
 
 El backend persiste un snapshot en `<root>/.code-map/code-map.json`; al reiniciar lo carga para responder rápido y luego ejecuta un escaneo completo en segundo plano.
 
+## Integración con Ollama
+
+Para que el panel "Stage Toolkit" pueda consultar y hacer ping a modelos locales debes tener Ollama instalado y sirviendo peticiones.
+
+1. **Instala Ollama** siguiendo la guía oficial según tu plataforma.
+2. **Arranca el servicio** antes (o en paralelo) al backend:
+   ```bash
+   ollama serve
+   ```
+   - Por defecto queda escuchando en `http://127.0.0.1:11434`.
+   - Si prefieres otra dirección/puerto, exporta `OLLAMA_HOST=http://host:puerto` antes de iniciar Uvicorn.
+3. **Verifica la conexión** desde nuestro backend:
+   ```bash
+   curl -s http://localhost:8000/integrations/ollama/status | jq
+   ```
+   Deberías ver `installed: true` y `running: true`. Si todo está correcto puedes probar un chat corto:
+   ```bash
+   curl -s -X POST http://localhost:8000/integrations/ollama/test \
+     -H 'Content-Type: application/json' \
+     -d '{"model":"gpt-oss:latest","prompt":"ping"}' | jq
+   ```
+4. **Usa la UI**. En la vista Stage Toolkit:
+   - Pulsa "Iniciar Ollama" si el servicio aún no estaba levantado (esto ejecuta `ollama serve`).
+   - Selecciona un modelo y lanza “Probar chat”.
+   - Recuerda que la primera llamada puede tardar mientras se carga el modelo; si ves un aviso de “modelo en carga”, espera unos segundos y reintenta.
+
+Si tienes problemas de conectividad, ejecuta `python tools/debug_ollama.py --endpoint http://127.0.0.1:11434 --model <modelo>` para comprobar TCP, `/api/tags` y un chat de prueba.
+
 ## Siguientes pasos
 - Añadir logging más detallado en los batch del watcher si hace falta visibilidad extra.
 - Escribir pruebas de integración una vez tengamos scripts automatizados.

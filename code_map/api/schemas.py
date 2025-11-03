@@ -222,7 +222,7 @@ class OllamaTestRequest(BaseModel):
     prompt: str = Field(..., min_length=1)
     system_prompt: Optional[str] = None
     endpoint: Optional[str] = None
-    timeout_seconds: Optional[float] = Field(default=None, ge=1.0, le=120.0)
+    timeout_seconds: Optional[float] = Field(default=None, ge=1.0, le=1200.0)
 
 
 class OllamaTestResponse(BaseModel):

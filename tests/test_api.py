@@ -338,6 +338,65 @@ def test_ollama_test_endpoint_handles_error(api_client: TestClient, monkeypatch)
     assert detail["endpoint"] == "http://127.0.0.1:11434"
 
 
+def test_ollama_test_endpoint_handles_timeout(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaChatError
+
+    loading_since = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+    def fake_chat_with_ollama(**kwargs):
+        raise OllamaChatError(
+            "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
+            endpoint="http://127.0.0.1:11434",
+            original_error="timeout",
+            reason_code="timeout",
+            retry_after_seconds=10.0,
+            loading_since=loading_since,
+        )
+
+    monkeypatch.setattr(integrations_module, "chat_with_ollama", fake_chat_with_ollama)
+
+    response = api_client.post(
+        "/integrations/ollama/test",
+        json={"model": "llama3", "prompt": "ping"},
+    )
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail["reason_code"] == "timeout"
+    assert detail["loading"] is True
+    assert detail["message"].startswith("Ollama tardó demasiado en responder")
+
+
+def test_ollama_test_endpoint_exposes_loading_hint(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+    from code_map.integrations import OllamaChatError
+
+    loading_started = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+    def fake_chat_with_ollama(**kwargs):
+        raise OllamaChatError(
+            "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
+            endpoint="http://127.0.0.1:11434",
+            original_error="timeout",
+            reason_code="timeout",
+            retry_after_seconds=10.0,
+            loading_since=loading_started,
+        )
+
+    monkeypatch.setattr(integrations_module, "chat_with_ollama", fake_chat_with_ollama)
+
+    response = api_client.post(
+        "/integrations/ollama/test",
+        json={"model": "llama3", "prompt": "ping"},
+    )
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail["reason_code"] == "timeout"
+    assert detail["loading"] is True
+    assert detail["retry_after_seconds"] == pytest.approx(10.0)
+    assert detail["loading_since"].startswith("2024-01-01T00:00:00")
+
+
 def test_get_settings_endpoint(api_client: TestClient) -> None:
     response = api_client.get("/settings")
     assert response.status_code == 200

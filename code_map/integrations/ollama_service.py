@@ -7,18 +7,24 @@ from __future__ import annotations
 
 import json
 import os
-import time
 import shutil
+import socket
 import subprocess
+import threading
+import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional
+from datetime import datetime, timezone, timedelta
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib import error as urlerror
 from urllib import parse as urlparse
 from urllib import request as urlrequest
 
 DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
 OLLAMA_HOST_ENV = "OLLAMA_HOST"
+MODEL_WARMUP_RETRY_AFTER_SECONDS = 10.0
+_LOADING_STATE_TTL = timedelta(minutes=3)
+_LOADING_LOCK = threading.Lock()
+_LOADING_STATE: Dict[Tuple[str, str], datetime] = {}
 
 
 def _normalize_endpoint(raw: Optional[str]) -> str:
@@ -123,6 +129,52 @@ def _current_timestamp() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _prune_loading_locked(reference: datetime) -> None:
+    """Elimina marcas de modelos cargándose que hayan caducado."""
+    expired = [
+        key for key, started in list(_LOADING_STATE.items())
+        if reference - started > _LOADING_STATE_TTL
+    ]
+    for key in expired:
+        _LOADING_STATE.pop(key, None)
+
+
+def _ensure_model_loading(endpoint: str, model: str) -> datetime:
+    """Marca un modelo como en proceso de carga y devuelve el timestamp de inicio."""
+    now = _current_timestamp()
+    with _LOADING_LOCK:
+        _prune_loading_locked(now)
+        key = (endpoint, model)
+        if key not in _LOADING_STATE:
+            _LOADING_STATE[key] = now
+        return _LOADING_STATE[key]
+
+
+def _get_model_loading(endpoint: str, model: str) -> Optional[datetime]:
+    """Devuelve el instante en el que detectamos que el modelo empezó a cargar."""
+    now = _current_timestamp()
+    with _LOADING_LOCK:
+        _prune_loading_locked(now)
+        return _LOADING_STATE.get((endpoint, model))
+
+
+def _clear_model_loading(endpoint: str, model: str) -> None:
+    """Elimina el estado de carga registrado para un modelo."""
+    with _LOADING_LOCK:
+        _LOADING_STATE.pop((endpoint, model), None)
+
+
+def _extract_http_error_payload(exc: urlerror.HTTPError) -> str:
+    """Extrae el cuerpo de error HTTP en formato texto."""
+    try:
+        payload = exc.read()
+        if payload:
+            return payload.decode("utf-8", errors="replace")
+    except Exception:
+        pass
+    return str(exc)
+
+
 @dataclass(frozen=True)
 class OllamaModelInfo:
     """Modelo instalado disponible para Ollama."""
@@ -178,6 +230,9 @@ class OllamaChatError(RuntimeError):
         endpoint: URL del servidor objetivo.
         original_error: Texto del error original si está disponible.
         status_code: Código HTTP retornado por Ollama (si hubo respuesta).
+        reason_code: Identificador interno del tipo de error detectado.
+        retry_after_seconds: Tiempo recomendado antes de reintentar.
+        loading_since: Momento en que se detectó que el modelo inició carga.
     """
 
     def __init__(
@@ -187,11 +242,17 @@ class OllamaChatError(RuntimeError):
         endpoint: str,
         original_error: Optional[str] = None,
         status_code: Optional[int] = None,
+        reason_code: Optional[str] = None,
+        retry_after_seconds: Optional[float] = None,
+        loading_since: Optional[datetime] = None,
     ) -> None:
         super().__init__(message)
         self.endpoint = endpoint
         self.original_error = original_error
         self.status_code = status_code
+        self.reason_code = reason_code
+        self.retry_after_seconds = retry_after_seconds
+        self.loading_since = loading_since
 
 
 class OllamaStartError(RuntimeError):
@@ -253,6 +314,7 @@ def chat_with_ollama(
     }
 
     request = _build_request(url, payload)
+    previous_loading = _get_model_loading(resolved_endpoint, model)
     start = time.perf_counter()
     try:
         with urlrequest.urlopen(request, timeout=timeout) as response:
@@ -261,17 +323,49 @@ def chat_with_ollama(
             data = json.loads(text)
             status_code = response.status
     except urlerror.HTTPError as exc:
+        original_error = _extract_http_error_payload(exc)
+        if exc.code in (503, 504):
+            loading_started = _ensure_model_loading(resolved_endpoint, model)
+            raise OllamaChatError(
+                "Ollama respondió que el servicio no está listo (posible carga del modelo). Intenta de nuevo en unos segundos.",
+                endpoint=resolved_endpoint,
+                original_error=original_error,
+                status_code=exc.code,
+                reason_code="service_unavailable",
+                retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
+                loading_since=loading_started,
+            ) from exc
         raise OllamaChatError(
             "Error HTTP al invocar Ollama.",
             endpoint=resolved_endpoint,
-            original_error=str(exc),
+            original_error=original_error,
             status_code=exc.code,
         ) from exc
     except urlerror.URLError as exc:
+        if isinstance(exc.reason, socket.timeout):
+            loading_started = previous_loading or _ensure_model_loading(resolved_endpoint, model)
+            raise OllamaChatError(
+                "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
+                endpoint=resolved_endpoint,
+                original_error="timeout",
+                reason_code="timeout",
+                retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
+                loading_since=loading_started,
+            ) from exc
         raise OllamaChatError(
             "No se pudo conectar con el servidor Ollama.",
             endpoint=resolved_endpoint,
             original_error=str(exc.reason),
+        ) from exc
+    except TimeoutError as exc:
+        loading_started = previous_loading or _ensure_model_loading(resolved_endpoint, model)
+        raise OllamaChatError(
+            "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
+            endpoint=resolved_endpoint,
+            original_error="timeout",
+            reason_code="timeout",
+            retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
+            loading_since=loading_started,
         ) from exc
     except json.JSONDecodeError as exc:
         raise OllamaChatError(
@@ -281,6 +375,7 @@ def chat_with_ollama(
         ) from exc
 
     latency = (time.perf_counter() - start) * 1000
+    _clear_model_loading(resolved_endpoint, model)
 
     message_block = data.get("message") or {}
     content = message_block.get("content")

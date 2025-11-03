@@ -290,7 +290,7 @@ export function StageToolkitView(): JSX.Element {
   );
   const [ollamaSystemPrompt, setOllamaSystemPrompt] = useState<string>("");
   const [ollamaEndpoint, setOllamaEndpoint] = useState<string>("");
-  const [ollamaTimeout, setOllamaTimeout] = useState<string>("15");
+  const [ollamaTimeout, setOllamaTimeout] = useState<string>("180");
   const [ollamaEndpointTouched, setOllamaEndpointTouched] = useState<boolean>(false);
 
   const stageStatus = statusQuery.data;
@@ -332,7 +332,7 @@ export function StageToolkitView(): JSX.Element {
   }, [ollamaTimeout]);
   const isTimeoutValid =
     !ollamaTimeout.trim() ||
-    (parsedTimeout !== undefined && parsedTimeout > 0 && parsedTimeout <= 120);
+    (parsedTimeout !== undefined && parsedTimeout > 0 && parsedTimeout <= 1200);
   const isTestingOllama = ollamaTestMutation.isPending;
   const ollamaTestResult = ollamaTestMutation.data;
   const ollamaTestError = ollamaTestMutation.error;
@@ -343,6 +343,23 @@ export function StageToolkitView(): JSX.Element {
     (ollamaTestError?.detail?.message ?? ollamaTestError?.message) ?? null;
   const ollamaErrorEndpoint = ollamaTestError?.detail?.endpoint;
   const ollamaErrorOriginal = ollamaTestError?.detail?.original_error;
+  const ollamaErrorReason = ollamaTestError?.detail?.reason_code ?? null;
+  const ollamaErrorRetryAfterSeconds = ollamaTestError?.detail?.retry_after_seconds;
+  const isOllamaLoadingModel = Boolean(ollamaTestError?.detail?.loading);
+  const ollamaLoadingSinceRaw = ollamaTestError?.detail?.loading_since ?? null;
+  const ollamaLoadingSince = useMemo(() => {
+    if (!ollamaLoadingSinceRaw) {
+      return null;
+    }
+    const parsed = new Date(ollamaLoadingSinceRaw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [ollamaLoadingSinceRaw]);
+  const formattedRetrySeconds =
+    typeof ollamaErrorRetryAfterSeconds === "number" && Number.isFinite(ollamaErrorRetryAfterSeconds)
+      ? Math.max(1, Math.round(ollamaErrorRetryAfterSeconds))
+      : null;
+  const showOllamaRetryHint =
+    ollamaErrorReason === "timeout" || ollamaErrorReason === "service_unavailable";
   const showTimeoutError = Boolean(ollamaTimeout.trim() && !isTimeoutValid);
   const isStartingOllama = ollamaStartMutation.isPending;
   const ollamaStartError = ollamaStartMutation.error ? String(ollamaStartMutation.error) : null;
@@ -575,7 +592,7 @@ export function StageToolkitView(): JSX.Element {
               className="stage-input"
               type="number"
               min={1}
-              max={120}
+              max={1200}
               step={0.5}
               value={ollamaTimeout}
               onChange={(event) => setOllamaTimeout(event.target.value)}
@@ -583,10 +600,10 @@ export function StageToolkitView(): JSX.Element {
               aria-label="Tiempo máximo de espera para la respuesta"
             />
             {showTimeoutError ? (
-              <p className="stage-error">Introduce un valor entre 1 y 120 segundos o deja el campo vacío.</p>
+              <p className="stage-error">Introduce un valor entre 1 y 1200 segundos o deja el campo vacío.</p>
             ) : (
               <p className="stage-hint">
-                Vacío usa el valor por defecto ({parsedTimeout ?? 15} s). Usa este límite para evitar esperas largas.
+                Vacío usa el valor por defecto ({parsedTimeout ?? 180} s). Usa este límite para evitar esperas largas.
               </p>
             )}
           </label>
@@ -654,6 +671,25 @@ export function StageToolkitView(): JSX.Element {
             ) : null}
             {ollamaErrorOriginal ? (
               <p className="stage-meta">Detalle: {ollamaErrorOriginal}</p>
+            ) : null}
+            {isOllamaLoadingModel ? (
+              <p className="stage-info">
+                Detectamos que el modelo sigue cargándose
+                {ollamaLoadingSince ? (
+                  <> desde {ollamaLoadingSince.toLocaleTimeString()}</>
+                ) : null}
+                .{" "}
+                Intenta nuevamente
+                {formattedRetrySeconds ? <> en ~{formattedRetrySeconds} s</> : " en unos segundos"} o revisa los logs con{" "}
+                <code>ollama serve</code>.
+              </p>
+            ) : null}
+            {!isOllamaLoadingModel && showOllamaRetryHint ? (
+              <p className="stage-info">
+                Ollama sugirió reintentar pronto
+                {formattedRetrySeconds ? <> (≈{formattedRetrySeconds} s)</> : ""}. Si el modelo tarda demasiado, abre una
+                terminal y observa <code>ollama serve</code>.
+              </p>
             ) : null}
           </article>
         ) : null}

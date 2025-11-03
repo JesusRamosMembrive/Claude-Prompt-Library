@@ -71,7 +71,7 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
         messages.append(OllamaChatMessage(role="system", content=payload.system_prompt))
     messages.append(OllamaChatMessage(role="user", content=payload.prompt))
 
-    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else 15.0
+    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else 180.0
 
     try:
         result = await asyncio.to_thread(
@@ -88,6 +88,13 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
             "original_error": exc.original_error,
             "status_code": exc.status_code,
         }
+        if exc.reason_code is not None:
+            detail["reason_code"] = exc.reason_code
+        if exc.retry_after_seconds is not None:
+            detail["retry_after_seconds"] = exc.retry_after_seconds
+        if exc.loading_since is not None:
+            detail["loading"] = True
+            detail["loading_since"] = exc.loading_since.isoformat()
         raise HTTPException(status_code=502, detail=detail) from exc
 
     return OllamaTestResponse(

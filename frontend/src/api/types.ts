@@ -162,6 +162,10 @@ export interface OllamaTestErrorDetail {
   endpoint?: string;
   original_error?: string;
   status_code?: number | null;
+  reason_code?: string;
+  retry_after_seconds?: number;
+  loading?: boolean;
+  loading_since?: string;
 }
 
 export interface OllamaStartPayload {
