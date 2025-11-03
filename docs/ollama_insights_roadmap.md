@@ -22,9 +22,9 @@
 - [ ] Añadir filtros o categorías (refactor, linters, patrones) para que el usuario navegue fácilmente por los resultados.
 
 ## Manejo de errores y control
-- [ ] Gestionar timeouts y reintentos controlados, mostrando feedback claro cuando Ollama no responda.
+- [x] Gestionar timeouts y reintentos controlados, mostrando feedback claro cuando Ollama no responda.
 - [ ] Registrar logs detallados en caso de fallos (con información del endpoint, modelo y prompts).
-- [ ] Añadir opción para limpiar historial de insights generados automáticamente.
+- [x] Añadir opción para limpiar historial de insights generados automáticamente.
 
 ## Iteraciones futuras
 - [ ] Generar propuestas de cambios concretos (por ejemplo, diffs/pseudocódigo) cuando sea viable.

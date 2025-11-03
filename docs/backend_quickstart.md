@@ -14,6 +14,16 @@ Guía rápida para poner en marcha el backend, validar que el watcher funciona y
    ```
 2. Elegir un directorio de trabajo que actuarà como proyecto a analizar. En los ejemplos usamos `/tmp/code-map-playground/project`.
 
+### Unificación de entornos virtuales
+
+Si trabajaste previamente con otro entorno creado en la raíz (carpetas `bin/`, `lib/`, `include/`, etc.), deja únicamente `.venv/` para evitar conflictos en el `PATH`:
+
+```bash
+rm -rf bin include lib lib64 pyvenv.cfg venv
+```
+
+Después, reactiva `.venv`, reinstala dependencias si es necesario y comprueba que los comandos (`ruff`, `black`, etc.) se resuelven dentro de `.venv/bin/`.
+
 ## Arranque del servidor
 ```bash
 export CODE_MAP_ROOT=/path/al/proyecto
@@ -83,3 +93,9 @@ Si tienes problemas de conectividad, ejecuta `python tools/debug_ollama.py --end
 - Añadir logging más detallado en los batch del watcher si hace falta visibilidad extra.
 - Escribir pruebas de integración una vez tengamos scripts automatizados.
 - Iniciar la configuración del frontend (React/Vite) consumiendo estos endpoints.
+
+### Hacia un setup más sencillo (plan de trabajo)
+- Script único (`scripts/setup_backend.py` o `make setup`) que cree `.venv`, instale dependencias y genere `.env` local con `CODE_MAP_ROOT` y `CODE_MAP_DB_PATH`.
+- Ajustar `code_map.settings.load_settings` para que, ante la ausencia de variables, asuma la carpeta actual como root y use `<root>/.code-map/state.db` por defecto.
+- Refinar el pipeline de linters: usar siempre `sys.executable -m ...`, registrar el `PATH` efectivo y mostrar en la UI un aviso claro cuando se omita una herramienta.
+- Mantener este documento actualizado con una tabla de problemas comunes (DB de solo lectura, reportes antiguos, etc.) y pasos para resolverlos.

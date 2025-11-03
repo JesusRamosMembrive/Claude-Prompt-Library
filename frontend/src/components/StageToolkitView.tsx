@@ -10,7 +10,7 @@ import type {
   OllamaStatus,
   OllamaModelInfo,
 } from "../api/types";
-import { updateSettings, triggerOllamaInsights } from "../api/client";
+import { updateSettings, triggerOllamaInsights, clearOllamaInsights } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import { useStageInitMutation } from "../hooks/useStageInitMutation";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
@@ -382,6 +382,7 @@ export function StageToolkitView(): JSX.Element {
   const settings = settingsQuery.data;
   const settingsLoading = settingsQuery.isLoading;
   const insightsHistory = insightsQuery.data ?? [];
+  const insightsHistoryError = insightsQuery.error;
   const insightsLastRunRaw = statusQuery.data?.ollama_insights_last_run ?? null;
   const insightsNextRunRaw = statusQuery.data?.ollama_insights_next_run ?? null;
   const insightsLastRun = insightsLastRunRaw ? new Date(insightsLastRunRaw) : null;
@@ -493,6 +494,22 @@ export function StageToolkitView(): JSX.Element {
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : "No se pudo generar el insight.";
       setInsightsStatus(`Error al generar insight: ${message}`);
+    },
+  });
+
+  const clearInsightsMutation = useMutation({
+    mutationFn: clearOllamaInsights,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(10) });
+      setInsightsStatus(
+        result.deleted > 0
+          ? `Se eliminaron ${result.deleted} insights almacenados.`
+          : "No había insights que eliminar.",
+      );
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "No se pudo limpiar el historial.";
+      setInsightsStatus(`Error al limpiar historial: ${message}`);
     },
   });
 
@@ -744,6 +761,10 @@ export function StageToolkitView(): JSX.Element {
                 <span>Historial reciente</span>
                 {insightsQuery.isLoading ? (
                   <p className="stage-info">Recuperando insights generados…</p>
+                ) : insightsQuery.isError ? (
+                  <p className="stage-error">
+                    Error al cargar historial: {String(insightsHistoryError)}
+                  </p>
                 ) : insightsHistory.length === 0 ? (
                   <p className="stage-hint">
                     No se han registrado insights todavía. Genera uno manualmente o espera a la próxima ejecución automática.
@@ -773,6 +794,14 @@ export function StageToolkitView(): JSX.Element {
                   disabled={manualInsightsMutation.isPending}
                 >
                   {manualInsightsMutation.isPending ? "Generando…" : "Generar ahora"}
+                </button>
+                <button
+                  className="secondary-btn"
+                  type="button"
+                  onClick={() => clearInsightsMutation.mutate()}
+                  disabled={clearInsightsMutation.isPending}
+                >
+                  {clearInsightsMutation.isPending ? "Limpiando…" : "Limpiar historial"}
                 </button>
                 {insightsLastRun ? (
                   <p className="stage-hint">

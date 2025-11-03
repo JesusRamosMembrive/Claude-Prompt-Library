@@ -33,6 +33,7 @@ from .stage_toolkit import stage_status as compute_stage_status
 from .state_reporter import StateReporter
 from .insights import run_ollama_insights
 from .insights.storage import record_insight
+from .integrations import OllamaChatError
 
 logger = logging.getLogger(__name__)
 
@@ -420,8 +421,35 @@ class AppState:
                 root_path=self.settings.root_path,
             )
             self._insights_last_run = result.generated_at
+        except OllamaChatError as exc:
+            logger.warning(
+                "Fallo generando insights (modelo=%s, endpoint=%s): %s",
+                model,
+                exc.endpoint,
+                exc,
+            )
+            record_notification(
+                channel="insights",
+                severity=Severity.MEDIUM,
+                title="Insights automáticos: error",
+                message=str(exc),
+                root_path=self.settings.root_path,
+                payload={
+                    "endpoint": exc.endpoint,
+                    "reason_code": getattr(exc, "reason_code", None),
+                    "original_error": exc.original_error,
+                },
+            )
         except Exception:  # pragma: no cover - logging del pipeline
-            logger.exception("Error al generar insights automáticos con Ollama")
+            logger.exception("Error inesperado al generar insights automáticos con Ollama")
+            record_notification(
+                channel="insights",
+                severity=Severity.MEDIUM,
+                title="Insights automáticos: excepción inesperada",
+                message="Consulta los logs del backend para más detalles.",
+                root_path=self.settings.root_path,
+                payload=None,
+            )
         finally:
             self._insights_task = None
             if self._insights_timer and self._insights_timer.done():

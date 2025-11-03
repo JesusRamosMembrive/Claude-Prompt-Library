@@ -19,7 +19,7 @@ from ..integrations import (
     discover_ollama,
     start_ollama_server,
 )
-from ..insights import run_ollama_insights, list_insights
+from ..insights import run_ollama_insights, list_insights, clear_insights
 from ..insights.storage import record_insight
 from ..state import AppState
 from .deps import get_app_state
@@ -32,6 +32,7 @@ from .schemas import (
     OllamaInsightsRequest,
     OllamaInsightsResponse,
     OllamaInsightEntry,
+    OllamaInsightsClearResponse,
 )
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
@@ -182,3 +183,13 @@ async def list_ollama_insights_endpoint(
         )
         for entry in entries
     ]
+
+
+@router.delete("/ollama/insights", response_model=OllamaInsightsClearResponse)
+async def clear_ollama_insights_endpoint(state: AppState = Depends(get_app_state)) -> OllamaInsightsClearResponse:
+    deleted = await asyncio.to_thread(
+        clear_insights,
+        root_path=state.settings.root_path,
+    )
+    state._recent_changes = []
+    return OllamaInsightsClearResponse(deleted=deleted)

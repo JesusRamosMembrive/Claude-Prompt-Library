@@ -113,6 +113,29 @@ def list_insights(
             )
         )
     return insights
+
+
+def clear_insights(
+    *,
+    root_path: Optional[Path | str] = None,
+    env: Optional[Mapping[str, str]] = None,
+) -> int:
+    """Elimina insights almacenados. Si se indica root_path, borra sólo los asociados."""
+    _ensure_table(env)
+    normalized_root = _normalize_root(root_path)
+
+    with open_database(env) as connection:
+        if normalized_root:
+            cursor = connection.execute(
+                "DELETE FROM ollama_insights WHERE root_path IS NULL OR root_path = ?",
+                (normalized_root,),
+            )
+        else:
+            cursor = connection.execute("DELETE FROM ollama_insights")
+        connection.commit()
+        return cursor.rowcount
+
+
 def _normalize_root(root: Optional[Path | str]) -> Optional[str]:
     if root is None:
         return None

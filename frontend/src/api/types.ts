@@ -205,6 +205,10 @@ export interface OllamaInsightsResponse {
   message: string;
 }
 
+export interface OllamaInsightsClearResponse {
+  deleted: number;
+}
+
 export interface StageInitPayload {
   agents: StageAgentSelection;
 }

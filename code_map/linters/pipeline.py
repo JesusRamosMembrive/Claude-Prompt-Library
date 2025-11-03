@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, replace
@@ -50,6 +51,7 @@ class ToolSpec:
     key: str
     name: str
     command: List[str]
+    module: Optional[str] = None
     parser: Optional[IssueParser] = None
     timeout: int = 300
 
@@ -152,6 +154,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         key="ruff",
         name="Ruff",
         command=["ruff", "check", ".", "--output-format", "json"],
+        module="ruff",
         parser=_parse_ruff,
         timeout=180,
     ),
@@ -159,6 +162,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         key="black",
         name="Black",
         command=["black", "--check", "--diff", "--color", "never", "."],
+        module="black",
         parser=_default_parser,
         timeout=180,
     ),
@@ -166,6 +170,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         key="mypy",
         name="mypy",
         command=["mypy", "."],
+        module="mypy",
         parser=_default_parser,
         timeout=240,
     ),
@@ -173,6 +178,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         key="bandit",
         name="Bandit",
         command=["bandit", "-q", "-r", ".", "-f", "json"],
+        module="bandit",
         parser=_parse_bandit,
         timeout=240,
     ),
@@ -187,6 +193,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
             "--cov-report=term",
             "--cov-report=xml",
         ],
+        module="pytest",
         parser=_default_parser,
         timeout=600,
     ),
@@ -280,26 +287,31 @@ def _check_max_file_length(
 
 
 def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[CoverageSnapshot]]:
-    binary = spec.command[0]
+    base_command = list(spec.command)
+    binary = base_command[0]
+    effective_command = base_command
     if _which(binary) is None:
-        return (
-            ToolRunResult(
-                key=spec.key,
-                name=spec.name,
-                status=CheckStatus.SKIPPED,
-                command=" ".join(spec.command),
-                issues_found=0,
-                issues_sample=[],
-                stdout_excerpt=None,
-                stderr_excerpt="Comando no encontrado en PATH.",
-            ),
-            None,
-        )
+        if spec.module:
+            effective_command = [sys.executable, "-m", spec.module, *base_command[1:]]
+        else:
+            return (
+                ToolRunResult(
+                    key=spec.key,
+                    name=spec.name,
+                    status=CheckStatus.SKIPPED,
+                    command=" ".join(base_command),
+                    issues_found=0,
+                    issues_sample=[],
+                    stdout_excerpt=None,
+                    stderr_excerpt="Comando no encontrado en PATH.",
+                ),
+                None,
+            )
 
     start = time.perf_counter()
     try:
         completed = subprocess.run(
-            spec.command,
+            effective_command,
             cwd=root,
             capture_output=True,
             text=True,
@@ -314,7 +326,7 @@ def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[C
                 key=spec.key,
                 name=spec.name,
                 status=CheckStatus.ERROR,
-                command=" ".join(spec.command),
+                command=" ".join(effective_command),
                 duration_ms=duration_ms,
                 exit_code=None,
                 issues_found=1,
@@ -350,7 +362,7 @@ def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[C
             key=spec.key,
             name=spec.name,
             status=status,
-            command=" ".join(spec.command),
+            command=" ".join(effective_command),
             duration_ms=duration_ms,
             exit_code=returncode,
             issues_found=issues_found,

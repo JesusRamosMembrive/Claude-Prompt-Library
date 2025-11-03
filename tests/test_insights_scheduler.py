@@ -11,6 +11,7 @@ from code_map.scheduler import ChangeScheduler
 from code_map.settings import AppSettings
 from code_map.state import AppState
 from code_map.insights import OllamaInsightResult
+from code_map.integrations import OllamaChatError
 
 
 class _DummyWatcher:
@@ -108,4 +109,48 @@ async def test_insights_scheduler_skips_when_disabled(monkeypatch, tmp_path: Pat
     await asyncio.sleep(0.05)
 
     assert state._insights_task is None
+    await _cleanup_state(state)
+
+
+@pytest.mark.asyncio
+async def test_insights_scheduler_records_error_notification(monkeypatch, tmp_path: Path) -> None:
+    notifications: list[dict] = []
+
+    def fake_run(**kwargs):
+        raise OllamaChatError("fallo de prueba", endpoint="http://localhost", original_error="timeout")
+
+    async def fake_context(self):
+        return "context"
+
+    def fake_record_notification(**kwargs):
+        notifications.append(kwargs)
+        return 1
+
+    monkeypatch.setattr("code_map.state.run_ollama_insights", fake_run)
+    monkeypatch.setattr("code_map.state.record_insight", lambda **kwargs: 1)
+    monkeypatch.setattr("code_map.state.WatcherService", _DummyWatcher)
+    monkeypatch.setattr(AppState, "_build_insights_context", fake_context)
+    monkeypatch.setattr("code_map.state.record_notification", fake_record_notification)
+
+    settings = AppSettings(
+        root_path=tmp_path,
+        exclude_dirs=(),
+        include_docstrings=True,
+        ollama_insights_enabled=True,
+        ollama_insights_model="test-model",
+        ollama_insights_frequency_minutes=1,
+    )
+    state = AppState(settings=settings, scheduler=ChangeScheduler())
+
+    state._schedule_insights_pipeline = lambda *args, **kwargs: None  # type: ignore[assignment]
+
+    await asyncio.sleep(0)
+    if state._insights_task:
+        with suppress(asyncio.CancelledError):
+            await asyncio.wait_for(state._insights_task, timeout=1)
+
+    assert notifications
+    payload = notifications[0]
+    assert payload["channel"] == "insights"
+    assert "fallo de prueba" in payload["message"]
     await _cleanup_state(state)

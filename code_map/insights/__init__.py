@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from .ollama_service import OllamaInsightResult, run_ollama_insights
-from .storage import record_insight, list_insights, StoredInsight
+from .storage import record_insight, list_insights, clear_insights, StoredInsight
 
 __all__ = [
     "OllamaInsightResult",
@@ -12,4 +12,5 @@ __all__ = [
     "StoredInsight",
     "record_insight",
     "list_insights",
+    "clear_insights",
 ]

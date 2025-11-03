@@ -512,6 +512,24 @@ def test_ollama_insights_history_endpoint(api_client: TestClient, monkeypatch) -
     assert payload[0]["model"] == "gpt-oss:latest"
 
 
+def test_ollama_insights_clear_endpoint(api_client: TestClient, monkeypatch) -> None:
+    from code_map.api import integrations as integrations_module
+
+    monkeypatch.setattr(integrations_module, "clear_insights", lambda **kwargs: 5)
+
+    state: AppState = api_client.app.state.app_state  # type: ignore[attr-defined]
+    original_changes = state._recent_changes
+    state._recent_changes = ["foo.py"]
+
+    response = api_client.delete("/integrations/ollama/insights")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["deleted"] == 5
+    assert state._recent_changes == []
+
+    state._recent_changes = original_changes
+
+
 def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
     response = api_client.put("/settings", json={"exclude_dirs": ["build", "dist"]})
     assert response.status_code == 200

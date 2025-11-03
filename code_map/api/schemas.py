@@ -279,6 +279,12 @@ class OllamaInsightEntry(BaseModel):
     generated_at: datetime
 
 
+class OllamaInsightsClearResponse(BaseModel):
+    """Respuesta tras limpiar el historial de insights."""
+
+    deleted: int
+
+
 class StageInitRequest(BaseModel):
     """Petición para inicializar los assets stage-aware."""
     agents: AgentSelection = Field(default="both")

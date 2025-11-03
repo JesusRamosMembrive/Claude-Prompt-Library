@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..integrations import OllamaChatError, OllamaChatMessage, chat_with_ollama, OllamaChatResponse
+from ..settings import AppSettings
 
 logger = logging.getLogger(__name__)
 

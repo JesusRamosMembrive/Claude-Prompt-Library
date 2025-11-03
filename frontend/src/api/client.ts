@@ -22,6 +22,7 @@ import type {
   OllamaTestErrorDetail,
   OllamaInsightEntry,
   OllamaInsightsResponse,
+  OllamaInsightsClearResponse,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -376,6 +377,12 @@ export function triggerOllamaInsights(payload?: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload ?? {}),
+  });
+}
+
+export function clearOllamaInsights(): Promise<OllamaInsightsClearResponse> {
+  return fetchJson("/integrations/ollama/insights", {
+    method: "DELETE",
   });
 }
 
