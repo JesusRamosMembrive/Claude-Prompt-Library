@@ -43,6 +43,8 @@ export interface SettingsPayload {
   exclude_dirs: string[];
   include_docstrings: boolean;
   ollama_insights_enabled: boolean;
+  ollama_insights_model: string | null;
+  ollama_insights_frequency_minutes: number | null;
   watcher_active: boolean;
 }
 
@@ -51,6 +53,8 @@ export interface SettingsUpdatePayload {
   include_docstrings?: boolean;
   exclude_dirs?: string[];
   ollama_insights_enabled?: boolean;
+  ollama_insights_model?: string | null;
+  ollama_insights_frequency_minutes?: number | null;
 }
 
 export interface AnalyzerCapability {
@@ -69,6 +73,8 @@ export interface StatusPayload {
   watcher_active: boolean;
   include_docstrings: boolean;
   ollama_insights_enabled: boolean;
+  ollama_insights_model: string | null;
+  ollama_insights_frequency_minutes: number | null;
   last_full_scan: string | null;
   last_event_batch: string | null;
   files_indexed: number;

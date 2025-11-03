@@ -2,7 +2,7 @@
 
 ## Configuración y opción del usuario
 - [x] Añadir preferencia en el backend para activar/desactivar los insights automáticos de Ollama.
-- [ ] Exponer la configuración en la API (`GET/PUT /settings`) e incluir flags para modelo y frecuencia.
+- [x] Exponer la configuración en la API (`GET/PUT /settings`) e incluir flags para modelo y frecuencia.
 - [ ] Crear controles en el frontend Stage Toolkit para activar la característica, seleccionar modelo y definir frecuencia.
 - [ ] Guardar la selección en el estado frontend y sincronizarla con el backend.
 

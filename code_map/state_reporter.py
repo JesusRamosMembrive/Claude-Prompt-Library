@@ -51,6 +51,8 @@ class StateReporter:
             "exclude_dirs": list(self.settings.exclude_dirs),
             "include_docstrings": self.settings.include_docstrings,
             "ollama_insights_enabled": self.settings.ollama_insights_enabled,
+            "ollama_insights_model": self.settings.ollama_insights_model,
+            "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
         }
@@ -86,6 +88,8 @@ class StateReporter:
             "watcher_active": watcher_active,
             "include_docstrings": self.settings.include_docstrings,
             "ollama_insights_enabled": self.settings.ollama_insights_enabled,
+            "ollama_insights_model": self.settings.ollama_insights_model,
+            "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
             "last_full_scan": last_full_scan,
             "last_event_batch": last_event_batch,
             "files_indexed": total_files,

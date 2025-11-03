@@ -405,6 +405,8 @@ def test_get_settings_endpoint(api_client: TestClient) -> None:
     assert payload["absolute_root"].startswith("/")
     assert payload["include_docstrings"] is True
     assert payload["ollama_insights_enabled"] is False
+    assert payload["ollama_insights_model"] is None
+    assert payload["ollama_insights_frequency_minutes"] is None
     assert "exclude_dirs" in payload
 
 
@@ -422,6 +424,22 @@ def test_update_settings_toggle_ollama_insights(api_client: TestClient) -> None:
     body = response.json()
     assert "ollama_insights_enabled" in body["updated"]
     assert body["settings"]["ollama_insights_enabled"] is True
+
+
+def test_update_settings_updates_ollama_insights_details(api_client: TestClient) -> None:
+    response = api_client.put(
+        "/settings",
+        json={
+            "ollama_insights_model": "gpt-oss:latest",
+            "ollama_insights_frequency_minutes": 45,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert "ollama_insights_model" in body["updated"]
+    assert "ollama_insights_frequency_minutes" in body["updated"]
+    assert body["settings"]["ollama_insights_model"] == "gpt-oss:latest"
+    assert body["settings"]["ollama_insights_frequency_minutes"] == 45
 
 
 def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
@@ -447,6 +465,8 @@ def test_status_endpoint_returns_metrics(api_client: TestClient) -> None:
     assert "symbols_indexed" in payload
     assert payload["watcher_active"] in {True, False}
     assert payload["ollama_insights_enabled"] in {True, False}
+    assert "ollama_insights_model" in payload
+    assert "ollama_insights_frequency_minutes" in payload
     assert isinstance(payload["capabilities"], list)
 
 

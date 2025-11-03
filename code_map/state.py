@@ -320,13 +320,23 @@ class AppState:
         include_docstrings: Optional[bool] = None,
         exclude_dirs: Optional[Iterable[str]] = None,
         ollama_insights_enabled: Optional[bool] = None,
+        ollama_insights_model: Optional[str] = None,
+        ollama_insights_frequency_minutes: Optional[int] = None,
     ) -> List[str]:
         """Actualiza la configuración de la aplicación."""
+        if ollama_insights_frequency_minutes is not None:
+            if ollama_insights_frequency_minutes <= 0:
+                raise ValueError("La frecuencia de insights debe ser un entero positivo.")
+            if ollama_insights_frequency_minutes > 24 * 60:
+                raise ValueError("La frecuencia de insights no puede superar 1440 minutos.")
+
         new_settings = self.settings.with_updates(
             root_path=root_path,
             include_docstrings=include_docstrings,
             exclude_dirs=exclude_dirs,
             ollama_insights_enabled=ollama_insights_enabled,
+            ollama_insights_model=ollama_insights_model,
+            ollama_insights_frequency_minutes=ollama_insights_frequency_minutes,
         )
         updated_fields: List[str] = []
         if new_settings.root_path != self.settings.root_path:
@@ -339,6 +349,13 @@ class AppState:
             updated_fields.append("exclude_dirs")
         if new_settings.ollama_insights_enabled != self.settings.ollama_insights_enabled:
             updated_fields.append("ollama_insights_enabled")
+        if new_settings.ollama_insights_model != self.settings.ollama_insights_model:
+            updated_fields.append("ollama_insights_model")
+        if (
+            new_settings.ollama_insights_frequency_minutes
+            != self.settings.ollama_insights_frequency_minutes
+        ):
+            updated_fields.append("ollama_insights_frequency_minutes")
 
         if not updated_fields:
             return []

@@ -48,12 +48,21 @@ async def update_settings(
             candidate = candidate.resolve()
         root_path = candidate
 
+    model_value: Optional[str] = None
+    if payload.ollama_insights_model is not None:
+        trimmed = payload.ollama_insights_model.strip()
+        model_value = trimmed or None
+
+    frequency_value = payload.ollama_insights_frequency_minutes
+
     try:
         updated = await state.update_settings(
             root_path=root_path,
             include_docstrings=payload.include_docstrings,
             exclude_dirs=payload.exclude_dirs,
             ollama_insights_enabled=payload.ollama_insights_enabled,
+            ollama_insights_model=model_value,
+            ollama_insights_frequency_minutes=frequency_value,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

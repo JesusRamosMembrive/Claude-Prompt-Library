@@ -83,6 +83,8 @@ class SettingsResponse(BaseModel):
     exclude_dirs: List[str]
     include_docstrings: bool
     ollama_insights_enabled: bool
+    ollama_insights_model: Optional[str]
+    ollama_insights_frequency_minutes: Optional[int]
     watcher_active: bool
 
 
@@ -92,6 +94,13 @@ class SettingsUpdateRequest(BaseModel):
     include_docstrings: Optional[bool] = None
     exclude_dirs: Optional[List[str]] = None
     ollama_insights_enabled: Optional[bool] = None
+    ollama_insights_model: Optional[str] = Field(default=None, min_length=1)
+    ollama_insights_frequency_minutes: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=24 * 60,
+        description="Frecuencia en minutos (1-1440).",
+    )
 
 
 class SettingsUpdateResponse(BaseModel):
@@ -118,6 +127,8 @@ class StatusResponse(BaseModel):
     watcher_active: bool
     include_docstrings: bool
     ollama_insights_enabled: bool
+    ollama_insights_model: Optional[str]
+    ollama_insights_frequency_minutes: Optional[int]
     last_full_scan: Optional[datetime]
     last_event_batch: Optional[datetime]
     files_indexed: int
