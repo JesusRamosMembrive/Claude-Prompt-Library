@@ -85,6 +85,7 @@ class SettingsResponse(BaseModel):
     ollama_insights_enabled: bool
     ollama_insights_model: Optional[str]
     ollama_insights_frequency_minutes: Optional[int]
+    ollama_insights_focus: Optional[str]
     watcher_active: bool
 
 
@@ -100,6 +101,12 @@ class SettingsUpdateRequest(BaseModel):
         ge=1,
         le=24 * 60,
         description="Frecuencia en minutos (1-1440).",
+    )
+    ollama_insights_focus: Optional[str] = Field(
+        default=None,
+        min_length=0,
+        max_length=64,
+        description="Foco de análisis para los insights automáticos.",
     )
 
 
@@ -131,6 +138,7 @@ class StatusResponse(BaseModel):
     ollama_insights_frequency_minutes: Optional[int]
     ollama_insights_last_run: Optional[datetime]
     ollama_insights_next_run: Optional[datetime]
+    ollama_insights_focus: Optional[str]
     last_full_scan: Optional[datetime]
     last_event_batch: Optional[datetime]
     files_indexed: int
@@ -260,6 +268,12 @@ class OllamaInsightsRequest(BaseModel):
         description="Modelo a utilizar (por defecto usa el configurado en settings).",
     )
     timeout_seconds: Optional[float] = Field(default=180.0, ge=1.0, le=600.0)
+    focus: Optional[str] = Field(
+        default=None,
+        min_length=0,
+        max_length=64,
+        description="Foco de análisis a aplicar (por defecto usa el configurado en settings).",
+    )
 
 
 class OllamaInsightsResponse(BaseModel):

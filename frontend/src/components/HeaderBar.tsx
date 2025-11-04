@@ -28,6 +28,7 @@ export function HeaderBar({
     { to: "/overview", label: "Overview" },
     { to: "/", label: "Inicio" },
     { to: "/stage-toolkit", label: "Stage Toolkit" },
+    { to: "/ollama", label: "Ollama" },
     { to: "/code-map", label: "Code Map" },
     { to: "/prompts", label: "Prompts" },
     { to: "/class-graph", label: "Class Graph" },

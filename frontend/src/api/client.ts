@@ -370,13 +370,23 @@ export function getOllamaInsights(limit = 20): Promise<OllamaInsightEntry[]> {
 export function triggerOllamaInsights(payload?: {
   model?: string;
   timeout_seconds?: number;
+  focus?: string;
 }): Promise<OllamaInsightsResponse> {
+  const bodyPayload = payload
+    ? {
+        ...payload,
+        focus:
+          payload.focus && payload.focus.trim()
+            ? payload.focus.trim().toLowerCase()
+            : undefined,
+      }
+    : {};
   return fetchJson("/integrations/ollama/analyze", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload ?? {}),
+    body: JSON.stringify(bodyPayload),
   });
 }
 

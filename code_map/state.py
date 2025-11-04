@@ -31,13 +31,14 @@ from .linters import (
 )
 from .stage_toolkit import stage_status as compute_stage_status
 from .state_reporter import StateReporter
-from .insights import run_ollama_insights
+from .insights import run_ollama_insights, VALID_INSIGHTS_FOCUS
 from .insights.storage import record_insight
 from .integrations import OllamaChatError
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_INSIGHTS_INTERVAL_MINUTES = 60
+VALID_INSIGHTS_FOCUS_SET = {focus.lower() for focus in VALID_INSIGHTS_FOCUS}
 
 
 def _parse_enabled_tools_env(raw: Optional[str]) -> Optional[Set[str]]:
@@ -413,6 +414,7 @@ class AppState:
                 root_path=self.settings.root_path,
                 endpoint=None,
                 context=context,
+                focus=self.settings.ollama_insights_focus,
             )
             record_insight(
                 model=result.model,
@@ -524,6 +526,7 @@ class AppState:
         ollama_insights_enabled: Optional[bool] = None,
         ollama_insights_model: Optional[str] = None,
         ollama_insights_frequency_minutes: Optional[int] = None,
+        ollama_insights_focus: Optional[str] = None,
     ) -> List[str]:
         """Actualiza la configuración de la aplicación."""
         if ollama_insights_frequency_minutes is not None:
@@ -532,6 +535,20 @@ class AppState:
             if ollama_insights_frequency_minutes > 24 * 60:
                 raise ValueError("La frecuencia de insights no puede superar 1440 minutos.")
 
+        focus_kwargs: Dict[str, Optional[str]] = {}
+        if ollama_insights_focus is not None:
+            normalized_focus = ollama_insights_focus.strip().lower()
+            if not normalized_focus:
+                # Permite restablecer a predeterminado
+                focus_kwargs["ollama_insights_focus"] = ""
+            elif normalized_focus not in VALID_INSIGHTS_FOCUS_SET:
+                raise ValueError(
+                    f"El enfoque de insights '{ollama_insights_focus}' no es válido. "
+                    f"Opciones disponibles: {', '.join(sorted(VALID_INSIGHTS_FOCUS_SET))}."
+                )
+            else:
+                focus_kwargs["ollama_insights_focus"] = normalized_focus
+
         new_settings = self.settings.with_updates(
             root_path=root_path,
             include_docstrings=include_docstrings,
@@ -539,6 +556,7 @@ class AppState:
             ollama_insights_enabled=ollama_insights_enabled,
             ollama_insights_model=ollama_insights_model,
             ollama_insights_frequency_minutes=ollama_insights_frequency_minutes,
+            **focus_kwargs,
         )
         updated_fields: List[str] = []
         if new_settings.root_path != self.settings.root_path:
@@ -558,6 +576,8 @@ class AppState:
             != self.settings.ollama_insights_frequency_minutes
         ):
             updated_fields.append("ollama_insights_frequency_minutes")
+        if new_settings.ollama_insights_focus != self.settings.ollama_insights_focus:
+            updated_fields.append("ollama_insights_focus")
 
         if not updated_fields:
             return []

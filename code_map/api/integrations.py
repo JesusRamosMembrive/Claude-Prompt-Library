@@ -130,6 +130,12 @@ async def generate_ollama_insights(
 
     context = await state._build_insights_context()
 
+    focus_value = (
+        payload.focus.strip().lower()
+        if isinstance(payload.focus, str)
+        else state.settings.ollama_insights_focus
+    )
+
     try:
         result = await asyncio.to_thread(
             run_ollama_insights,
@@ -138,6 +144,7 @@ async def generate_ollama_insights(
             endpoint=None,
             context=context,
             timeout=timeout,
+            focus=focus_value,
         )
     except OllamaChatError as exc:
         detail = {

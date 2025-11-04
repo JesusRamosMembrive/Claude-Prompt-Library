@@ -112,7 +112,8 @@
   - 404 si la ruta no existe o está fuera del root.
 
 ## Gestión del root y dependencias
-- La ruta raíz se pasa vía configuración (env var `CODE_MAP_ROOT` o archivo `.env`) o se gestiona en memoria cuando la UI la establece.
+- La ruta raíz se persiste en SQLite y puede ajustarse mediante el CLI (`python -m code_map config set-root`) o desde la UI.
+- Preferencias de insights (`ollama_insights_enabled`, `ollama_insights_model`, `ollama_insights_frequency_minutes`, `ollama_insights_focus`) se guardan en la misma tabla y determinan cómo se generan las recomendaciones automáticas.
 - Para este MVP, se lanza el backend apuntando a un root fijo; más adelante añadimos endpoint/config para cambiarlo en caliente.
 - Se utilizarán dependencias de FastAPI para inyectar `AppState` con referencias a `ProjectScanner`, `SymbolIndex`, `ChangeScheduler`, `SnapshotStore` y la cola de eventos SSE.
 

@@ -49,6 +49,7 @@ class AppSettings:
     ollama_insights_enabled: bool = False
     ollama_insights_model: Optional[str] = None
     ollama_insights_frequency_minutes: Optional[int] = None
+    ollama_insights_focus: Optional[str] = "general"
 
     def to_payload(self) -> dict:
         """Convierte la configuración a un diccionario serializable."""
@@ -59,6 +60,7 @@ class AppSettings:
             "ollama_insights_enabled": self.ollama_insights_enabled,
             "ollama_insights_model": self.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.ollama_insights_frequency_minutes,
+            "ollama_insights_focus": self.ollama_insights_focus or "general",
             "version": SETTINGS_VERSION,
         }
 
@@ -71,8 +73,17 @@ class AppSettings:
         ollama_insights_enabled: bool | None = None,
         ollama_insights_model: Optional[str] = None,
         ollama_insights_frequency_minutes: Optional[int] = None,
+        ollama_insights_focus: Optional[str] = None,
     ) -> "AppSettings":
         """Crea una nueva instancia de AppSettings con actualizaciones."""
+        def _normalize_focus(value: Optional[str]) -> Optional[str]:
+            if value is None:
+                return self.ollama_insights_focus
+            if isinstance(value, str):
+                stripped = value.strip()
+                return stripped or None
+            return None
+
         return AppSettings(
             root_path=(root_path or self.root_path).expanduser().resolve(),
             exclude_dirs=_normalize_exclusions(exclude_dirs) if exclude_dirs is not None else self.exclude_dirs,
@@ -96,6 +107,7 @@ class AppSettings:
                 if ollama_insights_frequency_minutes is not None
                 else self.ollama_insights_frequency_minutes
             ),
+            ollama_insights_focus=_normalize_focus(ollama_insights_focus),
         )
 
 def _parse_env_flag(raw: Optional[str]) -> Optional[bool]:
@@ -148,6 +160,7 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
             ollama_insights_enabled INTEGER NOT NULL DEFAULT 0,
             ollama_insights_model TEXT,
             ollama_insights_frequency_minutes INTEGER,
+            ollama_insights_focus TEXT,
             updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
         )
         """
@@ -228,6 +241,10 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
         "ollama_insights_frequency_minutes",
         "ALTER TABLE app_settings ADD COLUMN ollama_insights_frequency_minutes INTEGER",
     )
+    _ensure_column(
+        "ollama_insights_focus",
+        "ALTER TABLE app_settings ADD COLUMN ollama_insights_focus TEXT",
+    )
 
     connection.commit()
 
@@ -250,7 +267,8 @@ def _load_settings_from_db(
                     include_docstrings,
                     ollama_insights_enabled,
                     ollama_insights_model,
-                    ollama_insights_frequency_minutes
+                    ollama_insights_frequency_minutes,
+                    ollama_insights_focus
                 FROM app_settings WHERE id = 1
                 """
             )
@@ -284,10 +302,13 @@ def _load_settings_from_db(
                 freq_value = int(freq_raw) if freq_raw is not None else None
             except (TypeError, ValueError):
                 freq_value = None
+            focus_raw = row["ollama_insights_focus"] if "ollama_insights_focus" in row.keys() else None
+            focus_value = focus_raw.strip() if isinstance(focus_raw, str) and focus_raw.strip() else "general"
         else:
             insights_flag = False
             model_value = None
             freq_value = None
+            focus_value = "general"
         effective_root = stored_root if stored_root.exists() else default_root
 
         return AppSettings(
@@ -297,6 +318,7 @@ def _load_settings_from_db(
             ollama_insights_enabled=insights_flag,
             ollama_insights_model=model_value,
             ollama_insights_frequency_minutes=freq_value,
+            ollama_insights_focus=focus_value,
         )
 
 
@@ -330,7 +352,13 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
             "ollama_insights_frequency_minutes",
             "ALTER TABLE app_settings ADD COLUMN ollama_insights_frequency_minutes INTEGER",
         )
-        can_persist_insights = has_insights_column and has_model_column and has_frequency_column
+        has_focus_column = ensure_column(
+            "ollama_insights_focus",
+            "ALTER TABLE app_settings ADD COLUMN ollama_insights_focus TEXT",
+        )
+        can_persist_insights = (
+            has_insights_column and has_model_column and has_frequency_column and has_focus_column
+        )
 
         if can_persist_insights:
             connection.execute(
@@ -343,9 +371,10 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
                     ollama_insights_enabled,
                     ollama_insights_model,
                     ollama_insights_frequency_minutes,
+                    ollama_insights_focus,
                     updated_at
                 )
-                VALUES (1, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
                 ON CONFLICT(id) DO UPDATE SET
                     root_path = excluded.root_path,
                     exclude_dirs = excluded.exclude_dirs,
@@ -353,6 +382,7 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
                     ollama_insights_enabled = excluded.ollama_insights_enabled,
                     ollama_insights_model = excluded.ollama_insights_model,
                     ollama_insights_frequency_minutes = excluded.ollama_insights_frequency_minutes,
+                    ollama_insights_focus = excluded.ollama_insights_focus,
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -362,6 +392,7 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
                     1 if settings.ollama_insights_enabled else 0,
                     settings.ollama_insights_model,
                     settings.ollama_insights_frequency_minutes,
+                    settings.ollama_insights_focus,
                 ),
             )
         else:
@@ -412,8 +443,17 @@ def load_settings(
             exclude_dirs=_normalize_exclusions(),
             include_docstrings=default_include,
             ollama_insights_enabled=False,
+            ollama_insights_focus="general",
         )
         _save_settings_to_db(db_path, settings)
+
+    if not settings.root_path.exists() or not settings.root_path.is_dir():
+        logger.warning(
+            "La ruta almacenada %s no es válida; usando %s como nueva raíz",
+            settings.root_path,
+            base_root,
+        )
+        settings = settings.with_updates(root_path=base_root)
 
     if (override_path or env_root) and settings.root_path != base_root:
         settings = settings.with_updates(root_path=base_root)

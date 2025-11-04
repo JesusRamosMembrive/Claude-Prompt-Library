@@ -45,6 +45,7 @@ export interface SettingsPayload {
   ollama_insights_enabled: boolean;
   ollama_insights_model: string | null;
   ollama_insights_frequency_minutes: number | null;
+  ollama_insights_focus: string | null;
   watcher_active: boolean;
 }
 
@@ -55,6 +56,7 @@ export interface SettingsUpdatePayload {
   ollama_insights_enabled?: boolean;
   ollama_insights_model?: string | null;
   ollama_insights_frequency_minutes?: number | null;
+  ollama_insights_focus?: string | null;
 }
 
 export interface AnalyzerCapability {
@@ -75,6 +77,7 @@ export interface StatusPayload {
   ollama_insights_enabled: boolean;
   ollama_insights_model: string | null;
   ollama_insights_frequency_minutes: number | null;
+  ollama_insights_focus: string | null;
   ollama_insights_last_run: string | null;
   ollama_insights_next_run: string | null;
   last_full_scan: string | null;

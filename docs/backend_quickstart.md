@@ -12,7 +12,13 @@ Guía rápida para poner en marcha el backend, validar que el watcher funciona y
    .venv/bin/pip install tree_sitter_languages  # soporte TypeScript/TSX
    .venv/bin/pip install beautifulsoup4      # extracción básica en HTML
    ```
-2. Elegir un directorio de trabajo que actuarà como proyecto a analizar. En los ejemplos usamos `/tmp/code-map-playground/project`.
+   En Windows usa `.venv\Scripts\pip.exe` para los comandos equivalentes.
+2. Elegir un directorio de trabajo que actuará como proyecto a analizar. En los ejemplos usamos `/tmp/code-map-playground/project`.
+3. Registra esa ruta con el CLI:
+   ```bash
+   python -m code_map config set-root /tmp/code-map-playground/project
+   ```
+   Si omites este paso, el backend usará el directorio actual en el que lances el comando `run`.
 
 ### Unificación de entornos virtuales
 
@@ -26,24 +32,20 @@ Después, reactiva `.venv`, reinstala dependencias si es necesario y comprueba q
 
 ## Arranque del servidor
 ```bash
-export CODE_MAP_ROOT=/path/al/proyecto
-.venv/bin/uvicorn code_map.server:create_app \
-    --factory \
-    --host 0.0.0.0 \
-    --port 8000 \
-    --log-level info
+python -m code_map run --host 0.0.0.0 --port 8000 --log-level info
 ```
 
-- `CODE_MAP_ROOT` define la ruta que se analizará.
+- Añade `--root /ruta/al/proyecto` si quieres sobreescribir temporalmente la ruta configurada.
 - Al arrancar verás logs del estado del watcher. Si aparece “watchdog no está disponible”, el watcher queda deshabilitado (instala `watchdog` para activarlo).
+- Usa `python -m code_map --help` para ver todos los comandos disponibles.
 
 ### Opciones adicionales
 - `CODE_MAP_INCLUDE_DOCSTRINGS` (`true` por defecto): controla si el motor añade docstrings en los resultados. Ajusta a `0` o `false` para omitirlos.
 
 ## Validación manual
-1. **Crear/editar archivos** en `$CODE_MAP_ROOT`:
+1. **Crear/editar archivos** en la ruta configurada:
    ```bash
-   echo 'def demo():\n    return 42' > $CODE_MAP_ROOT/demo.py
+   echo 'def demo():\n    return 42' > /tmp/code-map-playground/project/demo.py
    ```
 2. **Consultar el árbol y archivos**:
    ```bash
@@ -86,6 +88,8 @@ Para que el panel "Stage Toolkit" pueda consultar y hacer ping a modelos locales
    - Pulsa "Iniciar Ollama" si el servicio aún no estaba levantado (esto ejecuta `ollama serve`).
    - Selecciona un modelo y lanza “Probar chat”.
    - Recuerda que la primera llamada puede tardar mientras se carga el modelo; si ves un aviso de “modelo en carga”, espera unos segundos y reintenta.
+   - Consulta la página “Ollama” para revisar el historial de insights y recomendaciones generadas.
+   - En esa página puedes escoger el enfoque del análisis (general, refactors, fallos, duplicación, testing) y ver el prompt exacto que se enviará a Ollama.
 
 Si tienes problemas de conectividad, ejecuta `python tools/debug_ollama.py --endpoint http://127.0.0.1:11434 --model <modelo>` para comprobar TCP, `/api/tags` y un chat de prueba.
 
@@ -95,7 +99,7 @@ Si tienes problemas de conectividad, ejecuta `python tools/debug_ollama.py --end
 - Iniciar la configuración del frontend (React/Vite) consumiendo estos endpoints.
 
 ### Hacia un setup más sencillo (plan de trabajo)
-- Script único (`scripts/setup_backend.py` o `make setup`) que cree `.venv`, instale dependencias y genere `.env` local con `CODE_MAP_ROOT` y `CODE_MAP_DB_PATH`.
+- Extender el CLI (`python -m code_map`) con comandos que automaticen la creación del entorno virtual y la instalación de dependencias.
 - Ajustar `code_map.settings.load_settings` para que, ante la ausencia de variables, asuma la carpeta actual como root y use `<root>/.code-map/state.db` por defecto.
 - Refinar el pipeline de linters: usar siempre `sys.executable -m ...`, registrar el `PATH` efectivo y mostrar en la UI un aviso claro cuando se omita una herramienta.
 - Mantener este documento actualizado con una tabla de problemas comunes (DB de solo lectura, reportes antiguos, etc.) y pasos para resolverlos.

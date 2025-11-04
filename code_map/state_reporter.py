@@ -53,6 +53,7 @@ class StateReporter:
             "ollama_insights_enabled": self.settings.ollama_insights_enabled,
             "ollama_insights_model": self.settings.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
+            "ollama_insights_focus": self.settings.ollama_insights_focus or "general",
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
         }
@@ -92,6 +93,7 @@ class StateReporter:
             "ollama_insights_enabled": self.settings.ollama_insights_enabled,
             "ollama_insights_model": self.settings.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
+            "ollama_insights_focus": self.settings.ollama_insights_focus or "general",
             "ollama_insights_last_run": insights_last_run,
             "ollama_insights_next_run": insights_next_run,
             "last_full_scan": last_full_scan,
