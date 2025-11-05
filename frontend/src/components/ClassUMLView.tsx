@@ -10,6 +10,7 @@ import {
 import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { useClassUmlQuery } from "../hooks/useClassUmlQuery";
+import type { UMLClass } from "../api/types";
 
 const DEFAULT_PREFIXES = "";
 const UML_ZOOM_MIN = 0.05;
@@ -30,6 +31,8 @@ export function ClassUMLView(): JSX.Element {
   const [prefixInput, setPrefixInput] = useState(DEFAULT_PREFIXES);
   const [zoom, setZoom] = useState(1);
   const svgHandleRef = useRef<UmlSvgHandle | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Edge type filters - default to inheritance + association only (no clutter)
   const [edgeTypes, setEdgeTypes] = useState<Set<string>>(
@@ -72,9 +75,64 @@ export function ClassUMLView(): JSX.Element {
   const classCount = data?.classCount ?? 0;
   const svgMarkup = data?.svg ?? null;
   const stats = data?.stats;
+  const classes = data?.classes ?? [];
+
+  const selectedClass = useMemo(() => {
+    if (!selectedClassId) return null;
+    return classes.find((c) => c.id === selectedClassId) ?? null;
+  }, [selectedClassId, classes]);
+
+  // Filter classes based on search term
+  const filteredClasses = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const term = searchTerm.toLowerCase();
+    return classes.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.module.toLowerCase().includes(term) ||
+        c.file.toLowerCase().includes(term)
+    );
+  }, [searchTerm, classes]);
+
+  const handleSearchSelect = useCallback((classId: string) => {
+    setSelectedClassId(classId);
+    setSearchTerm(""); // Clear search after selection
+  }, []);
 
   return (
     <div className="uml-view">
+      <section className="uml-search-section">
+        <div className="uml-search-container">
+          <input
+            type="text"
+            className="uml-search-input"
+            placeholder="Buscar clase por nombre, módulo o archivo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {filteredClasses.length > 0 && (
+            <div className="uml-search-results">
+              {filteredClasses.slice(0, 10).map((cls) => (
+                <button
+                  key={cls.id}
+                  type="button"
+                  className="uml-search-result-item"
+                  onClick={() => handleSearchSelect(cls.id)}
+                >
+                  <div className="search-result-name">{cls.name}</div>
+                  <div className="search-result-path">{cls.module}</div>
+                </button>
+              ))}
+              {filteredClasses.length > 10 && (
+                <div className="uml-search-more">
+                  +{filteredClasses.length - 10} resultados más
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="uml-controls">
         <div className="control-block">
           <h2>Prefijos de módulo</h2>
@@ -292,7 +350,21 @@ export function ClassUMLView(): JSX.Element {
         ) : classCount === 0 ? (
           <p className="summary-info">No hay clases para los filtros seleccionados.</p>
         ) : svgMarkup ? (
-          <UmlSvgContainer ref={svgHandleRef} svg={svgMarkup} onStateChange={handleCanvasStateChange} />
+          <>
+            <UmlSvgContainer
+              ref={svgHandleRef}
+              svg={svgMarkup}
+              onStateChange={handleCanvasStateChange}
+              onNodeClick={setSelectedClassId}
+              selectedNodeId={selectedClassId}
+            />
+            {selectedClass && (
+              <ClassDetailsPanel
+                classInfo={selectedClass}
+                onClose={() => setSelectedClassId(null)}
+              />
+            )}
+          </>
         ) : (
           <p className="summary-info">El backend no devolvió un diagrama válido.</p>
         )}
@@ -301,9 +373,97 @@ export function ClassUMLView(): JSX.Element {
   );
 }
 
+interface ClassDetailsPanelProps {
+  classInfo: UMLClass;
+  onClose: () => void;
+}
+
+function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.Element {
+  return (
+    <aside className="class-details-panel">
+      <header className="class-details-header">
+        <h2>{classInfo.name}</h2>
+        <button
+          type="button"
+          className="link-btn"
+          onClick={onClose}
+          aria-label="Cerrar panel de detalles"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div className="class-details-body">
+        <section className="class-details-section">
+          <h3>Información</h3>
+          <dl>
+            <dt>Módulo</dt>
+            <dd>{classInfo.module}</dd>
+            <dt>Archivo</dt>
+            <dd>{classInfo.file}</dd>
+            {classInfo.bases.length > 0 && (
+              <>
+                <dt>Hereda de</dt>
+                <dd>{classInfo.bases.join(", ")}</dd>
+              </>
+            )}
+          </dl>
+        </section>
+
+        {classInfo.attributes.length > 0 && (
+          <section className="class-details-section">
+            <h3>Atributos ({classInfo.attributes.length})</h3>
+            <ul className="class-members-list">
+              {classInfo.attributes.map((attr, idx) => (
+                <li key={idx}>
+                  <code className="member-name">{attr.name}</code>
+                  {attr.type && <span className="member-type">: {attr.type}</span>}
+                  {attr.optional && <span className="member-optional"> (opcional)</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {classInfo.methods.length > 0 && (
+          <section className="class-details-section">
+            <h3>Métodos ({classInfo.methods.length})</h3>
+            <ul className="class-members-list">
+              {classInfo.methods.map((method, idx) => (
+                <li key={idx}>
+                  <code className="member-name">{method.name}</code>
+                  <code className="member-signature">
+                    ({method.parameters.join(", ")})
+                    {method.returns && ` → ${method.returns}`}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {classInfo.associations.length > 0 && (
+          <section className="class-details-section">
+            <h3>Asociaciones ({classInfo.associations.length})</h3>
+            <ul className="class-associations-list">
+              {classInfo.associations.map((assoc, idx) => (
+                <li key={idx}>
+                  <code>{assoc}</code>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 interface UmlSvgContainerProps {
   svg: string;
   onStateChange?: (state: UmlViewState) => void;
+  onNodeClick?: (classId: string) => void;
+  selectedNodeId?: string | null;
 }
 
 const MIN_ZOOM = UML_ZOOM_MIN;
@@ -314,7 +474,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const initialOffset = { x: 0, y: 0 };
 
 const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function UmlSvgContainer(
-  { svg, onStateChange },
+  { svg, onStateChange, onNodeClick, selectedNodeId },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -433,6 +593,68 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
     const frame = requestAnimationFrame(updateFitState);
     return () => cancelAnimationFrame(frame);
   }, [svg, updateFitState]);
+
+  // Handle node clicks and highlighting
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !onNodeClick) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      // Find if we clicked on a node or its children
+      let target = event.target as Element | null;
+      let nodeElement: Element | null = null;
+
+      // Walk up the DOM tree to find the .node element
+      while (target && target !== container) {
+        if (target.classList?.contains("node")) {
+          nodeElement = target;
+          break;
+        }
+        target = target.parentElement;
+      }
+
+      if (nodeElement) {
+        // Extract class ID from the <title> element
+        const titleElement = nodeElement.querySelector("title");
+        if (titleElement) {
+          const classId = titleElement.textContent?.trim();
+          if (classId) {
+            onNodeClick(classId);
+          }
+        }
+      }
+    };
+
+    container.addEventListener("click", handleClick);
+    return () => container.removeEventListener("click", handleClick);
+  }, [onNodeClick]);
+
+  // Apply highlighting to selected node
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    // Remove previous highlights
+    const previousHighlights = container.querySelectorAll(".node.highlighted");
+    previousHighlights.forEach((node) => node.classList.remove("highlighted"));
+
+    if (!selectedNodeId) {
+      return;
+    }
+
+    // Find and highlight the selected node
+    const nodes = container.querySelectorAll(".node");
+    nodes.forEach((node) => {
+      const title = node.querySelector("title");
+      if (title?.textContent?.trim() === selectedNodeId) {
+        node.classList.add("highlighted");
+      }
+    });
+  }, [selectedNodeId, svg]);
 
   useEffect(() => {
     onStateChange?.({ zoom });

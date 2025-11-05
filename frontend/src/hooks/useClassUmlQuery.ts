@@ -36,6 +36,7 @@ export function useClassUmlQuery(options: Options) {
         svg,
         stats: model.stats,
         classCount: model.classes.length,
+        classes: model.classes,
       };
     },
     staleTime: 60_000,
