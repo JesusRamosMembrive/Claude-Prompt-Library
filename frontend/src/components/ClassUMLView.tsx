@@ -99,25 +99,48 @@ export function ClassUMLView(): JSX.Element {
     setSearchTerm(""); // Clear search after selection
   }, []);
 
+  // Handle keyboard events for accessibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close panel on Escape key
+      if (e.key === "Escape" && selectedClassId) {
+        setSelectedClassId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedClassId]);
+
   return (
     <div className="uml-view">
-      <section className="uml-search-section">
+      <section className="uml-search-section" aria-label="Búsqueda de clases">
         <div className="uml-search-container">
+          <label htmlFor="uml-search" className="sr-only">
+            Buscar clase
+          </label>
           <input
+            id="uml-search"
             type="text"
             className="uml-search-input"
             placeholder="Buscar clase por nombre, módulo o archivo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar clase por nombre, módulo o archivo"
+            aria-autocomplete="list"
+            aria-controls={filteredClasses.length > 0 ? "uml-search-results" : undefined}
+            aria-expanded={filteredClasses.length > 0}
           />
           {filteredClasses.length > 0 && (
-            <div className="uml-search-results">
+            <div id="uml-search-results" className="uml-search-results" role="listbox">
               {filteredClasses.slice(0, 10).map((cls) => (
                 <button
                   key={cls.id}
                   type="button"
                   className="uml-search-result-item"
                   onClick={() => handleSearchSelect(cls.id)}
+                  role="option"
+                  aria-label={`Seleccionar clase ${cls.name} del módulo ${cls.module}`}
                 >
                   <div className="search-result-name">{cls.name}</div>
                   <div className="search-result-path">{cls.module}</div>
@@ -342,11 +365,16 @@ export function ClassUMLView(): JSX.Element {
         </section>
       )}
 
-      <section className="uml-canvas">
+      <section className="uml-canvas" aria-live="polite" aria-busy={query.isLoading}>
         {query.isLoading ? (
-          <p className="summary-info">Calculando modelo UML…</p>
+          <div className="uml-loading" role="status">
+            <div className="uml-spinner" aria-hidden="true"></div>
+            <p className="summary-info">Calculando modelo UML…</p>
+          </div>
         ) : query.isError ? (
-          <p className="summary-error">No se pudo generar el modelo: {String(query.error)}</p>
+          <p className="summary-error" role="alert">
+            No se pudo generar el modelo: {String(query.error)}
+          </p>
         ) : classCount === 0 ? (
           <p className="summary-info">No hay clases para los filtros seleccionados.</p>
         ) : svgMarkup ? (
@@ -379,15 +407,30 @@ interface ClassDetailsPanelProps {
 }
 
 function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.Element {
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Auto-focus panel when opened for accessibility
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
+
   return (
-    <aside className="class-details-panel">
+    <aside
+      ref={panelRef}
+      className="class-details-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="class-details-title"
+      tabIndex={-1}
+    >
       <header className="class-details-header">
-        <h2>{classInfo.name}</h2>
+        <h2 id="class-details-title">{classInfo.name}</h2>
         <button
           type="button"
           className="link-btn"
           onClick={onClose}
           aria-label="Cerrar panel de detalles"
+          title="Cerrar (Esc)"
         >
           ✕
         </button>
