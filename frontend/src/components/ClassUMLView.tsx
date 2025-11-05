@@ -161,10 +161,11 @@ export function ClassUMLView(): JSX.Element {
           <h2>Prefijos de módulo</h2>
           <input
             type="text"
-            className="input-text"
+            className="uml-filter-input"
             value={prefixInput}
             onChange={(event) => setPrefixInput(event.target.value)}
             placeholder="Ej: api, src"
+            aria-label="Filtrar por prefijos de módulo (separados por coma)"
           />
         </div>
 

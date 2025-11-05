@@ -1072,7 +1072,7 @@
   {
     "path": "code_map/class_graph.py",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.630605+00:00",
+    "modified_at": "2025-11-05T13:26:08.683043+00:00",
     "symbols": [
       {
         "name": "ClassInfo",
@@ -1247,54 +1247,54 @@
         "kind": "function",
         "lineno": 328,
         "parent": null,
-        "docstring": null
+        "docstring": "Analyze Python modules in root, excluding common directories like .venv."
       },
       {
         "name": "_module_name_from_path",
         "kind": "function",
-        "lineno": 340,
+        "lineno": 364,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_definitions",
         "kind": "function",
-        "lineno": 345,
+        "lineno": 369,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_filter_modules",
         "kind": "function",
-        "lineno": 354,
+        "lineno": 378,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_edges_for_class",
         "kind": "function",
-        "lineno": 378,
+        "lineno": 402,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_reference",
         "kind": "function",
-        "lineno": 433,
+        "lineno": 457,
         "parent": null,
         "docstring": "Intenta resolver el nombre recibido contra las clases internas del proyecto.\n\nReturns:\n    (target_id, internal, display_name)"
       },
       {
         "name": "_possible_qualified_names",
         "kind": "function",
-        "lineno": 454,
+        "lineno": 478,
         "parent": null,
         "docstring": "Genera nombres candidatos (fully-qualified) a partir de un nombre crudo.\n\nConsidera clases locales, alias de imports y nombres simples."
       },
       {
         "name": "_count_by_type",
         "kind": "function",
-        "lineno": 492,
+        "lineno": 516,
         "parent": null,
         "docstring": null
       }
@@ -3210,7 +3210,7 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-11-05T11:00:05.796921+00:00",
+    "modified_at": "2025-11-05T13:25:47.144121+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
@@ -3371,68 +3371,68 @@
         "kind": "function",
         "lineno": 405,
         "parent": null,
-        "docstring": null
+        "docstring": "Analyze Python files in the root directory, excluding certain directories.\n\nArgs:\n    root: Root directory to scan\n    excluded_dirs: Set of directory names to exclude (e.g., .venv, __pycache__)"
       },
       {
         "name": "_filter_modules",
         "kind": "function",
-        "lineno": 417,
+        "lineno": 447,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_definitions",
         "kind": "function",
-        "lineno": 431,
+        "lineno": 461,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_bases",
         "kind": "function",
-        "lineno": 440,
+        "lineno": 470,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_associations",
         "kind": "function",
-        "lineno": 456,
+        "lineno": 486,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_references",
         "kind": "function",
-        "lineno": 474,
+        "lineno": 504,
         "parent": null,
         "docstring": "Resolve a set of raw class names to fully qualified names."
       },
       {
         "name": "_resolve_reference",
         "kind": "function",
-        "lineno": 493,
+        "lineno": 523,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_possible_names",
         "kind": "function",
-        "lineno": 500,
+        "lineno": 530,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_escape_id",
         "kind": "function",
-        "lineno": 527,
+        "lineno": 557,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_node_label",
         "kind": "function",
-        "lineno": 531,
+        "lineno": 561,
         "parent": null,
         "docstring": null
       }
