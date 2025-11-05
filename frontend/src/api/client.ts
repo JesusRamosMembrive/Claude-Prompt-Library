@@ -436,6 +436,7 @@ export function getClassGraph(options?: {
 export function getClassUml(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
+  edgeTypes?: string[];
 }): Promise<UMLDiagramResponse> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -448,6 +449,11 @@ export function getClassUml(options?: {
       }
     });
   }
+  if (options?.edgeTypes) {
+    options.edgeTypes.forEach((type) => {
+      params.append("edge_types", type);
+    });
+  }
   const query = params.toString();
   return fetchJson(`/graph/uml${query ? `?${query}` : ""}`);
 }
@@ -455,6 +461,7 @@ export function getClassUml(options?: {
 export async function getClassUmlSvg(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
+  edgeTypes?: string[];
 }): Promise<string> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -466,6 +473,11 @@ export async function getClassUmlSvg(options?: {
       if (trimmed) {
         params.append("module_prefix", trimmed);
       }
+    });
+  }
+  if (options?.edgeTypes) {
+    options.edgeTypes.forEach((type) => {
+      params.append("edge_types", type);
     });
   }
   const query = params.toString();

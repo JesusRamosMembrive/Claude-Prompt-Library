@@ -34,6 +34,8 @@ class ClassModel:
     attributes: List[AttributeInfo] = field(default_factory=list)
     methods: List[MethodInfo] = field(default_factory=list)
     associations: Set[str] = field(default_factory=set)
+    instantiates: Set[str] = field(default_factory=set)  # Classes created via SomeClass()
+    references: Set[str] = field(default_factory=set)  # Classes in type hints
 
 
 @dataclass
@@ -109,6 +111,16 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
         )
         self.generic_visit(node)
 
+    def visit_Call(self, node: ast.Call) -> None:
+        """Detect class instantiation: instance = SomeClass()"""
+        if self._current_class is None:
+            self.generic_visit(node)
+            return
+        target = self._expr_to_name(node.func)
+        if target and target[0].isupper():  # Likely a class (PascalCase)
+            self._current_class.instantiates.add(target)
+        self.generic_visit(node)
+
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if self._current_class is None:
             return
@@ -120,6 +132,9 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
             )
             if annotation:
                 self._track_association(annotation)
+            # Track type hints as references
+            type_names = self._extract_type_names(node.annotation)
+            self._current_class.references.update(type_names)
         self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:
@@ -171,6 +186,49 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
             parts.append(current.id)
         return list(reversed(parts))
 
+    def _extract_type_names(self, node: Optional[ast.AST]) -> Set[str]:
+        """Extract all class names from type annotation (handles Union, List, Optional, etc.)"""
+        names: Set[str] = set()
+        if node is None:
+            return names
+
+        # Simple name: foo: Bar
+        if isinstance(node, ast.Name):
+            if node.id[0].isupper():  # Likely a class (PascalCase)
+                names.add(node.id)
+
+        # Subscript: List[User], Optional[Product]
+        elif isinstance(node, ast.Subscript):
+            # Recurse into base and slice
+            names.update(self._extract_type_names(node.value))
+            names.update(self._extract_type_names(node.slice))
+
+        # Tuple of types: Union[A, B] or tuple annotation
+        elif isinstance(node, ast.Tuple):
+            for elt in node.elts:
+                names.update(self._extract_type_names(elt))
+
+        # Binary or: A | B (Python 3.10+)
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            names.update(self._extract_type_names(node.left))
+            names.update(self._extract_type_names(node.right))
+
+        # Attribute: module.ClassName
+        elif isinstance(node, ast.Attribute):
+            attr_name = self._expr_to_name(node)
+            if attr_name and attr_name[0].isupper():
+                names.add(attr_name)
+
+        # String literal (forward reference)
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if node.value and node.value[0].isupper():
+                names.add(node.value)
+
+        # Filter out built-in types
+        builtin_types = {"List", "Dict", "Set", "Tuple", "Optional", "Union",
+                        "Any", "Callable", "Type", "Sequence", "Iterable"}
+        return {name for name in names if name not in builtin_types}
+
 
 def _is_optional(expr: Optional[ast.AST]) -> bool:
     if expr is None:
@@ -198,13 +256,21 @@ def build_uml_model(
     classes = []
     inheritance_edges = 0
     association_edges = 0
+    instantiation_edges = 0
+    reference_edges = 0
 
     for module in modules:
         for class_model in module.classes.values():
             bases = _resolve_bases(class_model, module, index, include_external)
             associations = _resolve_associations(class_model, module, index, include_external)
+            instantiates = _resolve_references(class_model.instantiates, module, index, include_external)
+            references = _resolve_references(class_model.references, module, index, include_external)
+
             inheritance_edges += len(bases)
             association_edges += len(associations)
+            instantiation_edges += len(instantiates)
+            reference_edges += len(references)
+
             classes.append(
                 {
                     "id": f"{class_model.module}.{class_model.name}",
@@ -229,6 +295,8 @@ def build_uml_model(
                         for method in class_model.methods
                     ],
                     "associations": list(associations),
+                    "instantiates": list(instantiates),
+                    "references": list(references),
                 }
             )
 
@@ -236,12 +304,25 @@ def build_uml_model(
         "classes": len(classes),
         "inheritance_edges": inheritance_edges,
         "association_edges": association_edges,
+        "instantiation_edges": instantiation_edges,
+        "reference_edges": reference_edges,
     }
 
     return {"classes": classes, "stats": stats}
 
 
-def build_uml_dot(model: Dict[str, object]) -> str:
+def build_uml_dot(model: Dict[str, object], edge_types: Optional[Set[str]] = None) -> str:
+    """Generate Graphviz DOT format from UML model.
+
+    Args:
+        model: UML model with classes and relationships
+        edge_types: Set of edge types to include. Valid values:
+                   "inheritance", "association", "instantiation", "reference"
+                   If None, defaults to all types.
+    """
+    if edge_types is None:
+        edge_types = {"inheritance", "association", "instantiation", "reference"}
+
     classes: List[dict] = model.get("classes", [])  # type: ignore[assignment]
     lines: List[str] = [
         "digraph UML {",
@@ -251,33 +332,60 @@ def build_uml_dot(model: Dict[str, object]) -> str:
         '  edge [fontname="Inter", fontsize=9, color="#475569"];',
     ]
 
+    # Add nodes
     for cls in classes:
         node_id = _escape_id(cls["id"])
         label = _build_node_label(cls)
         lines.append(f"  {node_id} [label={label}];")
 
+    # Add edges based on requested types
     for cls in classes:
         source = _escape_id(cls["id"])
-        for base in cls.get("bases", []):
-            target = _escape_id(base)
-            lines.append(
-                f'  {target} -> {source} [arrowhead=empty, penwidth=1.6, color="#60a5fa"];'
-            )
-        for assoc in cls.get("associations", []):
-            target = _escape_id(assoc)
-            lines.append(
-                '  {source} -> {target} [style=dashed, color="#f97316", arrowhead=normal];'.format(
-                    source=source,
-                    target=target,
+
+        # Inheritance (blue, solid, empty arrow)
+        if "inheritance" in edge_types:
+            for base in cls.get("bases", []):
+                target = _escape_id(base)
+                lines.append(
+                    f'  {target} -> {source} [arrowhead=empty, penwidth=1.6, color="#60a5fa"];'
                 )
-            )
+
+        # Association (orange, dashed, normal arrow)
+        if "association" in edge_types:
+            for assoc in cls.get("associations", []):
+                target = _escape_id(assoc)
+                lines.append(
+                    f'  {source} -> {target} [style=dashed, color="#f97316", arrowhead=normal];'
+                )
+
+        # Instantiation (green, dashed, diamond arrow)
+        if "instantiation" in edge_types:
+            for inst in cls.get("instantiates", []):
+                target = _escape_id(inst)
+                lines.append(
+                    f'  {source} -> {target} [style=dashed, color="#10b981", arrowhead=diamond];'
+                )
+
+        # Reference (purple, dotted, vee arrow)
+        if "reference" in edge_types:
+            for ref in cls.get("references", []):
+                target = _escape_id(ref)
+                lines.append(
+                    f'  {source} -> {target} [style=dotted, color="#a855f7", arrowhead=vee];'
+                )
 
     lines.append("}")
     return "\n".join(lines)
 
 
-def render_uml_svg(model: Dict[str, object]) -> str:
-    dot = build_uml_dot(model)
+def render_uml_svg(model: Dict[str, object], edge_types: Optional[Set[str]] = None) -> str:
+    """Render UML model to SVG using Graphviz.
+
+    Args:
+        model: UML model with classes and relationships
+        edge_types: Set of edge types to include in diagram
+    """
+    dot = build_uml_dot(model, edge_types)
     try:
         result = subprocess.run(
             ["dot", "-Tsvg"],
@@ -361,6 +469,25 @@ def _resolve_associations(
         elif include_external:
             associations.add(raw)
     return associations
+
+
+def _resolve_references(
+    raw_refs: Set[str],
+    module: ModuleModel,
+    definitions: Dict[str, ClassModel],
+    include_external: bool,
+) -> Set[str]:
+    """Resolve a set of raw class names to fully qualified names."""
+    resolved: Set[str] = set()
+    for raw in raw_refs:
+        if not raw:
+            continue
+        target = _resolve_reference(raw, module, definitions)
+        if target:
+            resolved.add(target)
+        elif include_external:
+            resolved.add(raw)
+    return resolved
 
 
 def _resolve_reference(raw: str, module: ModuleModel, definitions: Dict[str, ClassModel]) -> Optional[str]:

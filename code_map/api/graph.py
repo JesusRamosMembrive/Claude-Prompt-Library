@@ -62,9 +62,23 @@ async def get_uml_diagram(
         None,
         description="Prefijos de módulo a incluir en el diagrama.",
     ),
+    edge_types: Optional[List[str]] = Query(
+        None,
+        description="Tipos de relaciones a mostrar: inheritance, association, instantiation, reference. Default: inheritance, association.",
+    ),
     state: AppState = Depends(get_app_state),
 ) -> UMLDiagramResponse:
     prefixes = {prefix for prefix in module_prefix or [] if prefix}
+
+    # Parse edge types - default to inheritance + association for backwards compatibility
+    valid_types = {"inheritance", "association", "instantiation", "reference"}
+    if edge_types:
+        requested_types = {edge for edge in edge_types if edge in valid_types}
+        if not requested_types:
+            requested_types = {"inheritance", "association"}
+    else:
+        requested_types = {"inheritance", "association"}
+
     uml = build_uml_model(
         state.settings.root_path,
         module_prefixes=prefixes,
@@ -83,16 +97,30 @@ async def get_uml_svg(
         None,
         description="Prefijos de módulo a incluir en el diagrama.",
     ),
+    edge_types: Optional[List[str]] = Query(
+        None,
+        description="Tipos de relaciones a mostrar: inheritance, association, instantiation, reference. Default: inheritance, association.",
+    ),
     state: AppState = Depends(get_app_state),
 ) -> Response:
     prefixes = {prefix for prefix in module_prefix or [] if prefix}
+
+    # Parse edge types - default to inheritance + association for backwards compatibility
+    valid_types = {"inheritance", "association", "instantiation", "reference"}
+    if edge_types:
+        requested_types = {edge for edge in edge_types if edge in valid_types}
+        if not requested_types:
+            requested_types = {"inheritance", "association"}
+    else:
+        requested_types = {"inheritance", "association"}
+
     model = build_uml_model(
         state.settings.root_path,
         module_prefixes=prefixes,
         include_external=include_external,
     )
     try:
-        svg = render_uml_svg(model)
+        svg = render_uml_svg(model, requested_types)
     except RuntimeError as exc:  # pragma: no cover
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return Response(content=svg, media_type="image/svg+xml")

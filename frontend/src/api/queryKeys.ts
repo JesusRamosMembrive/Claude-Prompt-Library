@@ -14,11 +14,12 @@ export const queryKeys = {
       [...edgeTypes].sort().join(","),
       prefixes ? [...prefixes].sort().join(",") : "",
     ] as const,
-  classUml: (includeExternal: boolean, prefixes?: string[]) =>
+  classUml: (includeExternal: boolean, prefixes?: string[], edgeTypes?: string[]) =>
     [
       "class-uml",
       includeExternal,
       prefixes ? [...prefixes].sort().join(",") : "",
+      edgeTypes ? [...edgeTypes].sort().join(",") : "",
     ] as const,
   lintersLatest: ["linters", "latest"] as const,
   lintersReports: (limit: number, offset: number) =>

@@ -31,6 +31,23 @@ export function ClassUMLView(): JSX.Element {
   const [zoom, setZoom] = useState(1);
   const svgHandleRef = useRef<UmlSvgHandle | null>(null);
 
+  // Edge type filters - default to inheritance + association only (no clutter)
+  const [edgeTypes, setEdgeTypes] = useState<Set<string>>(
+    new Set(["inheritance", "association"])
+  );
+
+  const toggleEdgeType = useCallback((type: string) => {
+    setEdgeTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  }, []);
+
   const handleCanvasStateChange = useCallback((state: UmlViewState) => {
     setZoom((prev) => (Math.abs(prev - state.zoom) < 0.001 ? prev : state.zoom));
   }, []);
@@ -44,7 +61,13 @@ export function ClassUMLView(): JSX.Element {
     [prefixInput],
   );
 
-  const query = useClassUmlQuery({ includeExternal, modulePrefixes });
+  const edgeTypesArray = useMemo(() => Array.from(edgeTypes), [edgeTypes]);
+
+  const query = useClassUmlQuery({
+    includeExternal,
+    modulePrefixes,
+    edgeTypes: edgeTypesArray,
+  });
   const data = query.data;
   const classCount = data?.classCount ?? 0;
   const svgMarkup = data?.svg ?? null;
@@ -72,6 +95,44 @@ export function ClassUMLView(): JSX.Element {
           />
           <span>Incluir clases externas</span>
         </label>
+
+        <div className="control-block">
+          <h2>Tipos de relaciones</h2>
+          <div className="control-row">
+            <label className="control-checkbox">
+              <input
+                type="checkbox"
+                checked={edgeTypes.has("inheritance")}
+                onChange={() => toggleEdgeType("inheritance")}
+              />
+              <span style={{ color: "#60a5fa" }}>Herencia</span>
+            </label>
+            <label className="control-checkbox">
+              <input
+                type="checkbox"
+                checked={edgeTypes.has("association")}
+                onChange={() => toggleEdgeType("association")}
+              />
+              <span style={{ color: "#f97316" }}>Asociación</span>
+            </label>
+            <label className="control-checkbox">
+              <input
+                type="checkbox"
+                checked={edgeTypes.has("instantiation")}
+                onChange={() => toggleEdgeType("instantiation")}
+              />
+              <span style={{ color: "#10b981" }}>Instanciación</span>
+            </label>
+            <label className="control-checkbox">
+              <input
+                type="checkbox"
+                checked={edgeTypes.has("reference")}
+                onChange={() => toggleEdgeType("reference")}
+              />
+              <span style={{ color: "#a855f7" }}>Referencias</span>
+            </label>
+          </div>
+        </div>
 
         <div className="uml-zoom-control">
           <label htmlFor="uml-zoom-slider">Zoom</label>
@@ -114,6 +175,82 @@ export function ClassUMLView(): JSX.Element {
         </button>
       </section>
 
+      {!query.isLoading && !query.isError && classCount > 0 && (
+        <section className="uml-legend" aria-label="Leyenda de relaciones">
+          <h3>Leyenda</h3>
+          <div className="legend-items">
+            <div className="legend-item">
+              <svg width="40" height="20" viewBox="0 0 40 20">
+                <line
+                  x1="0"
+                  y1="10"
+                  x2="40"
+                  y2="10"
+                  stroke="#60a5fa"
+                  strokeWidth="2"
+                  markerEnd="url(#arrow-inheritance)"
+                />
+                <defs>
+                  <marker
+                    id="arrow-inheritance"
+                    markerWidth="10"
+                    markerHeight="10"
+                    refX="9"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L0,6 L9,3 z" fill="#60a5fa" />
+                  </marker>
+                </defs>
+              </svg>
+              <span>Herencia (extends)</span>
+            </div>
+            <div className="legend-item">
+              <svg width="40" height="20" viewBox="0 0 40 20">
+                <line
+                  x1="0"
+                  y1="10"
+                  x2="40"
+                  y2="10"
+                  stroke="#f97316"
+                  strokeWidth="2"
+                  strokeDasharray="5,3"
+                />
+              </svg>
+              <span>Asociación (uses)</span>
+            </div>
+            <div className="legend-item">
+              <svg width="40" height="20" viewBox="0 0 40 20">
+                <line
+                  x1="0"
+                  y1="10"
+                  x2="40"
+                  y2="10"
+                  stroke="#10b981"
+                  strokeWidth="2"
+                  strokeDasharray="5,3"
+                />
+              </svg>
+              <span>Instanciación (creates)</span>
+            </div>
+            <div className="legend-item">
+              <svg width="40" height="20" viewBox="0 0 40 20">
+                <line
+                  x1="0"
+                  y1="10"
+                  x2="40"
+                  y2="10"
+                  stroke="#a855f7"
+                  strokeWidth="1.5"
+                  strokeDasharray="2,2"
+                />
+              </svg>
+              <span>Referencias (refers)</span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {stats && !query.isLoading && !query.isError && (
         <section className="uml-stats" aria-label="Resumen del modelo UML">
           <div className="uml-stat">
@@ -122,11 +259,27 @@ export function ClassUMLView(): JSX.Element {
           </div>
           <div className="uml-stat">
             <span className="uml-stat-label">Herencias</span>
-            <strong className="uml-stat-value">{stats.inheritance_edges ?? 0}</strong>
+            <strong className="uml-stat-value" style={{ color: "#60a5fa" }}>
+              {stats.inheritance_edges ?? 0}
+            </strong>
           </div>
           <div className="uml-stat">
             <span className="uml-stat-label">Asociaciones</span>
-            <strong className="uml-stat-value">{stats.association_edges ?? 0}</strong>
+            <strong className="uml-stat-value" style={{ color: "#f97316" }}>
+              {stats.association_edges ?? 0}
+            </strong>
+          </div>
+          <div className="uml-stat">
+            <span className="uml-stat-label">Instanciaciones</span>
+            <strong className="uml-stat-value" style={{ color: "#10b981" }}>
+              {stats.instantiation_edges ?? 0}
+            </strong>
+          </div>
+          <div className="uml-stat">
+            <span className="uml-stat-label">Referencias</span>
+            <strong className="uml-stat-value" style={{ color: "#a855f7" }}>
+              {stats.reference_edges ?? 0}
+            </strong>
           </div>
         </section>
       )}
