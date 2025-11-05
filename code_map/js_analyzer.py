@@ -83,7 +83,9 @@ class JsAnalyzer:
             module = self._module.parseModule(  # type: ignore[attr-defined]
                 source, comment=True, range=True, loc=True, tolerant=True
             )
-        except Exception as exc:  # pragma: no cover - errores de parseo
+        except Exception as exc:  # pragma: no cover
+            # Intentional broad exception: graceful degradation for any parser error
+            # (malformed JS, unsupported syntax, encoding issues, etc.)
             logger.debug("Error parseando %s: %s", abs_path, exc)
             return FileSummary(
                 path=abs_path,
@@ -99,7 +101,8 @@ class JsAnalyzer:
                 data = module.toDict()  # type: ignore[attr-defined]
                 comments = _ensure_list(data.get("comments", []) or comments)
                 body = _ensure_list(data.get("body", []))
-            except Exception:
+            except Exception:  # pragma: no cover
+                # Intentional broad exception: fallback for esprima API variations
                 body = body or []
 
         comment_map = self._build_comment_map(comments)

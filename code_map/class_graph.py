@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+from .ast_utils import ImportResolver
+
 # ---------------------------------------------------------------------------
 # Modelos de datos
 
@@ -98,13 +100,8 @@ class ModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _resolve_relative(self, module: str, level: int) -> str:
-        parts = self.info.module.split(".")
-        if level > len(parts):
-            return module
-        base = parts[: -level]
-        if module:
-            base.append(module)
-        return ".".join(base)
+        """Resolve relative imports to absolute module paths."""
+        return ImportResolver.resolve_relative_import(self.info.module, module, level)
 
     # -- Clases -------------------------------------------------------------
 

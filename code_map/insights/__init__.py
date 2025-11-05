@@ -10,6 +10,7 @@ from .ollama_service import (
     INSIGHTS_FOCUS_PROMPTS,
     VALID_INSIGHTS_FOCUS,
     build_insights_prompt,
+    OLLAMA_DEFAULT_TIMEOUT,
 )
 from .storage import record_insight, list_insights, clear_insights, StoredInsight
 
@@ -20,6 +21,7 @@ __all__ = [
     "INSIGHTS_FOCUS_PROMPTS",
     "VALID_INSIGHTS_FOCUS",
     "build_insights_prompt",
+    "OLLAMA_DEFAULT_TIMEOUT",
     "StoredInsight",
     "record_insight",
     "list_insights",

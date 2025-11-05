@@ -28,6 +28,7 @@ from .linters import (
     run_linters_pipeline,
     LinterRunOptions,
     get_latest_linters_report,
+    LINTER_TIMEOUT_FAST,  # Re-export for consistency
 )
 from .stage_toolkit import stage_status as compute_stage_status
 from .state_reporter import StateReporter
@@ -37,7 +38,11 @@ from .integrations import OllamaChatError
 
 logger = logging.getLogger(__name__)
 
+# Application timing constants
 DEFAULT_INSIGHTS_INTERVAL_MINUTES = 60
+LINTERS_MIN_INTERVAL_SECONDS = LINTER_TIMEOUT_FAST  # Default minimum interval between linter runs
+MAX_RECENT_CHANGES_TRACKED = 50  # Limit event notifications to avoid memory bloat
+
 VALID_INSIGHTS_FOCUS_SET = {focus.lower() for focus in VALID_INSIGHTS_FOCUS}
 
 
@@ -94,7 +99,7 @@ class AppState:
         max_project_bytes = max_project_size_mb * 1024 * 1024 if max_project_size_mb else None
 
         min_interval = _parse_int_env(min_interval_env)
-        self._linters_min_interval = max(0, min_interval or 180)
+        self._linters_min_interval = max(0, min_interval or LINTERS_MIN_INTERVAL_SECONDS)
 
         self._linters_options = LinterRunOptions(
             enabled_tools=enabled_tools,
@@ -188,9 +193,8 @@ class AppState:
         updated = [self.to_relative(path) for path in changes.get("updated", [])]
         deleted = [self.to_relative(path) for path in changes.get("deleted", [])]
         if updated or deleted:
-            combined = (updated + deleted)[:50]
+            combined = (updated + deleted)[:MAX_RECENT_CHANGES_TRACKED]
             self._recent_changes = combined
-        return {"updated": updated, "deleted": deleted}
         return {"updated": updated, "deleted": deleted}
 
     async def perform_full_scan(self) -> int:
@@ -209,7 +213,7 @@ class AppState:
         if payload["updated"]:
             self.last_event_batch = datetime.now(timezone.utc)
             await self.event_queue.put(payload)
-            self._recent_changes = updated[:50]
+            self._recent_changes = updated[:MAX_RECENT_CHANGES_TRACKED]
         self.last_full_scan = datetime.now(timezone.utc)
         self._schedule_linters_pipeline()
         self._schedule_insights_pipeline()
@@ -285,7 +289,9 @@ class AppState:
                         "critical_issues": summary.critical_issues,
                     },
                 )
-        except Exception:  # pragma: no cover - logging del pipeline
+        except Exception:  # pragma: no cover
+            # Intentional broad exception: background task must never crash the app
+            # Logs error for debugging but allows service to continue
             logger.exception("Error al ejecutar el pipeline de linters")
         finally:
             self._linters_task = None
@@ -344,7 +350,8 @@ class AppState:
         # Estado detectado del proyecto (stage)
         try:
             stage_payload = await compute_stage_status(self.settings.root_path, index=self.index)
-        except Exception:  # pragma: no cover - evitar que errores rompan el pipeline
+        except Exception:  # pragma: no cover
+            # Intentional broad exception: stage detection is optional, shouldn't break insights
             stage_payload = None
 
         detection = stage_payload.get("detection") if isinstance(stage_payload, dict) else None
@@ -442,7 +449,9 @@ class AppState:
                     "original_error": exc.original_error,
                 },
             )
-        except Exception:  # pragma: no cover - logging del pipeline
+        except Exception:  # pragma: no cover
+            # Intentional broad exception: background task must never crash the app
+            # Logs error for debugging but allows service to continue
             logger.exception("Error inesperado al generar insights automáticos con Ollama")
             record_notification(
                 channel="insights",

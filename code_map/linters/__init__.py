@@ -22,7 +22,13 @@ from .report_schema import (
     report_from_dict,
     report_to_dict,
 )
-from .pipeline import LinterRunOptions, run_linters_pipeline
+from .pipeline import (
+    LinterRunOptions,
+    run_linters_pipeline,
+    LINTER_TIMEOUT_FAST,
+    LINTER_TIMEOUT_STANDARD,
+    LINTER_TIMEOUT_TESTS,
+)
 from .storage import (
     StoredLintersReport,
     StoredNotification,
@@ -62,6 +68,9 @@ __all__ = [
     "mark_notification_read",
     "StoredNotification",
     "get_notification",
+    "LINTER_TIMEOUT_FAST",
+    "LINTER_TIMEOUT_STANDARD",
+    "LINTER_TIMEOUT_TESTS",
 ]
 
 

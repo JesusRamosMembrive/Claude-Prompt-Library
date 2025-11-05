@@ -19,7 +19,7 @@ from ..integrations import (
     discover_ollama,
     start_ollama_server,
 )
-from ..insights import run_ollama_insights, list_insights, clear_insights
+from ..insights import run_ollama_insights, list_insights, clear_insights, OLLAMA_DEFAULT_TIMEOUT
 from ..insights.storage import record_insight
 from ..state import AppState
 from .deps import get_app_state
@@ -79,7 +79,7 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
         messages.append(OllamaChatMessage(role="system", content=payload.system_prompt))
     messages.append(OllamaChatMessage(role="user", content=payload.prompt))
 
-    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else 180.0
+    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else OLLAMA_DEFAULT_TIMEOUT
 
     try:
         result = await asyncio.to_thread(
@@ -126,7 +126,7 @@ async def generate_ollama_insights(
     if not model:
         raise HTTPException(status_code=400, detail="No hay modelo configurado para ejecutar insights.")
 
-    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else 180.0
+    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else OLLAMA_DEFAULT_TIMEOUT
 
     context = await state._build_insights_context()
 

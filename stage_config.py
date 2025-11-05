@@ -13,6 +13,21 @@ if TYPE_CHECKING:
     from code_map.models import FileSummary
 
 # ---------------------------------------------------------------------------
+# Stage Detection Constants
+# ---------------------------------------------------------------------------
+
+# Stage 2 sub-stage boundaries for progress tracking
+STAGE2_EARLY_MAX_FILES = 8
+STAGE2_EARLY_MAX_LOC = 1000
+STAGE2_MID_MAX_FILES = 15
+STAGE2_MID_MAX_LOC = 2000
+
+# Warning thresholds for confidence adjustment
+HIGH_LOC_WARNING_MIN_FILES = 5  # Few files but high LOC suggests refactoring needed
+HIGH_LOC_WARNING_THRESHOLD = 1500  # LOC threshold for the warning
+MANY_FILES_NO_PATTERNS_THRESHOLD = 30  # Many files without patterns suggests missing structure
+
+# ---------------------------------------------------------------------------
 # Stage metadata
 
 
@@ -42,10 +57,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Prototyping",
         description="Mantén todo simple. Una sola pieza de código para validar la idea.",
         thresholds=StageThresholds(
-            max_files=3,
-            max_loc=500,
-            max_patterns=0,
-            max_arch_layers=0,
+            max_files=3,          # Proof of concept fits in 1-3 files
+            max_loc=500,          # Under 500 LOC total keeps it simple and easy to iterate
+            max_patterns=0,       # No design patterns yet - keep it straightforward
+            max_arch_layers=0,    # No architectural layers - single-level code structure
         ),
     ),
     StageDefinition(
@@ -53,10 +68,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Structuring",
         description="Divide el código cuando duela. Añade estructura ligera y máximo 1–2 patrones.",
         thresholds=StageThresholds(
-            max_files=20,
-            max_loc=3000,
-            max_patterns=3,
-            max_arch_layers=3,
+            max_files=20,         # Enough files for basic organization (models, services, utils)
+            max_loc=3000,         # ~3K LOC allows meaningful structure without complexity
+            max_patterns=3,       # 1-3 design patterns (e.g., Factory, Strategy, Observer)
+            max_arch_layers=3,    # Basic layering (presentation, business, data)
         ),
     ),
     StageDefinition(
@@ -64,10 +79,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Scaling",
         description="Patrones y arquitectura completa son válidos si resuelven dolores reales.",
         thresholds=StageThresholds(
-            max_files=None,
-            max_loc=None,
-            max_patterns=None,
-            max_arch_layers=None,
+            max_files=None,       # No limit - full production scale
+            max_loc=None,         # No limit - enterprise-level codebase
+            max_patterns=None,    # Full pattern usage when justified by real pain points
+            max_arch_layers=None, # Complete architectural freedom (microservices, DDD, etc.)
         ),
     ),
 )
@@ -413,12 +428,12 @@ def _determine_confidence(
 ) -> str:
     confidence = "high"
 
-    if metrics.file_count <= 5 and metrics.lines_of_code > 1500:
+    if metrics.file_count <= HIGH_LOC_WARNING_MIN_FILES and metrics.lines_of_code > HIGH_LOC_WARNING_THRESHOLD:
         confidence = "medium"
         warnings.append("Few files but high LOC - consider refactoring into smaller modules")
         reasons.append("⚠️  Few files but high LOC - consider refactoring")
 
-    if metrics.file_count > 30 and not metrics.patterns_found:
+    if metrics.file_count > MANY_FILES_NO_PATTERNS_THRESHOLD and not metrics.patterns_found:
         confidence = "medium"
         warnings.append("Many files without clear patterns - structure might be missing")
         reasons.append("⚠️  Many files but no patterns - may need structure")
@@ -433,9 +448,9 @@ def _append_substage_hint(metrics: StageMetrics, definition: StageDefinition, re
     files = metrics.file_count
     loc = metrics.lines_of_code
 
-    if files <= 8 and loc < 1000:
+    if files <= STAGE2_EARLY_MAX_FILES and loc < STAGE2_EARLY_MAX_LOC:
         reasons.append("📍 Early Stage 2 - just starting to structure")
-    elif files <= 15 and loc < 2000:
+    elif files <= STAGE2_MID_MAX_FILES and loc < STAGE2_MID_MAX_LOC:
         reasons.append("📍 Mid Stage 2 - structure emerging")
     else:
         reasons.append("📍 Late Stage 2 - consider Stage 3 transition")

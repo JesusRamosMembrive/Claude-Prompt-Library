@@ -473,7 +473,9 @@ def _run_command(command: List[str], *, timeout: float = 2.0) -> tuple[Optional[
         return None, "Comando no encontrado."
     except subprocess.TimeoutExpired:
         return None, "Tiempo de espera agotado."
-    except Exception as exc:  # pragma: no cover - errores inesperados
+    except Exception as exc:  # pragma: no cover
+        # Intentional broad exception: subprocess errors are unpredictable
+        # (permission errors, resource limits, OS-specific issues, etc.)
         return None, f"Error ejecutando {' '.join(command)}: {exc}"
 
     output = (completed.stdout or completed.stderr or "").strip()
@@ -525,7 +527,9 @@ def start_ollama_server(*, timeout: float = 5.0, poll_interval: float = 0.5) -> 
             start_new_session=True,
             close_fds=True,
         )
-    except Exception as exc:  # pragma: no cover - errores inesperados
+    except Exception as exc:  # pragma: no cover
+        # Intentional broad exception: subprocess.Popen can fail for many reasons
+        # (missing binary, permission denied, resource exhaustion, etc.)
         raise OllamaStartError(
             "No se pudo iniciar el proceso ollama serve.",
             endpoint=status_before.endpoint,

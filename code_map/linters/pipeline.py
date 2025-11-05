@@ -31,6 +31,25 @@ from .report_schema import (
 )
 
 
+# ============================================================================
+# CONSTANTS - Linter Pipeline Configuration
+# ============================================================================
+
+# Output truncation limits
+MAX_OUTPUT_TRUNCATE_CHARS = 2000  # Maximum characters before truncating tool output
+MAX_ISSUES_SAMPLE_SIZE = 25  # Maximum issues to include in report samples
+
+# Linter tool timeouts (seconds)
+LINTER_TIMEOUT_FAST = 180  # For ruff, black (fast formatters/linters)
+LINTER_TIMEOUT_STANDARD = 240  # For mypy, bandit (type checkers, security scanners)
+LINTER_TIMEOUT_TESTS = 600  # For pytest with coverage (can be slow)
+
+# File length thresholds
+MAX_FILE_LENGTH_THRESHOLD = 500  # Recommended maximum lines per file before warning
+MAX_FILE_LENGTH_CRITICAL = 1000  # Critical threshold where files are severely oversized
+
+# ============================================================================
+
 ParsedIssues = Tuple[int, List[IssueDetail]]
 IssueParser = Callable[[str, str], ParsedIssues]
 
@@ -77,7 +96,7 @@ def _which(command: str) -> Optional[str]:
     return path
 
 
-def _truncate_output(text: str, limit: int = 2000) -> str:
+def _truncate_output(text: str, limit: int = MAX_OUTPUT_TRUNCATE_CHARS) -> str:
     if len(text) <= limit:
         return text
     return text[: limit - 3] + "..."
@@ -90,7 +109,7 @@ def _parse_ruff(stdout: str, _: str) -> ParsedIssues:
     except json.JSONDecodeError:
         return 0, issues
 
-    for item in payload[:25]:
+    for item in payload[:MAX_ISSUES_SAMPLE_SIZE]:
         filename = item.get("filename", "")
         code = item.get("code")
         message = item.get("message", "")
@@ -117,7 +136,7 @@ def _parse_bandit(stdout: str, _: str) -> ParsedIssues:
     except json.JSONDecodeError:
         return 0, issues
 
-    results = payload.get("results", [])[:25]
+    results = payload.get("results", [])[:MAX_ISSUES_SAMPLE_SIZE]
     for item in results:
         issues.append(
             IssueDetail(
@@ -156,7 +175,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         command=["ruff", "check", ".", "--output-format", "json"],
         module="ruff",
         parser=_parse_ruff,
-        timeout=180,
+        timeout=LINTER_TIMEOUT_FAST,
     ),
     ToolSpec(
         key="black",
@@ -164,7 +183,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         command=["black", "--check", "--diff", "--color", "never", "."],
         module="black",
         parser=_default_parser,
-        timeout=180,
+        timeout=LINTER_TIMEOUT_FAST,
     ),
     ToolSpec(
         key="mypy",
@@ -172,7 +191,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         command=["mypy", "."],
         module="mypy",
         parser=_default_parser,
-        timeout=240,
+        timeout=LINTER_TIMEOUT_STANDARD,
     ),
     ToolSpec(
         key="bandit",
@@ -180,7 +199,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         command=["bandit", "-q", "-r", ".", "-f", "json"],
         module="bandit",
         parser=_parse_bandit,
-        timeout=240,
+        timeout=LINTER_TIMEOUT_STANDARD,
     ),
     ToolSpec(
         key="pytest",
@@ -195,7 +214,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
         ],
         module="pytest",
         parser=_default_parser,
-        timeout=600,
+        timeout=LINTER_TIMEOUT_TESTS,
     ),
 )
 
@@ -223,8 +242,8 @@ def _should_skip(path: Path) -> bool:
 
 def _check_max_file_length(
     root: Path,
-    threshold: int = 500,
-    critical_threshold: int = 1000,
+    threshold: int = MAX_FILE_LENGTH_THRESHOLD,
+    critical_threshold: int = MAX_FILE_LENGTH_CRITICAL,
 ) -> Tuple[CustomRuleResult, Dict[str, float]]:
     violations: List[IssueDetail] = []
     files_scanned = 0
@@ -275,7 +294,7 @@ def _check_max_file_length(
         status=status,
         description=f"Algunos archivos superan las {threshold} líneas permitidas.",
         threshold=threshold,
-        violations=violations[:25],
+        violations=violations[:MAX_ISSUES_SAMPLE_SIZE],
     )
     metrics = {
         "files_scanned": float(files_scanned),

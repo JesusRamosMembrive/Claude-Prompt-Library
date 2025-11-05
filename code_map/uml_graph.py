@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
+from .ast_utils import ImportResolver
+
 
 @dataclass
 class AttributeInfo:
@@ -71,15 +73,8 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _resolve_relative(self, module: str, level: int) -> str:
-        if not level:
-            return module
-        parts = self.module.split(".")
-        if level > len(parts):
-            return module
-        base = parts[:-level]
-        if module:
-            base.append(module)
-        return ".".join(base)
+        """Resolve relative imports to absolute module paths."""
+        return ImportResolver.resolve_relative_import(self.module, module, level)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         model = ClassModel(

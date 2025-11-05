@@ -14,6 +14,9 @@ from ..integrations import OllamaChatError, OllamaChatMessage, chat_with_ollama,
 logger = logging.getLogger(__name__)
 
 
+# Ollama insights configuration
+OLLAMA_DEFAULT_TIMEOUT = 180.0  # Default timeout for Ollama API calls (seconds)
+
 INSIGHTS_SYSTEM_PROMPT = (
     "Eres un asistente que revisa periódicamente un repositorio para detectar mejoras. "
     "Responde en español con un resumen breve de acciones útiles (máximo 5 viñetas)."
@@ -82,7 +85,7 @@ def run_ollama_insights(
     model: str,
     root_path: Path,
     endpoint: Optional[str] = None,
-    timeout: float = 180.0,
+    timeout: float = OLLAMA_DEFAULT_TIMEOUT,
     context: Optional[str] = None,
     focus: Optional[str] = None,
 ) -> OllamaInsightResult:
