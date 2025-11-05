@@ -90,7 +90,9 @@ def run() -> int:
     start = time.perf_counter()
     try:
         with urlrequest.urlopen(req, timeout=120) as response:
-            body = response.read().decode(response.headers.get_content_charset() or "utf-8")
+            body = response.read().decode(
+                response.headers.get_content_charset() or "utf-8"
+            )
             latency_ms = (time.perf_counter() - start) * 1000
             print(f"\n✅ Respuesta {response.status} en {latency_ms:.0f} ms")
             try:

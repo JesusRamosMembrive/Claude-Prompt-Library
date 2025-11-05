@@ -47,7 +47,9 @@ async def preview_file(
 
     if file_stat.st_size > MAX_PREVIEW_BYTES:
         limit_kib = MAX_PREVIEW_BYTES // 1024
-        detail = f"Archivo demasiado grande para previsualizar (limite {limit_kib} KiB)."
+        detail = (
+            f"Archivo demasiado grande para previsualizar (limite {limit_kib} KiB)."
+        )
         raise HTTPException(status_code=413, detail=detail)
 
     media_type = _guess_media_type(target_path)

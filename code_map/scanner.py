@@ -7,10 +7,20 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Set
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+)
 
 from .analyzer import FileAnalyzer
-from .analyzer_registry import AnalyzerRegistry
+from .analyzer_registry import AnalyzerProtocol, AnalyzerRegistry
 from .events import ChangeBatch
 from .models import FileSummary
 
@@ -44,6 +54,7 @@ DEFAULT_EXTENSIONS: Set[str] = {
     ".html",
 }
 
+
 class ProjectScanner:
     """Coordina los escaneos completos de una ruta raíz."""
 
@@ -52,7 +63,7 @@ class ProjectScanner:
         root: Path,
         *,
         analyzer: Optional[FileAnalyzer] = None,
-        analyzers: Optional[Mapping[str, Any]] = None,
+        analyzers: Optional[Mapping[str, AnalyzerProtocol]] = None,
         exclude_dirs: Optional[Sequence[str]] = None,
         include_docstrings: bool = False,
         extensions: Optional[Sequence[str]] = None,
@@ -81,12 +92,11 @@ class ProjectScanner:
         base_extensions = DEFAULT_EXTENSIONS.copy()
         if extensions:
             base_extensions.update(
-                ext if ext.startswith(".") else f".{ext}"
-                for ext in extensions
+                ext if ext.startswith(".") else f".{ext}" for ext in extensions
             )
         self.extensions: Set[str] = {ext.lower() for ext in base_extensions}
 
-        overrides: Dict[str, Any] = {}
+        overrides: Dict[str, AnalyzerProtocol] = {}
         if analyzers:
             for ext, custom_analyzer in analyzers.items():
                 key = ext if ext.startswith(".") else f".{ext}"

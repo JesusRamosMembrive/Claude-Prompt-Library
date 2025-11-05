@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from stage_config import StageAssessment
 
@@ -27,7 +27,12 @@ class StageUpdateResult:
     claude_instructions_appended: bool
 
 
-def run_claude_init(project_path: Path, *, dry_run: bool = False, logger_override: Optional[logging.Logger] = None) -> bool:
+def run_claude_init(
+    project_path: Path,
+    *,
+    dry_run: bool = False,
+    logger_override: Optional[logging.Logger] = None,
+) -> bool:
     """Invoke `claude -p "/init"` within the project path to generate CLAUDE.md."""
     log = logger_override or logger
     if dry_run:
@@ -86,7 +91,9 @@ def append_custom_instructions(
         if claude_md_path.exists():
             log.info("[dry-run] Would append custom instructions to %s", claude_md_path)
         else:
-            log.info("[dry-run] Would append custom instructions once CLAUDE.md is created")
+            log.info(
+                "[dry-run] Would append custom instructions once CLAUDE.md is created"
+            )
         return True
 
     if not claude_md_path.exists():
@@ -125,7 +132,9 @@ def append_custom_instructions(
     return True
 
 
-def detect_project_stage(root: Path, *, precomputed: Optional[StageAssessment] = None) -> Optional[StageAssessment]:
+def detect_project_stage(
+    root: Path, *, precomputed: Optional[StageAssessment] = None
+) -> Optional[StageAssessment]:
     """Detect the stage for the given project root."""
     if precomputed is not None:
         return precomputed

@@ -18,11 +18,13 @@ from ..stage_toolkit import AgentSelection
 
 class HealthResponse(BaseModel):
     """Respuesta del endpoint de health."""
+
     status: str = "ok"
 
 
 class AnalysisErrorSchema(BaseModel):
     """Esquema para un error de análisis."""
+
     message: str
     lineno: Optional[int] = None
     col_offset: Optional[int] = None
@@ -30,6 +32,7 @@ class AnalysisErrorSchema(BaseModel):
 
 class SymbolSchema(BaseModel):
     """Esquema para un símbolo de código."""
+
     name: str
     kind: SymbolKind
     lineno: int
@@ -40,6 +43,7 @@ class SymbolSchema(BaseModel):
 
 class FileSummarySchema(BaseModel):
     """Esquema para el resumen de un archivo."""
+
     path: str
     modified_at: Optional[datetime] = None
     symbols: List[SymbolSchema] = Field(default_factory=list)
@@ -48,6 +52,7 @@ class FileSummarySchema(BaseModel):
 
 class TreeNodeSchema(BaseModel):
     """Esquema para un nodo del árbol de archivos."""
+
     name: str
     path: str
     is_dir: bool
@@ -62,22 +67,26 @@ TreeNodeSchema.model_rebuild()
 
 class SearchResultsSchema(BaseModel):
     """Esquema para los resultados de una búsqueda."""
+
     results: List[SymbolSchema]
 
 
 class RescanResponse(BaseModel):
     """Respuesta del endpoint de rescan."""
+
     files: int
 
 
 class ChangeNotification(BaseModel):
     """Notificación de cambios en el sistema de archivos."""
+
     updated: List[str]
     deleted: List[str]
 
 
 class SettingsResponse(BaseModel):
     """Respuesta del endpoint de settings."""
+
     root_path: str
     absolute_root: str
     exclude_dirs: List[str]
@@ -91,6 +100,7 @@ class SettingsResponse(BaseModel):
 
 class SettingsUpdateRequest(BaseModel):
     """Petición para actualizar los settings."""
+
     root_path: Optional[str] = None
     include_docstrings: Optional[bool] = None
     exclude_dirs: Optional[List[str]] = None
@@ -112,12 +122,14 @@ class SettingsUpdateRequest(BaseModel):
 
 class SettingsUpdateResponse(BaseModel):
     """Respuesta de la actualización de settings."""
+
     updated: List[str]
     settings: SettingsResponse
 
 
 class AnalyzerCapabilitySchema(BaseModel):
     """Esquema para una capacidad del analizador."""
+
     key: str
     description: str
     extensions: List[str]
@@ -129,6 +141,7 @@ class AnalyzerCapabilitySchema(BaseModel):
 
 class StatusResponse(BaseModel):
     """Respuesta del endpoint de status."""
+
     root_path: str
     absolute_root: str
     watcher_active: bool
@@ -149,12 +162,14 @@ class StatusResponse(BaseModel):
 
 class PreviewResponse(BaseModel):
     """Respuesta del endpoint de preview."""
+
     content: str
     content_type: str
 
 
 class OptionalFilesStatus(BaseModel):
     """Estado opcional (archivos recomendados pero no obligatorios)."""
+
     expected: List[str]
     present: List[str]
     missing: List[str]
@@ -162,6 +177,7 @@ class OptionalFilesStatus(BaseModel):
 
 class AgentInstallStatus(BaseModel):
     """Estado de instalación para un agente (Claude o Codex)."""
+
     expected: List[str]
     present: List[str]
     missing: List[str]
@@ -171,6 +187,7 @@ class AgentInstallStatus(BaseModel):
 
 class DocsStatus(BaseModel):
     """Estado de los documentos de referencia."""
+
     expected: List[str]
     present: List[str]
     missing: List[str]
@@ -179,6 +196,7 @@ class DocsStatus(BaseModel):
 
 class StageDetectionStatus(BaseModel):
     """Resultado de la detección automática de etapa."""
+
     available: bool
     recommended_stage: Optional[int] = None
     confidence: Optional[str] = None
@@ -190,6 +208,7 @@ class StageDetectionStatus(BaseModel):
 
 class StageStatusResponse(BaseModel):
     """Payload completo con el estado stage-aware del proyecto."""
+
     root_path: str
     claude: AgentInstallStatus
     codex: AgentInstallStatus
@@ -199,6 +218,7 @@ class StageStatusResponse(BaseModel):
 
 class OllamaModelSchema(BaseModel):
     """Modelo disponible en Ollama."""
+
     name: str
     size_bytes: Optional[int] = None
     size_human: Optional[str] = None
@@ -209,6 +229,7 @@ class OllamaModelSchema(BaseModel):
 
 class OllamaStatusSchema(BaseModel):
     """Estado detectado para Ollama."""
+
     installed: bool
     running: bool
     models: List[OllamaModelSchema] = Field(default_factory=list)
@@ -221,17 +242,20 @@ class OllamaStatusSchema(BaseModel):
 
 class OllamaStatusResponse(BaseModel):
     """Respuesta con el estado actual de Ollama."""
+
     status: OllamaStatusSchema
     checked_at: datetime
 
 
 class OllamaStartRequest(BaseModel):
     """Petición para iniciar el servidor Ollama."""
+
     timeout_seconds: Optional[float] = Field(default=None, ge=1.0, le=60.0)
 
 
 class OllamaStartResponse(BaseModel):
     """Respuesta tras intentar iniciar Ollama."""
+
     started: bool
     already_running: bool
     endpoint: str
@@ -242,6 +266,7 @@ class OllamaStartResponse(BaseModel):
 
 class OllamaTestRequest(BaseModel):
     """Petición para realizar un chat de prueba con Ollama."""
+
     model: str = Field(..., min_length=1)
     prompt: str = Field(..., min_length=1)
     system_prompt: Optional[str] = None
@@ -251,6 +276,7 @@ class OllamaTestRequest(BaseModel):
 
 class OllamaTestResponse(BaseModel):
     """Respuesta tras ejecutar una prueba de chat contra Ollama."""
+
     success: bool
     model: str
     endpoint: str
@@ -301,11 +327,13 @@ class OllamaInsightsClearResponse(BaseModel):
 
 class StageInitRequest(BaseModel):
     """Petición para inicializar los assets stage-aware."""
+
     agents: AgentSelection = Field(default="both")
 
 
 class StageInitResponse(BaseModel):
     """Respuesta tras ejecutar init_project.py."""
+
     success: bool
     exit_code: int
     command: List[str]
@@ -316,6 +344,7 @@ class StageInitResponse(BaseModel):
 
 class LinterToolSchema(BaseModel):
     """Estado de una herramienta estándar de linters."""
+
     key: str
     name: str
     description: str
@@ -328,6 +357,7 @@ class LinterToolSchema(BaseModel):
 
 class LinterCustomRuleSchema(BaseModel):
     """Descripción de una regla de calidad personalizada."""
+
     key: str
     name: str
     description: str
@@ -338,6 +368,7 @@ class LinterCustomRuleSchema(BaseModel):
 
 class NotificationChannelSchema(BaseModel):
     """Canal disponible para notificaciones de escritorio."""
+
     key: str
     name: str
     available: bool
@@ -347,6 +378,7 @@ class NotificationChannelSchema(BaseModel):
 
 class LintersDiscoveryResponse(BaseModel):
     """Payload con el resultado del discovery de linters."""
+
     root_path: str
     generated_at: datetime
     tools: List[LinterToolSchema] = Field(default_factory=list)
@@ -485,11 +517,13 @@ class NotificationEntrySchema(BaseModel):
 
 class BrowseDirectoryResponse(BaseModel):
     """Respuesta al seleccionar un directorio en el servidor."""
+
     path: str
 
 
 class ClassGraphNode(BaseModel):
     """Nodo del grafo de clases."""
+
     id: str
     name: str
     module: str
@@ -498,6 +532,7 @@ class ClassGraphNode(BaseModel):
 
 class ClassGraphEdge(BaseModel):
     """Arista del grafo de clases."""
+
     source: str
     target: str
     type: str
@@ -507,6 +542,7 @@ class ClassGraphEdge(BaseModel):
 
 class ClassGraphStats(BaseModel):
     """Métricas del grafo generado."""
+
     nodes: int
     edges: int
     edges_by_type: Dict[str, int]
@@ -514,6 +550,7 @@ class ClassGraphStats(BaseModel):
 
 class ClassGraphResponse(BaseModel):
     """Respuesta completa del grafo de clases."""
+
     nodes: List[ClassGraphNode]
     edges: List[ClassGraphEdge]
     stats: ClassGraphStats
@@ -547,7 +584,9 @@ class UMLDiagramResponse(BaseModel):
     stats: Dict[str, int]
 
 
-def serialize_symbol(symbol: SymbolInfo, state: AppState, *, include_path: bool = True) -> SymbolSchema:
+def serialize_symbol(
+    symbol: SymbolInfo, state: AppState, *, include_path: bool = True
+) -> SymbolSchema:
     """Serializa un objeto SymbolInfo a un SymbolSchema."""
     path = state.to_relative(symbol.path) if include_path else None
     return SymbolSchema(
@@ -571,7 +610,10 @@ def serialize_error(error: AnalysisError) -> AnalysisErrorSchema:
 
 def serialize_summary(summary: FileSummary, state: AppState) -> FileSummarySchema:
     """Serializa un objeto FileSummary a un FileSummarySchema."""
-    symbols = [serialize_symbol(symbol, state, include_path=False) for symbol in summary.symbols]
+    symbols = [
+        serialize_symbol(symbol, state, include_path=False)
+        for symbol in summary.symbols
+    ]
     errors = [serialize_error(error) for error in summary.errors]
     return FileSummarySchema(
         path=state.to_relative(summary.path),
@@ -592,7 +634,10 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
     errors = None
     modified_at = None
     if summary:
-        symbols = [serialize_symbol(symbol, state, include_path=False) for symbol in summary.symbols]
+        symbols = [
+            serialize_symbol(symbol, state, include_path=False)
+            for symbol in summary.symbols
+        ]
         errors = [serialize_error(error) for error in summary.errors]
         modified_at = summary.modified_at
 
@@ -607,9 +652,13 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
     )
 
 
-def serialize_search_results(symbols: Iterable[SymbolInfo], state: AppState) -> SearchResultsSchema:
+def serialize_search_results(
+    symbols: Iterable[SymbolInfo], state: AppState
+) -> SearchResultsSchema:
     """Serializa una lista de SymbolInfo a un SearchResultsSchema."""
-    return SearchResultsSchema(results=[serialize_symbol(symbol, state) for symbol in symbols])
+    return SearchResultsSchema(
+        results=[serialize_symbol(symbol, state) for symbol in symbols]
+    )
 
 
 def serialize_settings(state: AppState) -> SettingsResponse:

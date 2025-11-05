@@ -31,6 +31,7 @@ Notes:
     - Provides specific guidance for human/AI review
     - Output can be piped to file or clipboard
 """
+import shutil
 import sys
 from pathlib import Path
 import subprocess
@@ -43,38 +44,52 @@ if __name__ == "__main__":
     project_path = Path(sys.argv[1])
 
     # Get filtered tree
+    tree_executable = shutil.which("tree")
     try:
+        if not tree_executable:
+            raise FileNotFoundError("tree command not found in PATH")
         tree = subprocess.check_output(
-            ["tree", "-L", "3", "-I", ".venv|node_modules|.git|__pycache__|*.pyc|*.egg-info"],
+            [
+                tree_executable,
+                "-L",
+                "3",
+                "-I",
+                ".venv|node_modules|.git|__pycache__|*.pyc|*.egg-info",
+            ],
             cwd=str(project_path),
             text=True,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
-    except:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         tree = "tree command not available - install with: sudo apt install tree"
 
-    print("""# Stage Assessment - Deep Analysis
+    print(
+        """# Stage Assessment - Deep Analysis
 
 ## Project Structure
-```""")
+```"""
+    )
     print(tree)
-    print("""```
+    print(
+        """```
 
 ## Automated Assessment
 
-""")
+"""
+    )
 
     # Run assess_stage.py
     try:
         assess = subprocess.check_output(
-            ["python", "assess_stage.py", str(project_path)],
-            text=True
+            [sys.executable, "assess_stage.py", str(project_path)],
+            text=True,
         )
         print(assess)
-    except:
-        print("Could not run assess_stage.py")
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        print(f"Could not run assess_stage.py: {exc}")
 
-    print("""
+    print(
+        """
 
 ## Instructions for Claude Code
 
@@ -113,4 +128,5 @@ Please provide:
 Consider that Stage 2 → Stage 3 is gradual. If borderline, choose based on:
 - **Choose Stage 2 if**: Structure works, no pain points, patterns not needed yet
 - **Choose Stage 3 if**: Files are large, would benefit from patterns, architecture needed
-""")
+"""
+    )

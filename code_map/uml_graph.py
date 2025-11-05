@@ -36,7 +36,9 @@ class ClassModel:
     attributes: List[AttributeInfo] = field(default_factory=list)
     methods: List[MethodInfo] = field(default_factory=list)
     associations: Set[str] = field(default_factory=set)
-    instantiates: Set[str] = field(default_factory=set)  # Classes created via SomeClass()
+    instantiates: Set[str] = field(
+        default_factory=set
+    )  # Classes created via SomeClass()
     references: Set[str] = field(default_factory=set)  # Classes in type hints
 
 
@@ -123,7 +125,9 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
             annotation = self._expr_to_name(node.annotation)
             optional = _is_optional(node.annotation)
             self._current_class.attributes.append(
-                AttributeInfo(name=node.target.id, annotation=annotation, optional=optional)
+                AttributeInfo(
+                    name=node.target.id, annotation=annotation, optional=optional
+                )
             )
             if annotation:
                 self._track_association(annotation)
@@ -154,6 +158,8 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _track_association(self, raw: str) -> None:
+        if self._current_class is None:
+            return
         name = raw.split("[")[0]
         if name:
             self._current_class.associations.add(name)
@@ -220,8 +226,19 @@ class UMLModuleAnalyzer(ast.NodeVisitor):
                 names.add(node.value)
 
         # Filter out built-in types
-        builtin_types = {"List", "Dict", "Set", "Tuple", "Optional", "Union",
-                        "Any", "Callable", "Type", "Sequence", "Iterable"}
+        builtin_types = {
+            "List",
+            "Dict",
+            "Set",
+            "Tuple",
+            "Optional",
+            "Union",
+            "Any",
+            "Callable",
+            "Type",
+            "Sequence",
+            "Iterable",
+        }
         return {name for name in names if name not in builtin_types}
 
 
@@ -257,9 +274,15 @@ def build_uml_model(
     for module in modules:
         for class_model in module.classes.values():
             bases = _resolve_bases(class_model, module, index, include_external)
-            associations = _resolve_associations(class_model, module, index, include_external)
-            instantiates = _resolve_references(class_model.instantiates, module, index, include_external)
-            references = _resolve_references(class_model.references, module, index, include_external)
+            associations = _resolve_associations(
+                class_model, module, index, include_external
+            )
+            instantiates = _resolve_references(
+                class_model.instantiates, module, index, include_external
+            )
+            references = _resolve_references(
+                class_model.references, module, index, include_external
+            )
 
             inheritance_edges += len(bases)
             association_edges += len(associations)
@@ -306,7 +329,9 @@ def build_uml_model(
     return {"classes": classes, "stats": stats}
 
 
-def build_uml_dot(model: Dict[str, object], edge_types: Optional[Set[str]] = None) -> str:
+def build_uml_dot(
+    model: Dict[str, object], edge_types: Optional[Set[str]] = None
+) -> str:
     """Generate Graphviz DOT format from UML model.
 
     Args:
@@ -373,7 +398,9 @@ def build_uml_dot(model: Dict[str, object], edge_types: Optional[Set[str]] = Non
     return "\n".join(lines)
 
 
-def render_uml_svg(model: Dict[str, object], edge_types: Optional[Set[str]] = None) -> str:
+def render_uml_svg(
+    model: Dict[str, object], edge_types: Optional[Set[str]] = None
+) -> str:
     """Render UML model to SVG using Graphviz.
 
     Args:
@@ -397,7 +424,9 @@ def render_uml_svg(model: Dict[str, object], edge_types: Optional[Set[str]] = No
     return result.stdout.decode("utf-8")
 
 
-def _analyze(root: Path, excluded_dirs: Optional[Set[str]] = None) -> Iterable[ModuleModel]:
+def _analyze(
+    root: Path, excluded_dirs: Optional[Set[str]] = None
+) -> Iterable[ModuleModel]:
     """Analyze Python files in the root directory, excluding certain directories.
 
     Args:
@@ -439,7 +468,9 @@ def _analyze(root: Path, excluded_dirs: Optional[Set[str]] = None) -> Iterable[M
             continue
 
 
-def _filter_modules(modules: List[ModuleModel], prefixes: Optional[Set[str]]) -> List[ModuleModel]:
+def _filter_modules(
+    modules: List[ModuleModel], prefixes: Optional[Set[str]]
+) -> List[ModuleModel]:
     if not prefixes:
         return modules
     normalized = {prefix.strip() for prefix in prefixes if prefix.strip()}
@@ -447,7 +478,9 @@ def _filter_modules(modules: List[ModuleModel], prefixes: Optional[Set[str]]) ->
         return modules
 
     def matches(name: str) -> bool:
-        return any(name == prefix or name.startswith(f"{prefix}.") for prefix in normalized)
+        return any(
+            name == prefix or name.startswith(f"{prefix}.") for prefix in normalized
+        )
 
     filtered = [module for module in modules if matches(module.name)]
     return filtered or modules
@@ -515,7 +548,9 @@ def _resolve_references(
     return resolved
 
 
-def _resolve_reference(raw: str, module: ModuleModel, definitions: Dict[str, ClassModel]) -> Optional[str]:
+def _resolve_reference(
+    raw: str, module: ModuleModel, definitions: Dict[str, ClassModel]
+) -> Optional[str]:
     for candidate in _possible_names(raw, module):
         if candidate in definitions:
             return candidate
@@ -558,4 +593,4 @@ def _build_node_label(cls: dict) -> str:
     module = html.escape(cls.get("module", ""))
     if module:
         return f'<<b>{name}</b><br/><font point-size="9">{module}</font>>'
-    return f'<<b>{name}</b>>'
+    return f"<<b>{name}</b>>"

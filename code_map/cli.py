@@ -6,9 +6,17 @@ CLI principal para gestionar Code Map desde la terminal.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-import typer
+if TYPE_CHECKING:  # pragma: no cover - solo para tipado
+    import typer  # type: ignore[import-not-found]
+else:  # pragma: no cover - manejo de dependencia opcional en runtime
+    try:
+        import typer  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover
+        raise RuntimeError(
+            "Typer es un requisito para ejecutar la CLI de Code Map."
+        ) from exc
 import uvicorn
 
 from .settings import AppSettings, load_settings, save_settings
@@ -110,7 +118,9 @@ def config_show() -> None:
 
 
 @config_app.command("set-root")
-def config_set_root(root: Path = typer.Argument(..., help="Directorio a analizar.")) -> None:
+def config_set_root(
+    root: Path = typer.Argument(..., help="Directorio a analizar.")
+) -> None:
     """Actualiza la raíz analizada por el backend."""
     normalized = _validate_root(root)
     settings = _persist_root(normalized)

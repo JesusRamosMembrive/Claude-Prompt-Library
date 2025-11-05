@@ -43,6 +43,7 @@ def _normalize_exclusions(additional: Iterable[str] | None = None) -> Tuple[str,
 @dataclass(frozen=True)
 class AppSettings:
     """Define la configuración de la aplicación."""
+
     root_path: Path
     exclude_dirs: Tuple[str, ...] = field(default_factory=tuple)
     include_docstrings: bool = True
@@ -76,6 +77,7 @@ class AppSettings:
         ollama_insights_focus: Optional[str] = None,
     ) -> "AppSettings":
         """Crea una nueva instancia de AppSettings con actualizaciones."""
+
         def _normalize_focus(value: Optional[str]) -> Optional[str]:
             if value is None:
                 return self.ollama_insights_focus
@@ -86,7 +88,11 @@ class AppSettings:
 
         return AppSettings(
             root_path=(root_path or self.root_path).expanduser().resolve(),
-            exclude_dirs=_normalize_exclusions(exclude_dirs) if exclude_dirs is not None else self.exclude_dirs,
+            exclude_dirs=(
+                _normalize_exclusions(exclude_dirs)
+                if exclude_dirs is not None
+                else self.exclude_dirs
+            ),
             include_docstrings=(
                 include_docstrings
                 if include_docstrings is not None
@@ -99,8 +105,13 @@ class AppSettings:
             ),
             ollama_insights_model=(
                 ollama_insights_model.strip()
-                if isinstance(ollama_insights_model, str) and ollama_insights_model.strip()
-                else (self.ollama_insights_model if ollama_insights_model is None else None)
+                if isinstance(ollama_insights_model, str)
+                and ollama_insights_model.strip()
+                else (
+                    self.ollama_insights_model
+                    if ollama_insights_model is None
+                    else None
+                )
             ),
             ollama_insights_frequency_minutes=(
                 ollama_insights_frequency_minutes
@@ -109,6 +120,7 @@ class AppSettings:
             ),
             ollama_insights_focus=_normalize_focus(ollama_insights_focus),
         )
+
 
 def _parse_env_flag(raw: Optional[str]) -> Optional[bool]:
     """Parsea una variable de entorno como un booleano."""
@@ -220,6 +232,7 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
     # Asegurar columna ollama_insights_enabled en instalaciones existentes.
     cursor = connection.execute("PRAGMA table_info(app_settings)")
     columns = {row["name"] for row in cursor.fetchall()}
+
     def _ensure_column(name: str, ddl: str) -> None:
         if name in columns:
             return
@@ -282,28 +295,56 @@ def _load_settings_from_db(
             return None
 
         stored_root_raw = row["root_path"]
-        stored_root = Path(stored_root_raw).expanduser().resolve() if stored_root_raw else default_root
+        stored_root = (
+            Path(stored_root_raw).expanduser().resolve()
+            if stored_root_raw
+            else default_root
+        )
         excludes_raw = row["exclude_dirs"] or "[]"
         try:
             data = json.loads(excludes_raw)
         except json.JSONDecodeError:
             data = []
 
-        include_flag = bool(row["include_docstrings"]) if row["include_docstrings"] is not None else default_include_docstrings
+        include_flag = (
+            bool(row["include_docstrings"])
+            if row["include_docstrings"] is not None
+            else default_include_docstrings
+        )
         if insights_supported and "ollama_insights_enabled" in row.keys():
             insights_raw = row["ollama_insights_enabled"]
             insights_flag = bool(insights_raw) if insights_raw is not None else False
 
-            model_value_raw = row["ollama_insights_model"] if "ollama_insights_model" in row.keys() else None
-            model_value = model_value_raw.strip() if isinstance(model_value_raw, str) and model_value_raw.strip() else None
+            model_value_raw = (
+                row["ollama_insights_model"]
+                if "ollama_insights_model" in row.keys()
+                else None
+            )
+            model_value = (
+                model_value_raw.strip()
+                if isinstance(model_value_raw, str) and model_value_raw.strip()
+                else None
+            )
 
-            freq_raw = row["ollama_insights_frequency_minutes"] if "ollama_insights_frequency_minutes" in row.keys() else None
+            freq_raw = (
+                row["ollama_insights_frequency_minutes"]
+                if "ollama_insights_frequency_minutes" in row.keys()
+                else None
+            )
             try:
                 freq_value = int(freq_raw) if freq_raw is not None else None
             except (TypeError, ValueError):
                 freq_value = None
-            focus_raw = row["ollama_insights_focus"] if "ollama_insights_focus" in row.keys() else None
-            focus_value = focus_raw.strip() if isinstance(focus_raw, str) and focus_raw.strip() else "general"
+            focus_raw = (
+                row["ollama_insights_focus"]
+                if "ollama_insights_focus" in row.keys()
+                else None
+            )
+            focus_value = (
+                focus_raw.strip()
+                if isinstance(focus_raw, str) and focus_raw.strip()
+                else "general"
+            )
         else:
             insights_flag = False
             model_value = None
@@ -357,7 +398,10 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
             "ALTER TABLE app_settings ADD COLUMN ollama_insights_focus TEXT",
         )
         can_persist_insights = (
-            has_insights_column and has_model_column and has_frequency_column and has_focus_column
+            has_insights_column
+            and has_model_column
+            and has_frequency_column
+            and has_focus_column
         )
 
         if can_persist_insights:
@@ -464,11 +508,15 @@ def load_settings(
     return settings
 
 
-def save_settings(settings: AppSettings, *, env: Optional[Mapping[str, str]] = None) -> None:
+def save_settings(
+    settings: AppSettings, *, env: Optional[Mapping[str, str]] = None
+) -> None:
     """Guarda la configuración en el disco."""
     db_path = database_path(env)
     try:
         _save_settings_to_db(db_path, settings)
     except sqlite3.OperationalError as exc:
         logger.warning("No se pudo guardar la configuración en %s: %s", db_path, exc)
+
+
 logger = logging.getLogger(__name__)

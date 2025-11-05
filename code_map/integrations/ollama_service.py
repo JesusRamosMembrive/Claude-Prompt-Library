@@ -66,7 +66,9 @@ def _build_request(url: str, data: Dict[str, Any]) -> urlrequest.Request:
     )
 
 
-def _fetch_json(url: str, *, timeout: float = 1.5) -> tuple[Optional[dict], Optional[str]]:
+def _fetch_json(
+    url: str, *, timeout: float = 1.5
+) -> tuple[Optional[dict], Optional[str]]:
     """Realiza una petición GET y parsea JSON si es posible."""
     request = urlrequest.Request(url, headers={"Accept": "application/json"})
     try:
@@ -132,7 +134,8 @@ def _current_timestamp() -> datetime:
 def _prune_loading_locked(reference: datetime) -> None:
     """Elimina marcas de modelos cargándose que hayan caducado."""
     expired = [
-        key for key, started in list(_LOADING_STATE.items())
+        key
+        for key, started in list(_LOADING_STATE.items())
         if reference - started > _LOADING_STATE_TTL
     ]
     for key in expired:
@@ -343,7 +346,9 @@ def chat_with_ollama(
         ) from exc
     except urlerror.URLError as exc:
         if isinstance(exc.reason, socket.timeout):
-            loading_started = previous_loading or _ensure_model_loading(resolved_endpoint, model)
+            loading_started = previous_loading or _ensure_model_loading(
+                resolved_endpoint, model
+            )
             raise OllamaChatError(
                 "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
                 endpoint=resolved_endpoint,
@@ -358,7 +363,9 @@ def chat_with_ollama(
             original_error=str(exc.reason),
         ) from exc
     except TimeoutError as exc:
-        loading_started = previous_loading or _ensure_model_loading(resolved_endpoint, model)
+        loading_started = previous_loading or _ensure_model_loading(
+            resolved_endpoint, model
+        )
         raise OllamaChatError(
             "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
             endpoint=resolved_endpoint,
@@ -423,7 +430,9 @@ def _detect_ollama(*, timeout: float = 1.5) -> OllamaStatus:
                 continue
             size = entry.get("size")
             size_bytes = size if isinstance(size, int) else None
-            details = entry.get("details") if isinstance(entry.get("details"), dict) else {}
+            details = (
+                entry.get("details") if isinstance(entry.get("details"), dict) else {}
+            )
             models.append(
                 OllamaModelInfo(
                     name=name,
@@ -459,7 +468,9 @@ def discover_ollama(*, timeout: float = 1.5) -> OllamaDiscovery:
     return OllamaDiscovery(status=status, checked_at=_current_timestamp())
 
 
-def _run_command(command: List[str], *, timeout: float = 2.0) -> tuple[Optional[str], Optional[str]]:
+def _run_command(
+    command: List[str], *, timeout: float = 2.0
+) -> tuple[Optional[str], Optional[str]]:
     """Ejecuta un comando y devuelve (stdout/stderr combinado, error)."""
     try:
         completed = subprocess.run(
@@ -495,7 +506,9 @@ def _extract_version(raw: Optional[str]) -> Optional[str]:
     return tokens[-1]
 
 
-def start_ollama_server(*, timeout: float = 5.0, poll_interval: float = 0.5) -> OllamaStartResult:
+def start_ollama_server(
+    *, timeout: float = 5.0, poll_interval: float = 0.5
+) -> OllamaStartResult:
     """
     Intenta iniciar el servidor Ollama (`ollama serve`) y confirma que está operativo.
     """

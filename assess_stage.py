@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Literal, overload
 
 from typing import TYPE_CHECKING
 
@@ -29,7 +29,29 @@ else:
     SymbolIndex = Any  # type: ignore
 
 
+@overload
 def assess_stage(  # noqa: D401 - keep compatibility
+    project_path: str | Path,
+    *,
+    metrics: Optional[StageMetrics] = None,
+    symbol_index: Optional["SymbolIndex"] = None,
+    extensions: Optional[Sequence[str]] = None,
+    return_dataclass: Literal[True],
+) -> Optional[StageAssessment]: ...
+
+
+@overload
+def assess_stage(
+    project_path: str | Path,
+    *,
+    metrics: Optional[StageMetrics] = None,
+    symbol_index: Optional["SymbolIndex"] = None,
+    extensions: Optional[Sequence[str]] = None,
+    return_dataclass: Literal[False] = False,
+) -> Optional[Dict[str, Any]]: ...
+
+
+def assess_stage(
     project_path: str | Path,
     *,
     metrics: Optional[StageMetrics] = None,
@@ -78,7 +100,7 @@ def _assessment_to_payload(assessment: StageAssessment) -> Dict[str, Any]:
     return payload
 
 
-def print_assessment(assessment: Dict[str, Any]) -> None:
+def print_assessment(assessment: Optional[Dict[str, Any]]) -> None:
     """
     Pretty print assessment results to console.
 
@@ -120,7 +142,7 @@ def print_assessment(assessment: Dict[str, Any]) -> None:
     if metrics.get("patterns_found"):
         print(f"  - Patterns Detected: {', '.join(metrics['patterns_found'])}")
     if metrics.get("architectural_folders"):
-        arch = metrics['architectural_folders']
+        arch = metrics["architectural_folders"]
         print(f"  - Architecture: {', '.join(arch[:6])}")
 
     print("\n💡 Reasoning:")
@@ -136,7 +158,7 @@ def print_assessment(assessment: Dict[str, Any]) -> None:
 
     print("\n📖 Next Steps:")
     print(f"  1. Review .claude/02-stage{stage_number}-rules.md")
-    print(f"  2. Update .claude/01-current-phase.md with current stage")
+    print("  2. Update .claude/01-current-phase.md with current stage")
     print("  3. Follow stage-appropriate practices")
 
     warnings = diagnostics.get("warnings", [])

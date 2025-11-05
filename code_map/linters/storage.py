@@ -45,6 +45,24 @@ def _safe_severity(value: Any) -> Severity:
         return Severity.INFO
 
 
+def _coerce_int(value: Any, *, default: int = 0) -> int:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return int(float(value))
+            except ValueError:
+                return default
+    return default
+
+
 @dataclass(frozen=True)
 class StoredLintersReport:
     """Representa un reporte almacenado con metadatos."""
@@ -73,13 +91,15 @@ class StoredNotification:
     read: bool
 
 
-def record_linters_report(report: LintersReport, *, env: Optional[Mapping[str, str]] = None) -> int:
+def record_linters_report(
+    report: LintersReport, *, env: Optional[Mapping[str, str]] = None
+) -> int:
     """Inserta un nuevo reporte de linters en la base de datos."""
     payload = report_to_dict(report)
     summary = payload.get("summary", {})
     overall_status = summary.get("overall_status", CheckStatus.PASS.value)
-    issues_total = int(summary.get("issues_total", 0) or 0)
-    critical_issues = int(summary.get("critical_issues", 0) or 0)
+    issues_total = _coerce_int(summary.get("issues_total", 0), default=0)
+    critical_issues = _coerce_int(summary.get("critical_issues", 0), default=0)
 
     with open_database(env) as connection:
         cursor = connection.execute(
@@ -97,7 +117,8 @@ def record_linters_report(report: LintersReport, *, env: Optional[Mapping[str, s
             ),
         )
         connection.commit()
-        return int(cursor.lastrowid)
+        last_id = cursor.lastrowid
+        return int(last_id) if last_id is not None else 0
 
 
 def _row_to_report(row: Mapping[str, Any]) -> StoredLintersReport:
@@ -107,13 +128,15 @@ def _row_to_report(row: Mapping[str, Any]) -> StoredLintersReport:
         generated_at=_parse_datetime(row["generated_at"]),
         root_path=row["root_path"],
         overall_status=_safe_check_status(row["overall_status"]),
-        issues_total=int(row["issues_total"]),
-        critical_issues=int(row["critical_issues"]),
+        issues_total=_coerce_int(row["issues_total"]),
+        critical_issues=_coerce_int(row["critical_issues"]),
         report=report_from_dict(payload),
     )
 
 
-def get_linters_report(report_id: int, *, env: Optional[Mapping[str, str]] = None) -> Optional[StoredLintersReport]:
+def get_linters_report(
+    report_id: int, *, env: Optional[Mapping[str, str]] = None
+) -> Optional[StoredLintersReport]:
     """Obtiene un reporte por ID."""
     with open_database(env) as connection:
         row = connection.execute(
@@ -200,7 +223,11 @@ def record_notification(
 ) -> int:
     """Almacena una notificación vinculada al ecosistema de linters."""
     created_at = datetime.now(timezone.utc).isoformat()
-    serialized_payload = json.dumps(payload, ensure_ascii=False, separators=(",", ":")) if payload else None
+    serialized_payload = (
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if payload
+        else None
+    )
     normalized_root = _normalize_root(root_path)
 
     with open_database(env) as connection:
@@ -220,7 +247,8 @@ def record_notification(
             ),
         )
         connection.commit()
-        return int(cursor.lastrowid)
+        last_id = cursor.lastrowid
+        return int(last_id) if last_id is not None else 0
 
 
 def _row_to_notification(row: Mapping[str, Any]) -> StoredNotification:

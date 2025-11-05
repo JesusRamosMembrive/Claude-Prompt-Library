@@ -1,9 +1,8 @@
-import asyncio
 import json
 import os
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 from contextlib import asynccontextmanager
@@ -29,6 +28,7 @@ from code_map.linters import (
 )
 from code_map.settings import load_settings, save_settings
 from code_map.state import AppState
+from code_map.integrations import OllamaChatResponse
 
 
 def write_file(root: Path, relative: str, content: str) -> Path:
@@ -125,7 +125,9 @@ def build_sample_report(root: Path) -> LintersReport:
         )
     ]
 
-    coverage = CoverageSnapshot(statement_coverage=82.5, branch_coverage=70.0, missing_lines=42)
+    coverage = CoverageSnapshot(
+        statement_coverage=82.5, branch_coverage=70.0, missing_lines=42
+    )
     chart = ChartData(
         issues_by_tool={"ruff": 2},
         issues_by_severity={Severity.HIGH: 1, Severity.LOW: 2},
@@ -146,7 +148,7 @@ def build_sample_report(root: Path) -> LintersReport:
 
 
 @pytest.fixture()
-def api_client(tmp_path: Path) -> TestClient:
+def api_client(tmp_path: Path) -> Generator[TestClient, None, None]:
     write_file(
         tmp_path,
         "pkg/module.py",
@@ -201,7 +203,9 @@ def test_rescan_endpoint_triggers_scan(api_client: TestClient, tmp_path: Path) -
     assert response.json()["files"] >= 1
 
 
-def test_ollama_status_endpoint_returns_payload(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_status_endpoint_returns_payload(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaDiscovery, OllamaStatus
 
@@ -232,7 +236,9 @@ def test_ollama_status_endpoint_returns_payload(api_client: TestClient, monkeypa
     assert parsed == fake_timestamp
 
 
-def test_ollama_start_endpoint_returns_payload(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_start_endpoint_returns_payload(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaStartResult, OllamaStatus
 
@@ -268,7 +274,9 @@ def test_ollama_start_endpoint_returns_payload(api_client: TestClient, monkeypat
     assert payload["status"]["running"] is True
 
 
-def test_ollama_start_endpoint_handles_error(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_start_endpoint_handles_error(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaStartError
 
@@ -288,7 +296,9 @@ def test_ollama_start_endpoint_handles_error(api_client: TestClient, monkeypatch
     assert detail["endpoint"] == "http://127.0.0.1:11434"
 
 
-def test_ollama_test_endpoint_returns_response(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_test_endpoint_returns_response(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations.ollama_service import OllamaChatResponse
 
@@ -315,7 +325,9 @@ def test_ollama_test_endpoint_returns_response(api_client: TestClient, monkeypat
     assert "raw" in payload
 
 
-def test_ollama_test_endpoint_handles_error(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_test_endpoint_handles_error(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaChatError
 
@@ -339,7 +351,9 @@ def test_ollama_test_endpoint_handles_error(api_client: TestClient, monkeypatch)
     assert detail["endpoint"] == "http://127.0.0.1:11434"
 
 
-def test_ollama_test_endpoint_handles_timeout(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_test_endpoint_handles_timeout(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaChatError
 
@@ -368,7 +382,9 @@ def test_ollama_test_endpoint_handles_timeout(api_client: TestClient, monkeypatc
     assert detail["message"].startswith("Ollama tardó demasiado en responder")
 
 
-def test_ollama_test_endpoint_exposes_loading_hint(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_test_endpoint_exposes_loading_hint(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.integrations import OllamaChatError
 
@@ -427,7 +443,9 @@ def test_update_settings_toggle_ollama_insights(api_client: TestClient) -> None:
     assert body["settings"]["ollama_insights_enabled"] is True
 
 
-def test_update_settings_updates_ollama_insights_details(api_client: TestClient) -> None:
+def test_update_settings_updates_ollama_insights_details(
+    api_client: TestClient,
+) -> None:
     response = api_client.put(
         "/settings",
         json={
@@ -443,18 +461,27 @@ def test_update_settings_updates_ollama_insights_details(api_client: TestClient)
     assert body["settings"]["ollama_insights_frequency_minutes"] == 45
 
 
-def test_ollama_analyze_endpoint_generates_insight(api_client: TestClient, monkeypatch) -> None:
+def test_ollama_analyze_endpoint_generates_insight(
+    api_client: TestClient, monkeypatch
+) -> None:
     from code_map.api import integrations as integrations_module
     from code_map.insights import OllamaInsightResult
 
     generated_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
     def fake_run(**kwargs) -> OllamaInsightResult:
+        model_name = kwargs.get("model", "default")
         return OllamaInsightResult(
-            model=kwargs.get("model", "default"),
+            model=model_name,
             generated_at=generated_at,
             message="Acciones sugeridas",
-            raw=SimpleNamespace(raw={"ok": True}),
+            raw=OllamaChatResponse(
+                model=model_name,
+                message="Acciones sugeridas",
+                raw={"ok": True},
+                latency_ms=5.0,
+                endpoint="http://localhost",
+            ),
         )
 
     recorded = {}
@@ -499,11 +526,25 @@ def test_ollama_insights_history_endpoint(api_client: TestClient, monkeypatch) -
     from code_map.insights import StoredInsight
 
     items = [
-        StoredInsight(id=1, model="gpt-oss:latest", message="abc", generated_at=datetime(2024, 1, 1, tzinfo=timezone.utc), root_path=None),
-        StoredInsight(id=2, model="gpt-mini", message="def", generated_at=datetime(2024, 1, 2, tzinfo=timezone.utc), root_path=None),
+        StoredInsight(
+            id=1,
+            model="gpt-oss:latest",
+            message="abc",
+            generated_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            root_path=None,
+        ),
+        StoredInsight(
+            id=2,
+            model="gpt-mini",
+            message="def",
+            generated_at=datetime(2024, 1, 2, tzinfo=timezone.utc),
+            root_path=None,
+        ),
     ]
 
-    monkeypatch.setattr(integrations_module, "list_insights", lambda limit, root_path: items[:limit])
+    monkeypatch.setattr(
+        integrations_module, "list_insights", lambda limit, root_path: items[:limit]
+    )
 
     response = api_client.get("/integrations/ollama/insights", params={"limit": 1})
     assert response.status_code == 200
@@ -541,7 +582,9 @@ def test_update_settings_updates_exclude_dirs(api_client: TestClient) -> None:
 
 
 def test_update_settings_invalid_root_returns_400(api_client: TestClient) -> None:
-    response = api_client.put("/settings", json={"root_path": "/path/that/does/not/exist"})
+    response = api_client.put(
+        "/settings", json={"root_path": "/path/that/does/not/exist"}
+    )
     assert response.status_code == 400
 
 
@@ -675,9 +718,14 @@ def test_linters_notifications_flow(api_client: TestClient, tmp_path: Path) -> N
 
     after_mark = api_client.get("/linters/notifications")
     assert after_mark.status_code == 200
-    assert any(item["id"] == notification_id and item["read"] is True for item in after_mark.json())
+    assert any(
+        item["id"] == notification_id and item["read"] is True
+        for item in after_mark.json()
+    )
 
-    unread_response = api_client.get("/linters/notifications", params={"unread_only": "true"})
+    unread_response = api_client.get(
+        "/linters/notifications", params={"unread_only": "true"}
+    )
     assert unread_response.status_code == 200
     assert unread_response.json() == []
 

@@ -9,7 +9,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from ..integrations import OllamaChatError, OllamaChatMessage, chat_with_ollama, OllamaChatResponse
+from ..integrations import (
+    OllamaChatError,
+    OllamaChatMessage,
+    chat_with_ollama,
+    OllamaChatResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +71,9 @@ def _resolve_focus(focus: Optional[str]) -> str:
 def build_insights_prompt(root_path: Path, focus: Optional[str]) -> str:
     """Construye el prompt de usuario según el foco seleccionado."""
     focus_key = _resolve_focus(focus)
-    template = INSIGHTS_FOCUS_PROMPTS.get(focus_key, INSIGHTS_FOCUS_PROMPTS[DEFAULT_INSIGHTS_FOCUS])
+    template = INSIGHTS_FOCUS_PROMPTS.get(
+        focus_key, INSIGHTS_FOCUS_PROMPTS[DEFAULT_INSIGHTS_FOCUS]
+    )
     return template.format(root=root_path.as_posix())
 
 

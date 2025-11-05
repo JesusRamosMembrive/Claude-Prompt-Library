@@ -35,6 +35,7 @@ def get_modified_time(path: Path) -> Optional[datetime]:
     except OSError:
         return None
 
+
 AstFunction = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
 
@@ -104,7 +105,7 @@ class FileAnalyzer:
         symbols: List[SymbolInfo] = []
 
         for node in tree.body:
-            if self._is_function(node):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 symbols.append(self._build_function_symbol(node, abs_path))
             elif isinstance(node, ast.ClassDef):
                 symbols.append(self._build_class_symbol(node, abs_path))
@@ -197,7 +198,7 @@ class FileAnalyzer:
     ) -> Iterable[SymbolInfo]:
         """Genera símbolos para los métodos definidos dentro de una clase."""
         for item in class_node.body:
-            if self._is_function(item):
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 yield SymbolInfo(
                     name=item.name,
                     kind=SymbolKind.METHOD,
@@ -211,9 +212,8 @@ class FileAnalyzer:
         """Recupera el docstring del nodo si está habilitado."""
         if not self.include_docstrings:
             return None
+        if not isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)
+        ):
+            return None
         return ast.get_docstring(node)
-
-    @staticmethod
-    def _is_function(node: ast.AST) -> bool:
-        """Indica si el nodo AST corresponde a una función o corrutina."""
-        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))

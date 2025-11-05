@@ -38,7 +38,13 @@ def test_evaluate_stage_returns_stage3_for_large_project() -> None:
         lines_of_code=7500,
         directory_count=12,
         patterns_found=["Service Layer", "Repository", "Strategy", "Adapter"],
-        architectural_folders=["services", "repositories", "domain", "infrastructure", "application"],
+        architectural_folders=[
+            "services",
+            "repositories",
+            "domain",
+            "infrastructure",
+            "application",
+        ],
     )
 
     assessment = evaluate_stage(metrics)
@@ -88,6 +94,8 @@ def main():
     assert payload is not None
     assert payload["recommended_stage"] == 1
 
-    assessment_obj = assess_stage.assess_stage(tmp_path, metrics=metrics, return_dataclass=True)
+    assessment_obj = assess_stage.assess_stage(
+        tmp_path, metrics=metrics, return_dataclass=True
+    )
     assert assessment_obj is not None
     assert assessment_obj.recommended_stage == payload["recommended_stage"]

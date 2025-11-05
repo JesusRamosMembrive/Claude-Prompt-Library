@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Mapping, Optional
+from typing import Mapping, Optional
 
 from ..settings import open_database
 
@@ -58,7 +58,9 @@ def record_insight(
     _ensure_table(env)
     generated_at = datetime.now(timezone.utc).isoformat()
     normalized_root = _normalize_root(root_path)
-    payload = json.dumps(raw, ensure_ascii=False, separators=(",", ":")) if raw else None
+    payload = (
+        json.dumps(raw, ensure_ascii=False, separators=(",", ":")) if raw else None
+    )
 
     with open_database(env) as connection:
         cursor = connection.execute(
@@ -69,7 +71,8 @@ def record_insight(
             (model, message, payload, generated_at, normalized_root),
         )
         connection.commit()
-        return int(cursor.lastrowid)
+        last_id = cursor.lastrowid
+        return int(last_id) if last_id is not None else 0
 
 
 def list_insights(
@@ -102,10 +105,12 @@ def list_insights(
 
     insights: list[StoredInsight] = []
     for row in rows:
-        generated_at = datetime.fromisoformat(row["generated_at"].replace("Z", "+00:00"))
+        generated_at = datetime.fromisoformat(
+            row["generated_at"].replace("Z", "+00:00")
+        )
         insights.append(
             StoredInsight(
-                id=int(row["id"]),
+                id=int(row["id"]) if row["id"] is not None else 0,
                 model=row["model"],
                 message=row["message"],
                 generated_at=generated_at,

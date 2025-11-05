@@ -145,7 +145,10 @@ def _serialize_value(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
     if is_dataclass(value):
-        return {field.name: _serialize_value(getattr(value, field.name)) for field in fields(value)}
+        return {
+            field.name: _serialize_value(getattr(value, field.name))
+            for field in fields(value)
+        }
     if isinstance(value, list):
         return [_serialize_value(item) for item in value]
     if isinstance(value, dict):
@@ -254,8 +257,7 @@ def _parse_chart_data(data: Mapping[str, Any]) -> ChartData:
     issues_by_tool_raw = data.get("issues_by_tool", {})
     issues_by_severity_raw = data.get("issues_by_severity", {})
     issues_by_severity = {
-        _safe_severity(key): int(value)
-        for key, value in issues_by_severity_raw.items()
+        _safe_severity(key): int(value) for key, value in issues_by_severity_raw.items()
     }
     return ChartData(
         issues_by_tool={str(k): int(v) for k, v in issues_by_tool_raw.items()},
@@ -269,7 +271,9 @@ def report_from_dict(data: Mapping[str, Any]) -> LintersReport:
     tools = [_parse_tool(item) for item in data.get("tools", [])]
     custom_rules = [_parse_custom_rule(item) for item in data.get("custom_rules", [])]
     coverage_data = data.get("coverage")
-    coverage = _parse_coverage(coverage_data) if isinstance(coverage_data, Mapping) else None
+    coverage = (
+        _parse_coverage(coverage_data) if isinstance(coverage_data, Mapping) else None
+    )
     chart_data = _parse_chart_data(data.get("chart_data", {}))
 
     metrics_raw = data.get("metrics", {})
@@ -286,7 +290,11 @@ def report_from_dict(data: Mapping[str, Any]) -> LintersReport:
     notes = [str(item) for item in data.get("notes", [])]
 
     generated_at_raw = data.get("generated_at")
-    generated_at = _parse_datetime(generated_at_raw) if isinstance(generated_at_raw, str) else datetime.now()
+    generated_at = (
+        _parse_datetime(generated_at_raw)
+        if isinstance(generated_at_raw, str)
+        else datetime.now()
+    )
 
     return LintersReport(
         root_path=str(data.get("root_path", "")),

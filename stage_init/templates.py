@@ -8,7 +8,7 @@ import logging
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional
+from typing import Dict, List, Mapping, MutableMapping, Optional
 
 logger = logging.getLogger(__name__)
 

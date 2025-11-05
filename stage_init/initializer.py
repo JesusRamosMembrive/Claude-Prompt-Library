@@ -46,7 +46,12 @@ class InitializationResult:
 class ProjectInitializer:
     """Coordinates template installation, stage detection, and reporting."""
 
-    def __init__(self, config: InitializationConfig, *, logger_override: Optional[logging.Logger] = None) -> None:
+    def __init__(
+        self,
+        config: InitializationConfig,
+        *,
+        logger_override: Optional[logging.Logger] = None,
+    ) -> None:
         self.config = config
         self.log = logger_override or logger
         self.repo_root = Path(__file__).resolve().parents[1]
@@ -58,7 +63,9 @@ class ProjectInitializer:
         self._ensure_directory(dest_dir)
 
         placeholders = self._build_placeholders(dest_dir)
-        template_sources, template_destinations = self._prepare_template_mappings(dest_dir)
+        template_sources, template_destinations = self._prepare_template_mappings(
+            dest_dir
+        )
 
         summaries = copy_templates(
             template_sources,
@@ -75,17 +82,25 @@ class ProjectInitializer:
         if self._should_prepare_claude():
             claude_md_path = dest_dir / "CLAUDE.md"
             claude_templates = template_sources.get("claude")
-            instructions_template = claude_templates / "CUSTOM_INSTRUCTIONS.md" if claude_templates else None
+            instructions_template = (
+                claude_templates / "CUSTOM_INSTRUCTIONS.md"
+                if claude_templates
+                else None
+            )
 
             if self.config.run_claude_init and not self.config.dry_run:
                 claude_cli_invoked = True
-                claude_md_created = run_claude_init(dest_dir, dry_run=False, logger_override=self.log)
+                claude_md_created = run_claude_init(
+                    dest_dir, dry_run=False, logger_override=self.log
+                )
             elif self.config.run_claude_init and self.config.dry_run:
                 claude_cli_invoked = True
                 run_claude_init(dest_dir, dry_run=True, logger_override=self.log)
 
             if not self.config.dry_run and not claude_md_path.exists():
-                claude_md_created = self._write_basic_claude_md(claude_md_path, dest_dir.name)
+                claude_md_created = self._write_basic_claude_md(
+                    claude_md_path, dest_dir.name
+                )
 
             if instructions_template and instructions_template.exists():
                 claude_instructions_appended = append_custom_instructions(
@@ -145,7 +160,9 @@ class ProjectInitializer:
             "{{YEAR}}": str(self.now.year),
         }
 
-    def _prepare_template_mappings(self, dest_dir: Path) -> tuple[Dict[str, Path], Dict[str, Path]]:
+    def _prepare_template_mappings(
+        self, dest_dir: Path
+    ) -> tuple[Dict[str, Path], Dict[str, Path]]:
         template_sources: Dict[str, Path] = {
             "claude": self.template_root / "basic" / ".claude",
             "docs": self.template_root / "docs",
@@ -161,7 +178,9 @@ class ProjectInitializer:
 
         for category, path in template_sources.items():
             if not path.exists():
-                raise FileNotFoundError(f"Template directory for {category} not found: {path}")
+                raise FileNotFoundError(
+                    f"Template directory for {category} not found: {path}"
+                )
 
         return template_sources, template_destinations
 

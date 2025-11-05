@@ -13,6 +13,7 @@ from typing import Iterable, List, Optional, Tuple
 
 class ChangeEventType(str, Enum):
     """Tipos de eventos emitidos por el watcher de archivos."""
+
     CREATED = "created"
     MODIFIED = "modified"
     DELETED = "deleted"
@@ -22,6 +23,7 @@ class ChangeEventType(str, Enum):
 @dataclass(slots=True)
 class FileChangeEvent:
     """Evento normalizado proveniente del sistema de archivos."""
+
     event_type: ChangeEventType
     src_path: Path
     dest_path: Optional[Path] = None
@@ -38,6 +40,7 @@ class FileChangeEvent:
 @dataclass(slots=True)
 class ChangeBatch:
     """Agrupa eventos por tipo para procesarlos en bloque."""
+
     created: List[Path] = field(default_factory=list)
     modified: List[Path] = field(default_factory=list)
     deleted: List[Path] = field(default_factory=list)

@@ -33,7 +33,9 @@ router = APIRouter(prefix="/linters", tags=["linters"])
 
 
 @router.get("/discovery", response_model=LintersDiscoveryResponse)
-async def get_linters_discovery(state: AppState = Depends(get_app_state)) -> LintersDiscoveryResponse:
+async def get_linters_discovery(
+    state: AppState = Depends(get_app_state),
+) -> LintersDiscoveryResponse:
     """Devuelve el resultado del proceso de discovery de herramientas de calidad."""
     payload = await linters_discovery_payload(state.settings.root_path)
     return LintersDiscoveryResponse(**payload)
@@ -92,7 +94,9 @@ async def list_reports(
 
 
 @router.get("/reports/latest", response_model=LintersReportRecordSchema)
-async def get_latest_report(state: AppState = Depends(get_app_state)) -> LintersReportRecordSchema:
+async def get_latest_report(
+    state: AppState = Depends(get_app_state),
+) -> LintersReportRecordSchema:
     stored = get_latest_linters_report(root_path=state.settings.root_path)
     if stored is None:
         raise HTTPException(status_code=404, detail="No hay reportes disponibles")
@@ -100,7 +104,9 @@ async def get_latest_report(state: AppState = Depends(get_app_state)) -> Linters
 
 
 @router.get("/reports/{report_id}", response_model=LintersReportRecordSchema)
-async def get_report(report_id: int, state: AppState = Depends(get_app_state)) -> LintersReportRecordSchema:
+async def get_report(
+    report_id: int, state: AppState = Depends(get_app_state)
+) -> LintersReportRecordSchema:
     stored = get_linters_report(report_id)
     if stored is None or stored.root_path != str(state.settings.root_path.resolve()):
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
@@ -121,7 +127,9 @@ async def list_linters_notifications(
     return [_to_notification_entry(item) for item in notifications]
 
 
-@router.post("/notifications/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/notifications/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT
+)
 async def mark_notification_as_read(
     notification_id: int,
     read: bool = True,
@@ -129,9 +137,8 @@ async def mark_notification_as_read(
 ) -> None:
     notification = get_notification(notification_id)
     normalized_root = str(state.settings.root_path.resolve())
-    if (
-        notification is None
-        or (notification.root_path and notification.root_path != normalized_root)
+    if notification is None or (
+        notification.root_path and notification.root_path != normalized_root
     ):
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
 

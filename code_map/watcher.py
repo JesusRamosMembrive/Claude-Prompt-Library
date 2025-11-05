@@ -7,19 +7,36 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Iterable, Optional, Set
+from typing import Any, Iterable, Optional, Set, TYPE_CHECKING
 
 from .events import ChangeEventType
 from .scheduler import ChangeScheduler
 
-try:
-    from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileMovedEvent
+if TYPE_CHECKING:  # pragma: no cover - solo para tipado
+    from watchdog.events import FileMovedEvent, FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
-except ImportError:  # pragma: no cover - dependerá de entorno
-    FileSystemEventHandler = object  # type: ignore[assignment]
-    FileSystemEvent = object  # type: ignore[assignment]
-    FileMovedEvent = object  # type: ignore[assignment]
-    Observer = None  # type: ignore[assignment]
+else:  # pragma: no cover - en tiempo de ejecución permitimos fallback
+    try:
+        from watchdog.events import (
+            FileSystemEventHandler,
+            FileSystemEvent,
+            FileMovedEvent,
+        )
+        from watchdog.observers import Observer
+    except ImportError:
+
+        class FileSystemEvent:  # type: ignore[too-few-public-methods]
+            src_path: str = ""
+            dest_path: Optional[str] = None
+            is_directory: bool = False
+
+        class FileMovedEvent(FileSystemEvent):  # type: ignore[too-few-public-methods]
+            pass
+
+        class FileSystemEventHandler:  # type: ignore[too-few-public-methods]
+            pass
+
+        Observer = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +84,7 @@ class _EventHandler(FileSystemEventHandler):
         """Registra la eliminación de un archivo con extensión soportada."""
         self._dispatch(ChangeEventType.DELETED, event)
 
-    def on_moved(self, event: FileMovedEvent) -> None:
+    def on_moved(self, event: FileSystemEvent) -> None:
         """Registra el movimiento o renombrado de un archivo."""
         self._dispatch(ChangeEventType.MOVED, event)
 
@@ -150,10 +167,9 @@ class WatcherService:
         if exclude_dirs:
             self.exclude_dirs.update(exclude_dirs)
         self.extensions: Set[str] = {
-            ext if ext.startswith(".") else f".{ext}"
-            for ext in (extensions or [".py"])
+            ext if ext.startswith(".") else f".{ext}" for ext in (extensions or [".py"])
         }
-        self._observer: Optional[Observer] = None
+        self._observer: Optional[Any] = None
 
     @property
     def is_running(self) -> bool:
@@ -169,7 +185,9 @@ class WatcherService:
         if self.is_running:
             return True
 
-        handler = _EventHandler(self.root, self.scheduler, self.exclude_dirs, self.extensions)
+        handler = _EventHandler(
+            self.root, self.scheduler, self.exclude_dirs, self.extensions
+        )
         observer = Observer()
         observer.schedule(handler, str(self.root), recursive=True)
         observer.start()

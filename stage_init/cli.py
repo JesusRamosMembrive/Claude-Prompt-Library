@@ -100,7 +100,9 @@ def _print_summary(result, config: InitializationConfig, log: logging.Logger) ->
     if config.agent_selection in {"claude", "both"}:
         print(f"✓ Claude context files at: {claude_dir}")
     else:
-        print(f"ℹ️ Claude integration skipped (--agent={config.agent_selection}); core stage files stored at: {claude_dir}")
+        print(
+            f"ℹ️ Claude integration skipped (--agent={config.agent_selection}); core stage files stored at: {claude_dir}"
+        )
 
     if config.agent_selection in {"codex", "both"}:
         print(f"✓ Codex instructions at: {codex_dir}")

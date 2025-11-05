@@ -217,7 +217,9 @@ def _extract_type_names(node: Optional[ast.AST]) -> Set[str]:
                 names.update(_extract_type_names(elt))
         else:
             names.update(_extract_type_names(node.slice))
-    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):  # PEP 604 unions
+    elif isinstance(node, ast.BinOp) and isinstance(
+        node.op, ast.BitOr
+    ):  # PEP 604 unions
         names.update(_extract_type_names(node.left))
         names.update(_extract_type_names(node.right))
     elif isinstance(node, ast.Tuple):

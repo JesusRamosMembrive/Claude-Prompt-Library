@@ -20,6 +20,7 @@ DEFAULT_DEBOUNCE_SECONDS = 0.25
 @dataclass(slots=True)
 class _QueuedEvent:
     """Representa un evento pendiente dentro del debounce."""
+
     event_type: ChangeEventType
     src_path: Path
     dest_path: Optional[Path] = None
@@ -133,4 +134,4 @@ class ChangeScheduler:
                     ChangeEventType.DELETED, event.src_path
                 )
 
-        return state.values()
+        return iter(state.values())

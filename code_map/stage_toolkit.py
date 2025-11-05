@@ -79,9 +79,15 @@ def _collect_file_status(root: Path, required: Sequence[str]) -> FileStatus:
     return FileStatus(expected=tuple(required), present=present, missing=missing)
 
 
-def _build_agent_payload(root: Path, required: Tuple[str, ...], optional: Tuple[str, ...] = ()) -> Dict[str, object]:
+def _build_agent_payload(
+    root: Path, required: Tuple[str, ...], optional: Tuple[str, ...] = ()
+) -> Dict[str, object]:
     mandatory = _collect_file_status(root, required)
-    optional_status = _collect_file_status(root, optional) if optional else FileStatus(optional, [], [])
+    optional_status = (
+        _collect_file_status(root, optional)
+        if optional
+        else FileStatus(optional, [], [])
+    )
     return {
         "expected": list(mandatory.expected),
         "present": mandatory.present,
@@ -95,7 +101,9 @@ def _build_agent_payload(root: Path, required: Tuple[str, ...], optional: Tuple[
     }
 
 
-def _detect_stage(root: Path, *, metrics: Optional[StageMetrics] = None) -> Dict[str, object]:
+def _detect_stage(
+    root: Path, *, metrics: Optional[StageMetrics] = None
+) -> Dict[str, object]:
     try:
         import assess_stage  # noqa: WPS433 (import at runtime)
     except Exception as exc:  # pragma: no cover - fallback path
@@ -144,9 +152,13 @@ def _detect_stage(root: Path, *, metrics: Optional[StageMetrics] = None) -> Dict
     }
 
 
-def _compute_status(root: Path, metrics: Optional[StageMetrics] = None) -> Dict[str, object]:
+def _compute_status(
+    root: Path, metrics: Optional[StageMetrics] = None
+) -> Dict[str, object]:
     resolved_root = root.expanduser().resolve()
-    claude_payload = _build_agent_payload(resolved_root, CLAUDE_REQUIRED, CLAUDE_OPTIONAL)
+    claude_payload = _build_agent_payload(
+        resolved_root, CLAUDE_REQUIRED, CLAUDE_OPTIONAL
+    )
     codex_payload = _build_agent_payload(resolved_root, CODEX_REQUIRED)
     docs_status = _collect_file_status(resolved_root, DOCS_REQUIRED)
 
@@ -164,7 +176,9 @@ def _compute_status(root: Path, metrics: Optional[StageMetrics] = None) -> Dict[
     }
 
 
-async def stage_status(root: Path, *, index: Optional["SymbolIndex"] = None) -> Dict[str, object]:
+async def stage_status(
+    root: Path, *, index: Optional["SymbolIndex"] = None
+) -> Dict[str, object]:
     """Obtiene el estado actual de los archivos stage-aware para un root dado."""
     metrics: Optional[StageMetrics] = None
     if index is not None:

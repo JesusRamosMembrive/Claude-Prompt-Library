@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict
-from typing import List, Optional
+from typing import Dict, List
 
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -19,7 +19,12 @@ from ..integrations import (
     discover_ollama,
     start_ollama_server,
 )
-from ..insights import run_ollama_insights, list_insights, clear_insights, OLLAMA_DEFAULT_TIMEOUT
+from ..insights import (
+    run_ollama_insights,
+    list_insights,
+    clear_insights,
+    OLLAMA_DEFAULT_TIMEOUT,
+)
 from ..insights.storage import record_insight
 from ..state import AppState
 from .deps import get_app_state
@@ -27,6 +32,7 @@ from .schemas import (
     OllamaStartRequest,
     OllamaStartResponse,
     OllamaStatusResponse,
+    OllamaStatusSchema,
     OllamaTestRequest,
     OllamaTestResponse,
     OllamaInsightsRequest,
@@ -42,7 +48,8 @@ router = APIRouter(prefix="/integrations", tags=["integrations"])
 async def get_ollama_status() -> OllamaStatusResponse:
     """Devuelve el estado actual de Ollama (instalación, servicio y modelos)."""
     discovery = await asyncio.to_thread(discover_ollama)
-    return OllamaStatusResponse(status=asdict(discovery.status), checked_at=discovery.checked_at)
+    status_payload = OllamaStatusSchema.model_validate(asdict(discovery.status))
+    return OllamaStatusResponse(status=status_payload, checked_at=discovery.checked_at)
 
 
 @router.post("/ollama/start", response_model=OllamaStartResponse)
@@ -59,12 +66,13 @@ async def start_ollama(payload: OllamaStartRequest) -> OllamaStartResponse:
         }
         raise HTTPException(status_code=502, detail=detail) from exc
 
+    status_payload = OllamaStatusSchema.model_validate(asdict(result.status))
     return OllamaStartResponse(
         started=result.started,
         already_running=result.already_running,
         endpoint=result.endpoint,
         process_id=result.process_id,
-        status=asdict(result.status),
+        status=status_payload,
         checked_at=result.checked_at,
     )
 
@@ -79,7 +87,11 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
         messages.append(OllamaChatMessage(role="system", content=payload.system_prompt))
     messages.append(OllamaChatMessage(role="user", content=payload.prompt))
 
-    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else OLLAMA_DEFAULT_TIMEOUT
+    timeout = (
+        payload.timeout_seconds
+        if payload.timeout_seconds is not None
+        else OLLAMA_DEFAULT_TIMEOUT
+    )
 
     try:
         result = await asyncio.to_thread(
@@ -90,7 +102,7 @@ async def test_ollama_chat(payload: OllamaTestRequest) -> OllamaTestResponse:
             timeout=timeout,
         )
     except OllamaChatError as exc:
-        detail = {
+        detail: Dict[str, object] = {
             "message": str(exc),
             "endpoint": exc.endpoint,
             "original_error": exc.original_error,
@@ -124,9 +136,15 @@ async def generate_ollama_insights(
 
     model = payload.model or state.settings.ollama_insights_model
     if not model:
-        raise HTTPException(status_code=400, detail="No hay modelo configurado para ejecutar insights.")
+        raise HTTPException(
+            status_code=400, detail="No hay modelo configurado para ejecutar insights."
+        )
 
-    timeout = payload.timeout_seconds if payload.timeout_seconds is not None else OLLAMA_DEFAULT_TIMEOUT
+    timeout = (
+        payload.timeout_seconds
+        if payload.timeout_seconds is not None
+        else OLLAMA_DEFAULT_TIMEOUT
+    )
 
     context = await state._build_insights_context()
 
@@ -193,7 +211,9 @@ async def list_ollama_insights_endpoint(
 
 
 @router.delete("/ollama/insights", response_model=OllamaInsightsClearResponse)
-async def clear_ollama_insights_endpoint(state: AppState = Depends(get_app_state)) -> OllamaInsightsClearResponse:
+async def clear_ollama_insights_endpoint(
+    state: AppState = Depends(get_app_state),
+) -> OllamaInsightsClearResponse:
     deleted = await asyncio.to_thread(
         clear_insights,
         root_path=state.settings.root_path,

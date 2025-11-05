@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Optional
 
 from .analyzer_registry import AnalyzerCapability
 from .scanner import ProjectScanner
@@ -83,7 +83,9 @@ class StateReporter:
         summaries = self.index.get_all()
         total_files = len(summaries)
         total_symbols = sum(len(summary.symbols) for summary in summaries)
-        capabilities = [_serialize_capability(cap) for cap in self.scanner.registry.capabilities]
+        capabilities = [
+            _serialize_capability(cap) for cap in self.scanner.registry.capabilities
+        ]
 
         return {
             "root_path": self.settings.root_path.as_posix(),

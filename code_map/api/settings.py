@@ -84,7 +84,9 @@ async def get_status(state: AppState = Depends(get_app_state)) -> StatusResponse
 
 
 @router.post("/settings/browse", response_model=BrowseDirectoryResponse)
-async def browse_directory(state: AppState = Depends(get_app_state)) -> BrowseDirectoryResponse:
+async def browse_directory(
+    state: AppState = Depends(get_app_state),
+) -> BrowseDirectoryResponse:
     """Abre un diálogo nativo para seleccionar un directorio."""
 
     def _select_directory(initial: Path) -> str:

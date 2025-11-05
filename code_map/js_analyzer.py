@@ -71,7 +71,7 @@ class JsAnalyzer:
 
         try:
             source = abs_path.read_text(encoding="utf-8")
-        except OSError as exc:
+        except OSError:
             return FileSummary(
                 path=abs_path,
                 symbols=[],
@@ -109,7 +109,9 @@ class JsAnalyzer:
 
         symbols: List[SymbolInfo] = []
         for node in body:
-            self._collect_from_node(node, symbols, comment_map, parent=None, file_path=abs_path)
+            self._collect_from_node(
+                node, symbols, comment_map, parent=None, file_path=abs_path
+            )
 
         return FileSummary(
             path=abs_path,
@@ -132,7 +134,9 @@ class JsAnalyzer:
         if node_type == "FunctionDeclaration":
             name = _node_get(_node_get(node, "id", {}), "name")
             if name:
-                line = _node_get(_node_get(_node_get(node, "loc", {}), "start", {}), "line")
+                line = _node_get(
+                    _node_get(_node_get(node, "loc", {}), "start", {}), "line"
+                )
                 doc = self._docstring_for(line, comment_map)
                 symbols.append(
                     SymbolInfo(
@@ -187,7 +191,9 @@ class JsAnalyzer:
                 )
         elif node_type == "VariableDeclaration":
             for declarator in _ensure_list(_node_get(node, "declarations", [])):
-                self._handle_variable_declarator(declarator, symbols, comment_map, file_path)
+                self._handle_variable_declarator(
+                    declarator, symbols, comment_map, file_path
+                )
 
     def _handle_variable_declarator(
         self,
@@ -246,7 +252,9 @@ class JsAnalyzer:
             result[end_line] = cleaned
         return result
 
-    def _docstring_for(self, line: Optional[int], comment_map: Dict[int, str]) -> Optional[str]:
+    def _docstring_for(
+        self, line: Optional[int], comment_map: Dict[int, str]
+    ) -> Optional[str]:
         """Busca un comentario inmediatamente anterior a la línea indicada."""
         if not self.include_docstrings or line is None:
             return None

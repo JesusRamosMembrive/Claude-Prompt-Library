@@ -13,7 +13,9 @@ class ImportResolver:
     """Shared logic for resolving Python imports in AST analysis."""
 
     @staticmethod
-    def resolve_relative_import(current_module: str, relative_module: str, level: int) -> str:
+    def resolve_relative_import(
+        current_module: str, relative_module: str, level: int
+    ) -> str:
         """
         Resolve relative imports to absolute module paths.
 

@@ -6,7 +6,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, TYPE_CHECKING
+from typing import (
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TYPE_CHECKING,
+)
 
 if TYPE_CHECKING:
     from code_map.index import SymbolIndex
@@ -25,7 +35,9 @@ STAGE2_MID_MAX_LOC = 2000
 # Warning thresholds for confidence adjustment
 HIGH_LOC_WARNING_MIN_FILES = 5  # Few files but high LOC suggests refactoring needed
 HIGH_LOC_WARNING_THRESHOLD = 1500  # LOC threshold for the warning
-MANY_FILES_NO_PATTERNS_THRESHOLD = 30  # Many files without patterns suggests missing structure
+MANY_FILES_NO_PATTERNS_THRESHOLD = (
+    30  # Many files without patterns suggests missing structure
+)
 
 # ---------------------------------------------------------------------------
 # Stage metadata
@@ -57,10 +69,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Prototyping",
         description="Mantén todo simple. Una sola pieza de código para validar la idea.",
         thresholds=StageThresholds(
-            max_files=3,          # Proof of concept fits in 1-3 files
-            max_loc=500,          # Under 500 LOC total keeps it simple and easy to iterate
-            max_patterns=0,       # No design patterns yet - keep it straightforward
-            max_arch_layers=0,    # No architectural layers - single-level code structure
+            max_files=3,  # Proof of concept fits in 1-3 files
+            max_loc=500,  # Under 500 LOC total keeps it simple and easy to iterate
+            max_patterns=0,  # No design patterns yet - keep it straightforward
+            max_arch_layers=0,  # No architectural layers - single-level code structure
         ),
     ),
     StageDefinition(
@@ -68,10 +80,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Structuring",
         description="Divide el código cuando duela. Añade estructura ligera y máximo 1–2 patrones.",
         thresholds=StageThresholds(
-            max_files=20,         # Enough files for basic organization (models, services, utils)
-            max_loc=3000,         # ~3K LOC allows meaningful structure without complexity
-            max_patterns=3,       # 1-3 design patterns (e.g., Factory, Strategy, Observer)
-            max_arch_layers=3,    # Basic layering (presentation, business, data)
+            max_files=20,  # Enough files for basic organization (models, services, utils)
+            max_loc=3000,  # ~3K LOC allows meaningful structure without complexity
+            max_patterns=3,  # 1-3 design patterns (e.g., Factory, Strategy, Observer)
+            max_arch_layers=3,  # Basic layering (presentation, business, data)
         ),
     ),
     StageDefinition(
@@ -79,10 +91,10 @@ STAGE_DEFINITIONS: Tuple[StageDefinition, ...] = (
         label="Scaling",
         description="Patrones y arquitectura completa son válidos si resuelven dolores reales.",
         thresholds=StageThresholds(
-            max_files=None,       # No limit - full production scale
-            max_loc=None,         # No limit - enterprise-level codebase
-            max_patterns=None,    # Full pattern usage when justified by real pain points
-            max_arch_layers=None, # Complete architectural freedom (microservices, DDD, etc.)
+            max_files=None,  # No limit - full production scale
+            max_loc=None,  # No limit - enterprise-level codebase
+            max_patterns=None,  # Full pattern usage when justified by real pain points
+            max_arch_layers=None,  # Complete architectural freedom (microservices, DDD, etc.)
         ),
     ),
 )
@@ -291,7 +303,11 @@ def detect_patterns(files: Iterable[Path], root: Path) -> List[str]:
     for pattern, keywords in PATTERN_KEYWORDS.items():
         for keyword in keywords:
             keyword_lower = keyword.lower()
-            if any(keyword_lower in segment.lower() for path in files for segment in path.parts):
+            if any(
+                keyword_lower in segment.lower()
+                for path in files
+                for segment in path.parts
+            ):
                 matches.add(pattern)
                 break
 
@@ -368,7 +384,9 @@ def _path_within_root(path: Path, root: Path) -> bool:
         return False
 
 
-def _select_stage_definition(metrics: StageMetrics, reasons: List[str]) -> StageDefinition:
+def _select_stage_definition(
+    metrics: StageMetrics, reasons: List[str]
+) -> StageDefinition:
     files = metrics.file_count
     loc = metrics.lines_of_code
     patterns = len(metrics.patterns_found)
@@ -381,8 +399,12 @@ def _select_stage_definition(metrics: StageMetrics, reasons: List[str]) -> Stage
 
         files_ok = thresholds.max_files is None or files <= thresholds.max_files
         loc_ok = thresholds.max_loc is None or loc < thresholds.max_loc
-        patterns_ok = thresholds.max_patterns is None or patterns <= thresholds.max_patterns
-        layers_ok = thresholds.max_arch_layers is None or layers <= thresholds.max_arch_layers
+        patterns_ok = (
+            thresholds.max_patterns is None or patterns <= thresholds.max_patterns
+        )
+        layers_ok = (
+            thresholds.max_arch_layers is None or layers <= thresholds.max_arch_layers
+        )
 
         if files_ok and loc_ok and patterns_ok and layers_ok:
             stage = definition
@@ -413,9 +435,13 @@ def _select_stage_definition(metrics: StageMetrics, reasons: List[str]) -> Stage
     else:
         reasons.append(f"Large or complex codebase ({files} files, ~{loc} LOC)")
         if metrics.patterns_found:
-            reasons.append(f"Multiple patterns detected: {', '.join(metrics.patterns_found[:4])}")
+            reasons.append(
+                f"Multiple patterns detected: {', '.join(metrics.patterns_found[:4])}"
+            )
         if len(metrics.architectural_folders) > 4:
-            reasons.append(f"Complex architecture: {len(metrics.architectural_folders)} layers")
+            reasons.append(
+                f"Complex architecture: {len(metrics.architectural_folders)} layers"
+            )
 
     return stage
 
@@ -428,20 +454,32 @@ def _determine_confidence(
 ) -> str:
     confidence = "high"
 
-    if metrics.file_count <= HIGH_LOC_WARNING_MIN_FILES and metrics.lines_of_code > HIGH_LOC_WARNING_THRESHOLD:
+    if (
+        metrics.file_count <= HIGH_LOC_WARNING_MIN_FILES
+        and metrics.lines_of_code > HIGH_LOC_WARNING_THRESHOLD
+    ):
         confidence = "medium"
-        warnings.append("Few files but high LOC - consider refactoring into smaller modules")
+        warnings.append(
+            "Few files but high LOC - consider refactoring into smaller modules"
+        )
         reasons.append("⚠️  Few files but high LOC - consider refactoring")
 
-    if metrics.file_count > MANY_FILES_NO_PATTERNS_THRESHOLD and not metrics.patterns_found:
+    if (
+        metrics.file_count > MANY_FILES_NO_PATTERNS_THRESHOLD
+        and not metrics.patterns_found
+    ):
         confidence = "medium"
-        warnings.append("Many files without clear patterns - structure might be missing")
+        warnings.append(
+            "Many files without clear patterns - structure might be missing"
+        )
         reasons.append("⚠️  Many files but no patterns - may need structure")
 
     return confidence
 
 
-def _append_substage_hint(metrics: StageMetrics, definition: StageDefinition, reasons: List[str]) -> None:
+def _append_substage_hint(
+    metrics: StageMetrics, definition: StageDefinition, reasons: List[str]
+) -> None:
     if definition.number != 2:
         return
 

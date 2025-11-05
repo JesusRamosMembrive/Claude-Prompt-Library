@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .analyzer import get_modified_time
 from .dependencies import optional_dependencies
@@ -17,13 +17,16 @@ from .models import FileSummary, SymbolInfo, SymbolKind
 @dataclass
 class _TsParser:
     """Wrapper ligero sobre el parser de tree-sitter."""
+
     parser: Any
 
     @classmethod
     def for_language(cls, modules: Dict[str, Any], name: str) -> "_TsParser":
         """Construye un parser configurado para el lenguaje indicado."""
         parser_cls = getattr(modules.get("tree_sitter"), "Parser", None)
-        get_language = getattr(modules.get("tree_sitter_languages"), "get_language", None)
+        get_language = getattr(
+            modules.get("tree_sitter_languages"), "get_language", None
+        )
         if parser_cls is None or get_language is None:
             raise RuntimeError("tree_sitter_languages no disponible")
         language = get_language(name)
@@ -35,7 +38,9 @@ class _TsParser:
 class TsAnalyzer:
     """Analizador basado en tree-sitter para archivos TypeScript/TSX."""
 
-    def __init__(self, *, include_docstrings: bool = False, is_tsx: bool = False) -> None:
+    def __init__(
+        self, *, include_docstrings: bool = False, is_tsx: bool = False
+    ) -> None:
         """Inicializa el parser adecuado y comprueba la disponibilidad de dependencias."""
         self.include_docstrings = include_docstrings
         self._modules = optional_dependencies.load("tree_sitter_languages")
@@ -99,9 +104,15 @@ class TsAnalyzer:
                 if not name:
                     continue
                 lineno = child.start_point[0] + 1
-                doc = self._find_leading_comment(child, lines) if self.include_docstrings else None
+                doc = (
+                    self._find_leading_comment(child, lines)
+                    if self.include_docstrings
+                    else None
+                )
                 kind = (
-                    SymbolKind.METHOD if parent and child.type == "method_definition" else SymbolKind.FUNCTION
+                    SymbolKind.METHOD
+                    if parent and child.type == "method_definition"
+                    else SymbolKind.FUNCTION
                 )
                 symbols.append(
                     SymbolInfo(
@@ -135,7 +146,9 @@ class TsAnalyzer:
                     )
                     body = self._find_child(child, "class_body")
                     if body:
-                        self._collect_from_children(body, file_path, symbols, lines, parent=class_name)
+                        self._collect_from_children(
+                            body, file_path, symbols, lines, parent=class_name
+                        )
                     continue
             elif child.type == "lexical_declaration":
                 self._handle_lexical_declaration(child, file_path, symbols, lines)

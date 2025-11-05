@@ -38,7 +38,9 @@ async def health() -> HealthResponse:
 
 @router.get("/tree", response_model=TreeNodeSchema)
 async def get_tree(
-    refresh: bool = Query(False, description="Fuerza un escaneo completo antes de responder."),
+    refresh: bool = Query(
+        False, description="Fuerza un escaneo completo antes de responder."
+    ),
     state: AppState = Depends(get_app_state),
 ) -> TreeNodeSchema:
     """Obtiene el árbol de archivos del proyecto."""
@@ -61,13 +63,17 @@ async def get_file(
 
     summary = state.index.get_file(target_path)
     if summary is None:
-        raise HTTPException(status_code=404, detail="Archivo no encontrado en el índice.")
+        raise HTTPException(
+            status_code=404, detail="Archivo no encontrado en el índice."
+        )
     return serialize_summary(summary, state)
 
 
 @router.get("/search", response_model=SearchResultsSchema)
 async def search(
-    q: str = Query(..., min_length=1, description="Texto a buscar en nombres de símbolos."),
+    q: str = Query(
+        ..., min_length=1, description="Texto a buscar en nombres de símbolos."
+    ),
     state: AppState = Depends(get_app_state),
 ) -> SearchResultsSchema:
     """Busca símbolos en el proyecto."""
@@ -79,7 +85,9 @@ async def _event_stream(state: AppState) -> AsyncIterator[bytes]:
     """Genera un flujo de eventos de cambio."""
     while True:
         try:
-            payload = await asyncio.wait_for(state.event_queue.get(), timeout=KEEPALIVE_SECONDS)
+            payload = await asyncio.wait_for(
+                state.event_queue.get(), timeout=KEEPALIVE_SECONDS
+            )
             data = ChangeNotification(**payload)
             yield f"event: update\ndata: {data.json()}\n\n".encode("utf-8")
         except asyncio.TimeoutError:

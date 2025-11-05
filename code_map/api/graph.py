@@ -49,7 +49,7 @@ async def get_class_graph(
         edge_types=requested,
         module_prefixes={prefix for prefix in module_prefix or [] if prefix},
     )
-    return ClassGraphResponse(**graph)
+    return ClassGraphResponse.model_validate(graph)
 
 
 @router.get("/uml", response_model=UMLDiagramResponse)
@@ -84,7 +84,7 @@ async def get_uml_diagram(
         module_prefixes=prefixes,
         include_external=include_external,
     )
-    return UMLDiagramResponse(**uml)
+    return UMLDiagramResponse.model_validate(uml)
 
 
 @router.get("/uml/svg", response_class=Response)

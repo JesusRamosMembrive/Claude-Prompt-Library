@@ -12,7 +12,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Mapping
 
 from .cache import SnapshotStore
 from .index import SymbolIndex
@@ -40,7 +40,9 @@ logger = logging.getLogger(__name__)
 
 # Application timing constants
 DEFAULT_INSIGHTS_INTERVAL_MINUTES = 60
-LINTERS_MIN_INTERVAL_SECONDS = LINTER_TIMEOUT_FAST  # Default minimum interval between linter runs
+LINTERS_MIN_INTERVAL_SECONDS = (
+    LINTER_TIMEOUT_FAST  # Default minimum interval between linter runs
+)
 MAX_RECENT_CHANGES_TRACKED = 50  # Limit event notifications to avoid memory bloat
 
 VALID_INSIGHTS_FOCUS_SET = {focus.lower() for focus in VALID_INSIGHTS_FOCUS}
@@ -66,6 +68,7 @@ def _parse_int_env(raw: Optional[str]) -> Optional[int]:
 @dataclass
 class AppState:
     """Estado compartido de la aplicación FastAPI."""
+
     settings: AppSettings
     scheduler: ChangeScheduler
     scanner: ProjectScanner = field(init=False)
@@ -82,7 +85,9 @@ class AppState:
         self._scheduler_task: Optional[asyncio.Task[None]] = None
         self._linters_task: Optional[asyncio.Task[None]] = None
         self._linters_pending = False
-        self._linters_disabled = os.environ.get(ENV_DISABLE_LINTERS, "").strip().lower() in {
+        self._linters_disabled = os.environ.get(
+            ENV_DISABLE_LINTERS, ""
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -96,10 +101,14 @@ class AppState:
 
         max_project_files = _parse_int_env(max_files_env)
         max_project_size_mb = _parse_int_env(max_size_env)
-        max_project_bytes = max_project_size_mb * 1024 * 1024 if max_project_size_mb else None
+        max_project_bytes = (
+            max_project_size_mb * 1024 * 1024 if max_project_size_mb else None
+        )
 
         min_interval = _parse_int_env(min_interval_env)
-        self._linters_min_interval = max(0, min_interval or LINTERS_MIN_INTERVAL_SECONDS)
+        self._linters_min_interval = max(
+            0, min_interval or LINTERS_MIN_INTERVAL_SECONDS
+        )
 
         self._linters_options = LinterRunOptions(
             enabled_tools=enabled_tools,
@@ -188,7 +197,9 @@ class AppState:
                     self._schedule_insights_pipeline()
             await asyncio.sleep(self.scheduler.debounce_seconds)
 
-    def _serialize_changes(self, changes: Dict[str, Iterable[Path]]) -> Dict[str, List[str]]:
+    def _serialize_changes(
+        self, changes: Dict[str, Iterable[Path]]
+    ) -> Dict[str, List[str]]:
         """Serializa los cambios para la notificación de eventos."""
         updated = [self.to_relative(path) for path in changes.get("updated", [])]
         deleted = [self.to_relative(path) for path in changes.get("deleted", [])]
@@ -232,12 +243,16 @@ class AppState:
                 return
 
             if self._linters_min_interval and self._linters_last_run is not None:
-                elapsed = (datetime.now(timezone.utc) - self._linters_last_run).total_seconds()
+                elapsed = (
+                    datetime.now(timezone.utc) - self._linters_last_run
+                ).total_seconds()
                 remaining = self._linters_min_interval - elapsed
                 if remaining > 0:
                     self._linters_pending = True
                     if self._linters_timer is None or self._linters_timer.done():
-                        self._linters_timer = asyncio.create_task(self._schedule_linters_pipeline_later(remaining))
+                        self._linters_timer = asyncio.create_task(
+                            self._schedule_linters_pipeline_later(remaining)
+                        )
                     return
 
         self._linters_pending = False
@@ -259,7 +274,9 @@ class AppState:
 
             if status in {CheckStatus.FAIL, CheckStatus.WARN, CheckStatus.SKIPPED}:
                 if status == CheckStatus.FAIL:
-                    severity = Severity.CRITICAL if summary.critical_issues else Severity.HIGH
+                    severity = (
+                        Severity.CRITICAL if summary.critical_issues else Severity.HIGH
+                    )
                     message = (
                         f"{summary.issues_total} incidencias detectadas (críticas: {summary.critical_issues})."
                         if summary.issues_total
@@ -319,7 +336,10 @@ class AppState:
         )
 
     def _insights_interval_seconds(self) -> int:
-        minutes = self.settings.ollama_insights_frequency_minutes or DEFAULT_INSIGHTS_INTERVAL_MINUTES
+        minutes = (
+            self.settings.ollama_insights_frequency_minutes
+            or DEFAULT_INSIGHTS_INTERVAL_MINUTES
+        )
         return max(1, minutes) * 60
 
     def _compute_insights_next_run(self) -> Optional[datetime]:
@@ -327,7 +347,9 @@ class AppState:
             return None
         if self._insights_last_run is None:
             return datetime.now(timezone.utc)
-        return self._insights_last_run + timedelta(seconds=self._insights_interval_seconds())
+        return self._insights_last_run + timedelta(
+            seconds=self._insights_interval_seconds()
+        )
 
     async def _build_insights_context(self) -> str:
         parts: List[str] = []
@@ -349,17 +371,26 @@ class AppState:
 
         # Estado detectado del proyecto (stage)
         try:
-            stage_payload = await compute_stage_status(self.settings.root_path, index=self.index)
+            stage_payload = await compute_stage_status(
+                self.settings.root_path, index=self.index
+            )
         except Exception:  # pragma: no cover
             # Intentional broad exception: stage detection is optional, shouldn't break insights
             stage_payload = None
 
-        detection = stage_payload.get("detection") if isinstance(stage_payload, dict) else None
+        detection_raw: Any = (
+            stage_payload.get("detection") if isinstance(stage_payload, dict) else None
+        )
+        detection: Optional[Mapping[str, Any]] = (
+            detection_raw if isinstance(detection_raw, Mapping) else None
+        )
         if detection and detection.get("available"):
             recommended = detection.get("recommended_stage")
             confidence = detection.get("confidence")
             reasons = detection.get("reasons") or []
-            formatted_reasons = ", ".join(reasons[:3]) if reasons else "sin motivos destacados"
+            formatted_reasons = (
+                ", ".join(reasons[:3]) if reasons else "sin motivos destacados"
+            )
             parts.append(
                 (
                     f"Detección de etapa: Stage {recommended} (confianza {confidence}). "
@@ -387,6 +418,13 @@ class AppState:
             self._insights_timer = None
             return
 
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No event loop available yet (e.g. during import-time in tests).
+            self._insights_pending = True
+            return
+
         if self._insights_task and not self._insights_task.done():
             self._insights_pending = True
             return
@@ -394,18 +432,20 @@ class AppState:
         interval_seconds = self._insights_interval_seconds()
 
         if not force and self._insights_last_run is not None:
-            elapsed = (datetime.now(timezone.utc) - self._insights_last_run).total_seconds()
+            elapsed = (
+                datetime.now(timezone.utc) - self._insights_last_run
+            ).total_seconds()
             remaining = interval_seconds - elapsed
             if remaining > 0:
                 self._insights_pending = True
                 if self._insights_timer is None or self._insights_timer.done():
-                    self._insights_timer = asyncio.create_task(
+                    self._insights_timer = loop.create_task(
                         self._schedule_insights_pipeline_later(remaining)
                     )
                 return
 
         self._insights_pending = False
-        self._insights_task = asyncio.create_task(self._run_insights_pipeline())
+        self._insights_task = loop.create_task(self._run_insights_pipeline())
 
     async def _run_insights_pipeline(self) -> None:
         """Ejecuta el pipeline de insights basado en Ollama."""
@@ -452,7 +492,9 @@ class AppState:
         except Exception:  # pragma: no cover
             # Intentional broad exception: background task must never crash the app
             # Logs error for debugging but allows service to continue
-            logger.exception("Error inesperado al generar insights automáticos con Ollama")
+            logger.exception(
+                "Error inesperado al generar insights automáticos con Ollama"
+            )
             record_notification(
                 channel="insights",
                 severity=Severity.MEDIUM,
@@ -540,9 +582,13 @@ class AppState:
         """Actualiza la configuración de la aplicación."""
         if ollama_insights_frequency_minutes is not None:
             if ollama_insights_frequency_minutes <= 0:
-                raise ValueError("La frecuencia de insights debe ser un entero positivo.")
+                raise ValueError(
+                    "La frecuencia de insights debe ser un entero positivo."
+                )
             if ollama_insights_frequency_minutes > 24 * 60:
-                raise ValueError("La frecuencia de insights no puede superar 1440 minutos.")
+                raise ValueError(
+                    "La frecuencia de insights no puede superar 1440 minutos."
+                )
 
         focus_kwargs: Dict[str, Optional[str]] = {}
         if ollama_insights_focus is not None:
@@ -569,14 +615,20 @@ class AppState:
         )
         updated_fields: List[str] = []
         if new_settings.root_path != self.settings.root_path:
-            if not new_settings.root_path.exists() or not new_settings.root_path.is_dir():
+            if (
+                not new_settings.root_path.exists()
+                or not new_settings.root_path.is_dir()
+            ):
                 raise ValueError("La nueva ruta raíz no es válida o no existe.")
             updated_fields.append("root_path")
         if new_settings.include_docstrings != self.settings.include_docstrings:
             updated_fields.append("include_docstrings")
         if new_settings.exclude_dirs != self.settings.exclude_dirs:
             updated_fields.append("exclude_dirs")
-        if new_settings.ollama_insights_enabled != self.settings.ollama_insights_enabled:
+        if (
+            new_settings.ollama_insights_enabled
+            != self.settings.ollama_insights_enabled
+        ):
             updated_fields.append("ollama_insights_enabled")
         if new_settings.ollama_insights_model != self.settings.ollama_insights_model:
             updated_fields.append("ollama_insights_model")

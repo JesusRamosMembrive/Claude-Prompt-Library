@@ -75,7 +75,7 @@ export function ClassUMLView(): JSX.Element {
   const classCount = data?.classCount ?? 0;
   const svgMarkup = data?.svg ?? null;
   const stats = data?.stats;
-  const classes = data?.classes ?? [];
+  const classes = useMemo(() => data?.classes ?? [], [data?.classes]);
 
   const selectedClass = useMemo(() => {
     if (!selectedClassId) return null;

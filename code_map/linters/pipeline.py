@@ -14,7 +14,7 @@ from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 from xml.etree import ElementTree
 
 from ..scanner import DEFAULT_EXCLUDED_DIRS
@@ -54,7 +54,9 @@ ParsedIssues = Tuple[int, List[IssueDetail]]
 IssueParser = Callable[[str, str], ParsedIssues]
 
 
-def _safe_severity(value: Optional[str], default: Severity = Severity.MEDIUM) -> Severity:
+def _safe_severity(
+    value: Optional[str], default: Severity = Severity.MEDIUM
+) -> Severity:
     if not value:
         return default
     try:
@@ -100,6 +102,14 @@ def _truncate_output(text: str, limit: int = MAX_OUTPUT_TRUNCATE_CHARS) -> str:
     if len(text) <= limit:
         return text
     return text[: limit - 3] + "..."
+
+
+def _ensure_text(data: bytes | str | None) -> str:
+    if data is None:
+        return ""
+    if isinstance(data, bytes):
+        return data.decode("utf-8", errors="replace")
+    return data
 
 
 def _parse_ruff(stdout: str, _: str) -> ParsedIssues:
@@ -262,7 +272,9 @@ def _check_max_file_length(
         max_lines = max(max_lines, line_count)
         if line_count <= threshold:
             continue
-        severity = Severity.CRITICAL if line_count >= critical_threshold else Severity.HIGH
+        severity = (
+            Severity.CRITICAL if line_count >= critical_threshold else Severity.HIGH
+        )
         violations.append(
             IssueDetail(
                 message=f"{path.relative_to(root)} tiene {line_count} líneas.",
@@ -287,7 +299,11 @@ def _check_max_file_length(
         }
         return result, metrics
 
-    status = CheckStatus.FAIL if any(item.severity == Severity.CRITICAL for item in violations) else CheckStatus.WARN
+    status = (
+        CheckStatus.FAIL
+        if any(item.severity == Severity.CRITICAL for item in violations)
+        else CheckStatus.WARN
+    )
     result = CustomRuleResult(
         key="max_file_length",
         name="Longitud máxima de archivo",
@@ -305,7 +321,9 @@ def _check_max_file_length(
     return result, metrics
 
 
-def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[CoverageSnapshot]]:
+def _execute_tool(
+    root: Path, spec: ToolSpec
+) -> Tuple[ToolRunResult, Optional[CoverageSnapshot]]:
     base_command = list(spec.command)
     binary = base_command[0]
     effective_command = base_command
@@ -340,6 +358,8 @@ def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[C
         duration_ms = int((time.perf_counter() - start) * 1000)
         message = f"Ejecución excedió el timeout ({spec.timeout}s)."
         issue = IssueDetail(message=message, severity=Severity.HIGH)
+        stdout_excerpt = _truncate_output(_ensure_text(exc.stdout))
+        stderr_excerpt = _truncate_output(_ensure_text(exc.stderr))
         return (
             ToolRunResult(
                 key=spec.key,
@@ -350,16 +370,16 @@ def _execute_tool(root: Path, spec: ToolSpec) -> Tuple[ToolRunResult, Optional[C
                 exit_code=None,
                 issues_found=1,
                 issues_sample=[issue],
-                stdout_excerpt=_truncate_output(exc.stdout or ""),
-                stderr_excerpt=_truncate_output(exc.stderr or ""),
+                stdout_excerpt=stdout_excerpt,
+                stderr_excerpt=stderr_excerpt,
             ),
             None,
         )
 
     duration_ms = int((time.perf_counter() - start) * 1000)
     returncode = completed.returncode
-    stdout = completed.stdout or ""
-    stderr = completed.stderr or ""
+    stdout = _ensure_text(completed.stdout)
+    stderr = _ensure_text(completed.stderr)
     parser = spec.parser or _default_parser
 
     issues_found = 0
@@ -422,15 +442,21 @@ def _aggregate_summary(
     custom_rules: List[CustomRuleResult],
 ) -> Tuple[ReportSummary, ChartData, Dict[str, float], Counter]:
     total_checks = len(tools) + len(custom_rules)
-    checks_passed = sum(1 for item in tools + custom_rules if item.status == CheckStatus.PASS)
-    checks_warned = sum(1 for item in tools + custom_rules if item.status == CheckStatus.WARN)
+    checks_passed = sum(
+        1 for item in tools + custom_rules if item.status == CheckStatus.PASS
+    )
+    checks_warned = sum(
+        1 for item in tools + custom_rules if item.status == CheckStatus.WARN
+    )
     checks_failed = sum(
         1
         for item in tools + custom_rules
         if item.status in {CheckStatus.FAIL, CheckStatus.ERROR}
     )
 
-    issues_total = sum(tool.issues_found for tool in tools) + sum(len(rule.violations) for rule in custom_rules)
+    issues_total = sum(tool.issues_found for tool in tools) + sum(
+        len(rule.violations) for rule in custom_rules
+    )
     severity_counter: Counter[Severity] = Counter()
     issues_by_tool: Dict[str, int] = {}
     top_candidates: List[str] = []
@@ -451,7 +477,10 @@ def _aggregate_summary(
 
     critical_issues = severity_counter[Severity.CRITICAL]
 
-    if any(item.status in {CheckStatus.FAIL, CheckStatus.ERROR} for item in tools + custom_rules):
+    if any(
+        item.status in {CheckStatus.FAIL, CheckStatus.ERROR}
+        for item in tools + custom_rules
+    ):
         overall_status = CheckStatus.FAIL
     elif any(item.status == CheckStatus.WARN for item in tools + custom_rules):
         overall_status = CheckStatus.WARN
@@ -494,7 +523,9 @@ def _aggregate_summary(
     return summary, chart_data, metrics, severity_counter
 
 
-def run_linters_pipeline(root: Path, options: Optional[LinterRunOptions] = None) -> LintersReport:
+def run_linters_pipeline(
+    root: Path, options: Optional[LinterRunOptions] = None
+) -> LintersReport:
     """Ejecuta las herramientas estándar y devuelve un reporte completo."""
     resolved_root = Path(root).expanduser().resolve()
     start = time.perf_counter()
@@ -506,9 +537,14 @@ def run_linters_pipeline(root: Path, options: Optional[LinterRunOptions] = None)
             reason="No hay herramientas de linters habilitadas. Ajusta CODE_MAP_LINTERS_TOOLS para ejecutar el pipeline.",
         )
 
-    if options and (options.max_project_files is not None or options.max_project_bytes is not None):
+    if options and (
+        options.max_project_files is not None or options.max_project_bytes is not None
+    ):
         stats = _collect_project_stats(resolved_root)
-        if options.max_project_files is not None and stats["files"] > options.max_project_files:
+        if (
+            options.max_project_files is not None
+            and stats["files"] > options.max_project_files
+        ):
             return _build_skipped_report(
                 resolved_root,
                 reason=(
@@ -517,7 +553,10 @@ def run_linters_pipeline(root: Path, options: Optional[LinterRunOptions] = None)
                 ),
                 stats=stats,
             )
-        if options.max_project_bytes is not None and stats["bytes"] > options.max_project_bytes:
+        if (
+            options.max_project_bytes is not None
+            and stats["bytes"] > options.max_project_bytes
+        ):
             limit_mb = options.max_project_bytes / (1024 * 1024)
             total_mb = stats["bytes"] / (1024 * 1024)
             return _build_skipped_report(
@@ -540,15 +579,21 @@ def run_linters_pipeline(root: Path, options: Optional[LinterRunOptions] = None)
     custom_rule, custom_metrics = _check_max_file_length(resolved_root)
     custom_rules = [custom_rule]
 
-    summary, chart_data, metrics, severity_counter = _aggregate_summary(tool_results, custom_rules)
+    summary, chart_data, metrics, severity_counter = _aggregate_summary(
+        tool_results, custom_rules
+    )
     pipeline_duration_ms = int((time.perf_counter() - start) * 1000)
     files_scanned_val = custom_metrics.get("files_scanned")
     lines_scanned_val = custom_metrics.get("lines_scanned")
     summary = replace(
         summary,
         duration_ms=pipeline_duration_ms,
-        files_scanned=int(files_scanned_val) if files_scanned_val else summary.files_scanned,
-        lines_scanned=int(lines_scanned_val) if lines_scanned_val else summary.lines_scanned,
+        files_scanned=(
+            int(files_scanned_val) if files_scanned_val else summary.files_scanned
+        ),
+        lines_scanned=(
+            int(lines_scanned_val) if lines_scanned_val else summary.lines_scanned
+        ),
     )
     metrics["pipeline_duration_ms"] = float(pipeline_duration_ms)
     metrics["issues_total"] = float(summary.issues_total)
@@ -611,7 +656,9 @@ def _collect_project_stats(root: Path) -> Dict[str, float]:
     return {"files": float(total_files), "bytes": float(total_bytes)}
 
 
-def _build_skipped_report(root: Path, reason: str, *, stats: Optional[Dict[str, float]] = None) -> LintersReport:
+def _build_skipped_report(
+    root: Path, reason: str, *, stats: Optional[Dict[str, float]] = None
+) -> LintersReport:
     resolved_root = Path(root).expanduser().resolve()
     now = datetime.now(timezone.utc)
     summary = ReportSummary(
@@ -624,7 +671,7 @@ def _build_skipped_report(root: Path, reason: str, *, stats: Optional[Dict[str, 
         issues_total=0,
         critical_issues=0,
     )
-    metrics = {"skip_reason": reason}
+    metrics: Dict[str, float] = {}
     if stats:
         metrics.update({f"project_{key}": value for key, value in stats.items()})
 
