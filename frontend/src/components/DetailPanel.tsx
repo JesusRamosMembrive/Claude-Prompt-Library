@@ -62,10 +62,10 @@ export function DetailPanel(): JSX.Element {
     return (
       <section className="panel">
         <div className="placeholder">
-          <h3>Selecciona un archivo</h3>
+          <h3>Select a file</h3>
           <p>
-            Haz clic sobre un archivo en el árbol para ver sus clases, métodos y
-            funciones. Cuando añadas docstrings aparecerán como descripción.
+            Click a file in the tree to see its classes, methods, and functions. Any docstrings you
+            add will appear as descriptions.
           </p>
         </div>
       </section>
@@ -76,7 +76,7 @@ export function DetailPanel(): JSX.Element {
     return (
       <section className="panel">
         <p style={{ color: "#7f869d" }}>
-          Cargando símbolos de <strong>{selectedPath}</strong>…
+          Loading symbols for <strong>{selectedPath}</strong>…
         </p>
       </section>
     );
@@ -86,8 +86,8 @@ export function DetailPanel(): JSX.Element {
     return (
       <section className="panel">
         <div className="error-banner">
-          Error al cargar <strong>{selectedPath}</strong>:{" "}
-          {(error as Error)?.message ?? "intenta de nuevo"}
+          Error loading <strong>{selectedPath}</strong>:{" "}
+          {(error as Error)?.message ?? "try again"}
         </div>
       </section>
     );
@@ -97,7 +97,7 @@ export function DetailPanel(): JSX.Element {
     return (
       <section className="panel">
         <p style={{ color: "#7f869d" }}>
-          No hay información disponible para <strong>{selectedPath}</strong>.
+          No information available for <strong>{selectedPath}</strong>.
         </p>
       </section>
     );
@@ -112,12 +112,12 @@ export function DetailPanel(): JSX.Element {
         <div>
           <h2>{selectedPath}</h2>
           <div className="detail-meta">
-            Última modificación: {modified} · {data.symbols.length} símbolos
+            Last modified: {modified} · {data.symbols.length} symbols
           </div>
         </div>
         {data.errors.length > 0 && (
           <span className="badge" style={{ background: "rgba(249, 115, 22, 0.18)", color: "#f9a84b" }}>
-            {data.errors.length} errores
+            {data.errors.length} errors
           </span>
         )}
       </div>
@@ -127,7 +127,7 @@ export function DetailPanel(): JSX.Element {
           {data.errors.map((issue, index) => (
             <div key={`${issue.message}-${index}`}>
               {issue.message}
-              {issue.lineno != null ? ` · línea ${issue.lineno}` : ""}
+              {issue.lineno != null ? ` · line ${issue.lineno}` : ""}
             </div>
           ))}
         </div>
@@ -138,8 +138,8 @@ export function DetailPanel(): JSX.Element {
           <div className="symbol-title">
             {symbol.name}
             <span className="symbol-meta">
-              <span>línea {symbol.lineno}</span>
-              <span>{methods.length} métodos</span>
+              <span>line {symbol.lineno}</span>
+              <span>{methods.length} methods</span>
             </span>
           </div>
           {symbol.docstring && (
@@ -149,7 +149,7 @@ export function DetailPanel(): JSX.Element {
             {methods.map((method) => (
               <li key={method.name}>
                 <span>
-                  {method.parent}.{method.name} (línea {method.lineno})
+                  {method.parent}.{method.name} (line {method.lineno})
                 </span>
                 {method.docstring && (
                   <span className="symbol-method-doc">
@@ -167,15 +167,15 @@ export function DetailPanel(): JSX.Element {
           <div className="symbol-title">
             {fn.name}
             <span className="symbol-meta">
-              <span>línea {fn.lineno}</span>
-              <span>función</span>
+              <span>line {fn.lineno}</span>
+              <span>function</span>
             </span>
           </div>
           {fn.docstring ? (
             <p className="symbol-doc">{formatDocstring(fn.docstring)}</p>
           ) : (
             <p className="symbol-doc" style={{ opacity: 0.65 }}>
-              Sin docstring
+              No docstring
             </p>
           )}
         </article>
@@ -183,10 +183,10 @@ export function DetailPanel(): JSX.Element {
 
       {grouped.classes.length === 0 && grouped.functions.length === 0 && (
         <div className="placeholder">
-          <h3>Archivo sin símbolos exportables</h3>
+          <h3>File without exportable symbols</h3>
           <p>
-            Añade funciones o clases de nivel superior para visualizarlas aquí. Los
-            métodos se agrupan automáticamente bajo su clase correspondiente.
+            Add top-level functions or classes to visualize them here. Methods are automatically
+            grouped under their class.
           </p>
         </div>
       )}
@@ -194,7 +194,7 @@ export function DetailPanel(): JSX.Element {
       {selectedPath && (
         <div className="preview-container">
           <h3 style={{ margin: "0 0 8px", color: "#7f869d", fontSize: "13px" }}>
-            Previsualización
+            Preview
           </h3>
           <PreviewPane path={selectedPath} />
         </div>

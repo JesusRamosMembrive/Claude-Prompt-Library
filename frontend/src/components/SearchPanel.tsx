@@ -19,16 +19,16 @@ export function SearchPanel(): JSX.Element {
 
   return (
     <div>
-      <h2>Búsqueda</h2>
+      <h2>Search</h2>
       <div className="search-box">
-        <span role="img" aria-label="Buscar">
+        <span role="img" aria-label="Search">
           🔍
         </span>
         <input
           type="search"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
-          placeholder="Buscar símbolos (mínimo 2 caracteres)…"
+          placeholder="Search symbols (minimum 2 characters)…"
         />
       </div>
 
@@ -36,15 +36,15 @@ export function SearchPanel(): JSX.Element {
         <>
           {isError && (
             <div className="error-banner">
-              Error al buscar: {(error as Error)?.message ?? "intenta de nuevo"}
+              Search error: {(error as Error)?.message ?? "try again"}
             </div>
           )}
           {isFetching && (
-            <p style={{ color: "#7f869d", fontSize: "13px" }}>Buscando…</p>
+            <p style={{ color: "#7f869d", fontSize: "13px" }}>Searching…</p>
           )}
           {!isFetching && results.length === 0 && (
             <p style={{ color: "#7f869d", fontSize: "13px" }}>
-              No se encontraron símbolos que coincidan con “{term}”.
+              No symbols match “{term}”.
             </p>
           )}
           {!isFetching && results.length > 0 && (

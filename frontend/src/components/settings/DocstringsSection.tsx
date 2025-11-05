@@ -11,25 +11,23 @@ export function DocstringsSection({
 }: DocstringsSectionProps): JSX.Element {
   return (
     <section className="settings-card">
-      <h2>Visualización</h2>
-      <p>Ajusta cómo se muestran los símbolos en la interfaz.</p>
+      <h2>Display</h2>
+      <p>Adjust how symbols are shown in the interface.</p>
       <div className="setting-row">
         <div className="setting-info">
-          <strong>Modo de símbolos</strong>
-          <span>Agrupación principal para el explorador.</span>
+          <strong>Symbol mode</strong>
+          <span>Primary grouping for the explorer.</span>
         </div>
         <div className="setting-controls">
           <select value="tree" disabled>
-            <option value="tree">Carpeta → archivo → símbolo</option>
+            <option value="tree">Folder → file → symbol</option>
           </select>
         </div>
       </div>
       <div className="toggle-row">
         <div>
-          <strong>Mostrar docstrings</strong>
-          <span>
-            Controla si el analizador extrae docstrings para mostrarlos en la UI.
-          </span>
+          <strong>Show docstrings</strong>
+          <span>Controls whether the analyzer extracts docstrings for the UI.</span>
         </div>
         <input
           type="checkbox"
@@ -40,8 +38,8 @@ export function DocstringsSection({
       </div>
       <div className="toggle-row">
         <div>
-          <strong>Tema oscuro</strong>
-          <span>Activa la paleta actual del workspace.</span>
+          <strong>Dark theme</strong>
+          <span>Reflects the workspace's current palette.</span>
         </div>
         <input type="checkbox" checked readOnly />
       </div>

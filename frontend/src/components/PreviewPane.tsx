@@ -22,13 +22,13 @@ export function PreviewPane({ path }: PreviewPaneProps): JSX.Element | null {
   }
 
   if (previewQuery.isLoading) {
-    return <p style={{ color: "#7f869d", fontSize: "13px" }}>Cargando vista previa…</p>;
+    return <p style={{ color: "#7f869d", fontSize: "13px" }}>Loading preview…</p>;
   }
 
   if (previewQuery.isError) {
     return (
       <div className="error-banner">
-        No se pudo cargar la previsualización: {String(previewQuery.error)}
+        Could not load the preview: {String(previewQuery.error)}
       </div>
     );
   }
@@ -44,7 +44,7 @@ export function PreviewPane({ path }: PreviewPaneProps): JSX.Element | null {
         className="preview-frame"
         sandbox="allow-scripts allow-same-origin"
         srcDoc={content}
-        title={`Vista previa de ${path}`}
+        title={`Preview of ${path}`}
       />
     );
   }
@@ -59,7 +59,7 @@ export function PreviewPane({ path }: PreviewPaneProps): JSX.Element | null {
 
   return (
     <p className="preview-fallback">
-      No hay previsualización disponible para este tipo de archivo ({contentType || "desconocido"}).
+      No preview available for this file type ({contentType || "unknown"}).
     </p>
   );
 }

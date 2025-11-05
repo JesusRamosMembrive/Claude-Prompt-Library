@@ -12,8 +12,8 @@ import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 
 const AGENT_OPTIONS: { value: StageAgentSelection; label: string }[] = [
   { value: "both", label: "Claude + Codex" },
-  { value: "claude", label: "Solo Claude" },
-  { value: "codex", label: "Solo Codex" },
+  { value: "claude", label: "Claude only" },
+  { value: "codex", label: "Codex only" },
 ];
 
 function formatList(values: string[]): JSX.Element {
@@ -43,13 +43,13 @@ function AgentStatusCard({
         <header>
           <h3>{title}</h3>
         </header>
-        <p>No se pudo obtener el estado.</p>
+        <p>Unable to retrieve status.</p>
       </article>
     );
   }
 
   const badgeClass = status.installed ? "stage-badge success" : "stage-badge warn";
-  const badgeLabel = status.installed ? "Instalado" : "Faltan elementos";
+  const badgeLabel = status.installed ? "Installed" : "Missing items";
 
   return (
     <article className="stage-card">
@@ -58,22 +58,22 @@ function AgentStatusCard({
         <span className={badgeClass}>{badgeLabel}</span>
       </header>
       <section>
-        <h4>Archivos presentes</h4>
+        <h4>Present files</h4>
         {formatList(status.present)}
       </section>
       <section>
-        <h4>Archivos faltantes</h4>
+        <h4>Missing files</h4>
         {formatList(status.missing)}
       </section>
       {status.optional && status.optional.expected.length > 0 ? (
         <section>
-          <h4>Opcionales</h4>
+          <h4>Optional files</h4>
           {status.optional.missing.length === 0 ? (
-            <p className="stage-optional">Todos los opcionales están presentes.</p>
+            <p className="stage-optional">All optional files are present.</p>
           ) : (
             <>
               <p className="stage-optional">
-                Opcionales recomendados pero no estrictamente necesarios:
+                Recommended optional files that are not strictly required:
               </p>
               {formatList(status.optional.missing)}
             </>
@@ -89,27 +89,27 @@ function DocsStatusCard({ status }: { status: DocsStatus | undefined }): JSX.Ele
     return (
       <article className="stage-card">
         <header>
-          <h3>Documentación</h3>
+          <h3>Documentation</h3>
         </header>
-        <p>No se pudo comprobar la carpeta docs/.</p>
+        <p>Could not inspect the docs/ folder.</p>
       </article>
     );
   }
   const badgeClass = status.complete ? "stage-badge success" : "stage-badge warn";
-  const badgeLabel = status.complete ? "Completa" : "Faltan archivos";
+  const badgeLabel = status.complete ? "Complete" : "Missing files";
 
   return (
     <article className="stage-card">
       <header>
-        <h3>Documentación</h3>
+        <h3>Documentation</h3>
         <span className={badgeClass}>{badgeLabel}</span>
       </header>
       <section>
-        <h4>Presentes</h4>
+        <h4>Present</h4>
         {formatList(status.present)}
       </section>
       <section>
-        <h4>Faltantes</h4>
+        <h4>Missing</h4>
         {formatList(status.missing)}
       </section>
     </article>
@@ -126,10 +126,10 @@ function StageDetectionCard({ detection }: { detection: StageDetectionStatus | u
     return (
       <article className="stage-card">
         <header>
-          <h3>Detección de etapa</h3>
-          <span className="stage-badge warn">No disponible</span>
+          <h3>Stage detection</h3>
+          <span className="stage-badge warn">Unavailable</span>
         </header>
-        <p>{error ?? "No se pudo evaluar la etapa del proyecto."}</p>
+        <p>{error ?? "The project stage could not be evaluated."}</p>
       </article>
     );
   }
@@ -137,21 +137,21 @@ function StageDetectionCard({ detection }: { detection: StageDetectionStatus | u
   return (
     <article className="stage-card stage-detection">
       <header>
-        <h3>Detección de etapa</h3>
+        <h3>Stage detection</h3>
         <span className="stage-badge success">
           Stage {recommended_stage} · {confidence?.toUpperCase() ?? "N/A"}
         </span>
       </header>
       {checked_at ? (
-        <p className="stage-meta">Última evaluación: {new Date(checked_at).toLocaleString()}</p>
+        <p className="stage-meta">Last check: {new Date(checked_at).toLocaleString()}</p>
       ) : null}
       <section>
-        <h4>Motivos destacados</h4>
+        <h4>Key reasons</h4>
         {formatList(reasons)}
       </section>
       {metrics ? (
         <section>
-          <h4>Métricas</h4>
+          <h4>Metrics</h4>
           <dl className="stage-metrics">
             {Object.entries(metrics).map(([key, value]) => (
               <div key={key}>
@@ -194,10 +194,10 @@ export function StageToolkitView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Estado del proyecto Stage-Aware</h2>
+            <h2>Stage-Aware project status</h2>
             <p>
-              Revisa si los archivos clave para Claude Code y Codex CLI están presentes en el
-              workspace actual.
+              Check whether the key files for Claude Code and Codex CLI are present in the current
+              workspace.
             </p>
           </div>
           <button
@@ -206,15 +206,15 @@ export function StageToolkitView(): JSX.Element {
             onClick={() => statusQuery.refetch()}
             disabled={statusQuery.isFetching}
           >
-            {statusQuery.isFetching ? "Verificando…" : "Volver a verificar"}
+            {statusQuery.isFetching ? "Checking…" : "Check again"}
           </button>
         </header>
 
         {statusQuery.isLoading ? (
-          <p className="stage-info">Cargando estado…</p>
+          <p className="stage-info">Loading status…</p>
         ) : statusQuery.isError ? (
           <p className="stage-error">
-            No se pudo obtener el estado. {String(statusQuery.error)}
+            Could not fetch status. {String(statusQuery.error)}
           </p>
         ) : (
           <div className="stage-status-grid">
@@ -228,22 +228,21 @@ export function StageToolkitView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Ollama y recomendaciones</h2>
+            <h2>Ollama and recommendations</h2>
             <p>
-              La configuración del servicio Ollama y el historial de insights ahora viven en una
-              página dedicada.
+              Ollama service configuration and the insight history now live on a dedicated page.
             </p>
           </div>
         </header>
 
         <article className="stage-card">
           <p>
-            Visita la pestaña <Link to="/ollama">Ollama</Link> para iniciar el servidor, probar
-            modelos y gestionar las recomendaciones automáticas generadas por Ollama.
+            Visit the <Link to="/ollama">Ollama</Link> tab to start the server, test models, and
+            manage automatically generated recommendations.
           </p>
           <p className="stage-hint">
-            Desde allí podrás ajustar el modelo, la frecuencia, lanzar análisis manuales y revisar
-            el historial reciente de insights.
+            From there you can adjust the model and cadence, launch manual analyses, and review the
+            latest insights.
           </p>
         </article>
       </section>
@@ -251,17 +250,17 @@ export function StageToolkitView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Inicializar o reinstalar instrucciones</h2>
+            <h2>Initialize or reinstall instructions</h2>
             <p>
-              Ejecuta <code>init_project.py --existing</code> (puedes añadir <code>--dry-run</code>
-              para ensayar) sobre el workspace actual con los agentes seleccionados.
+              Run <code>init_project.py --existing</code> (optionally add <code>--dry-run</code> to
+              simulate) against the current workspace with the selected agents.
             </p>
           </div>
         </header>
 
         <div className="stage-actions">
           <label className="stage-radio-group-title" htmlFor="agent-selection">
-            Agentes
+            Agents
           </label>
           <div className="stage-radio-group" id="agent-selection">
             {AGENT_OPTIONS.map((option) => (
@@ -284,7 +283,7 @@ export function StageToolkitView(): JSX.Element {
             onClick={handleStageInit}
             disabled={initMutation.isPending}
           >
-            {initMutation.isPending ? "Ejecutando…" : `Inicializar (${currentAgentLabel})`}
+            {initMutation.isPending ? "Running…" : `Initialize (${currentAgentLabel})`}
           </button>
         </div>
 
@@ -293,11 +292,11 @@ export function StageToolkitView(): JSX.Element {
 
       <section className="stage-section">
         {statusQuery.isLoading ? (
-          <p className="stage-info">Calculando detección de etapa…</p>
+          <p className="stage-info">Calculating stage detection…</p>
         ) : stageStatus ? (
           <StageDetectionCard detection={stageStatus.detection} />
         ) : (
-          <p className="stage-info">No se pudo obtener el estado del proyecto.</p>
+          <p className="stage-info">Unable to retrieve project status.</p>
         )}
       </section>
 
@@ -305,16 +304,16 @@ export function StageToolkitView(): JSX.Element {
         <section className="stage-section">
           <header className="stage-section-header">
             <div>
-              <h2>Salida de init_project.py</h2>
+              <h2>init_project.py output</h2>
               <p>
-                Comando ejecutado: <code>{initResult.command.join(" ")}</code>
+                Command: <code>{initResult.command.join(" ")}</code>
               </p>
             </div>
           </header>
           {stdout ? (
             <pre className="stage-output">{stdout}</pre>
           ) : (
-            <p className="stage-info">No hubo salida en stdout.</p>
+            <p className="stage-info">No stdout output.</p>
           )}
           {stderr ? <pre className="stage-output error">{stderr}</pre> : null}
         </section>

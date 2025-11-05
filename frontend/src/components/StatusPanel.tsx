@@ -23,8 +23,8 @@ export function StatusPanel({
   if (statusQuery.isLoading) {
     return (
       <div>
-        <h2>Estado</h2>
-        <p style={{ color: "#7f869d", fontSize: "13px" }}>Cargando estado…</p>
+        <h2>Status</h2>
+        <p style={{ color: "#7f869d", fontSize: "13px" }}>Loading status…</p>
       </div>
     );
   }
@@ -32,9 +32,9 @@ export function StatusPanel({
   if (statusQuery.isError || !status) {
     return (
       <div>
-        <h2>Estado</h2>
+        <h2>Status</h2>
         <div className="error-banner">
-          No se pudo obtener el estado actual del backend.
+          Could not retrieve the current backend status.
         </div>
       </div>
     );
@@ -42,34 +42,34 @@ export function StatusPanel({
 
   return (
     <div className="status-panel">
-      <h2>Estado</h2>
+      <h2>Status</h2>
       <dl className="status-grid">
         <div>
           <dt>Watcher</dt>
-          <dd>{status.watcher_active ? "Activo" : "Inactivo"}</dd>
+          <dd>{status.watcher_active ? "Active" : "Inactive"}</dd>
         </div>
         <div>
           <dt>Docstrings</dt>
-          <dd>{status.include_docstrings ? "Incluidos" : "Ocultos"}</dd>
+          <dd>{status.include_docstrings ? "Included" : "Hidden"}</dd>
         </div>
         <div>
-          <dt>Archivos</dt>
+          <dt>Files</dt>
           <dd>{status.files_indexed}</dd>
         </div>
         <div>
-          <dt>Símbolos</dt>
+          <dt>Symbols</dt>
           <dd>{status.symbols_indexed}</dd>
         </div>
         <div>
-          <dt>Último escaneo</dt>
+          <dt>Last scan</dt>
           <dd>{formatRelative(status.last_full_scan)}</dd>
         </div>
         <div>
-          <dt>Último evento</dt>
+          <dt>Last event</dt>
           <dd>{formatRelative(status.last_event_batch)}</dd>
         </div>
         <div>
-          <dt>Pendientes</dt>
+          <dt>Pending</dt>
           <dd>{status.pending_events}</dd>
         </div>
       </dl>
@@ -83,18 +83,18 @@ function CapabilitySummary({ capabilities }: { capabilities: AnalyzerCapability[
   if (!capabilities || capabilities.length === 0) {
     return (
       <div className="capability-summary">
-        <p className="capability-helper">Sin información de dependencias opcionales.</p>
+        <p className="capability-helper">No information about optional dependencies.</p>
       </div>
     );
   }
 
   return (
     <div className="capability-summary">
-      <h3>Analizadores</h3>
+      <h3>Analyzers</h3>
       <ul>
         {capabilities.map((cap) => {
           const downgraded = !cap.available;
-          const badge = downgraded ? "Degradado" : "Activo";
+          const badge = downgraded ? "Degraded" : "Active";
           return (
             <li key={cap.key}>
               <div>
@@ -106,7 +106,7 @@ function CapabilitySummary({ capabilities }: { capabilities: AnalyzerCapability[
               </span>
               {downgraded && (
                 <p className="capability-warning">
-                  {cap.dependency ? `Instala ${cap.dependency}` : "Dependencia faltante"}
+                  {cap.dependency ? `Install ${cap.dependency}` : "Missing dependency"}
                   {cap.error ? ` · ${cap.error}` : ""}
                 </p>
               )}

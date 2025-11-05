@@ -32,40 +32,39 @@ export function Sidebar(): JSX.Element {
   return (
     <aside className="panel">
       <div className="panel-header">
-        <h2>Proyecto</h2>
+        <h2>Project</h2>
         {selectedPath && (
           <button type="button" onClick={clearSelection}>
-            Limpiar selección
+            Clear selection
           </button>
         )}
       </div>
 
       <div className="search-box">
-        <span role="img" aria-label="Filtrar">
+        <span role="img" aria-label="Filter">
           🔎
         </span>
         <input
           type="search"
-          placeholder="Filtrar archivos…"
+          placeholder="Filter files…"
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
         />
       </div>
 
-      {isLoading && <p style={{ color: "#7f869d" }}>Cargando estructura…</p>}
+      {isLoading && <p style={{ color: "#7f869d" }}>Loading structure…</p>}
 
       {isError && (
         <div className="error-banner">
-          Error al cargar el árbol:{" "}
-          {(error as Error)?.message ?? "intenta recargar la página"}
+          Error loading the tree: {(error as Error)?.message ?? "try reloading the page"}
         </div>
       )}
 
       {!isLoading && !isError && nodes.length === 0 && (
         <p style={{ color: "#7f869d", fontSize: "13px" }}>
           {filter
-            ? `No hay resultados para “${filter}”.`
-            : "No se detectaron archivos Python. Añade `.py` al directorio raíz para comenzar."}
+            ? `No results for “${filter}”.`
+            : "No Python files detected. Add `.py` to the root directory to get started."}
         </p>
       )}
 
@@ -125,7 +124,7 @@ function TreeNodeItem({
         {isDirectory ? (
           <span className="badge">{node.children?.length ?? 0}</span>
         ) : symbolCount > 0 ? (
-          <span className="badge">{symbolCount} símbolos</span>
+          <span className="badge">{symbolCount} symbols</span>
         ) : null}
       </div>
       {isDirectory && expanded && node.children?.length ? (

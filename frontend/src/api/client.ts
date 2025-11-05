@@ -280,7 +280,7 @@ export function getOllamaStatus(): Promise<OllamaStatusPayload> {
 }
 
 /**
- * Solicita al backend iniciar el servidor Ollama.
+ * Requests the backend to start the Ollama server.
  */
 export async function startOllama(payload: OllamaStartPayload): Promise<OllamaStartResponse> {
   const response = await fetch(buildUrl("/integrations/ollama/start"), {
@@ -292,7 +292,7 @@ export async function startOllama(payload: OllamaStartPayload): Promise<OllamaSt
   });
 
   if (!response.ok) {
-    let detailMessage = `No se pudo iniciar Ollama (${response.status})`;
+    let detailMessage = `Could not start Ollama (${response.status})`;
     const body = await response.text().catch(() => "");
     if (body) {
       try {
@@ -302,7 +302,7 @@ export async function startOllama(payload: OllamaStartPayload): Promise<OllamaSt
           detailMessage = String(candidate.message);
         }
       } catch {
-        // sin acción, mantenemos mensaje genérico
+        // No-op, keep the generic message.
       }
     }
     throw new Error(detailMessage);
@@ -312,7 +312,7 @@ export async function startOllama(payload: OllamaStartPayload): Promise<OllamaSt
 }
 
 /**
- * Ejecuta una petición de chat simple contra Ollama para comprobar conectividad.
+ * Runs a simple chat request against Ollama to verify connectivity.
  */
 export async function testOllamaChat(payload: OllamaTestPayload): Promise<OllamaTestResponse> {
   const response = await fetch(buildUrl("/integrations/ollama/test"), {
@@ -335,7 +335,7 @@ export async function testOllamaChat(payload: OllamaTestPayload): Promise<Ollama
           detail = candidate as OllamaTestErrorDetail;
         }
       } catch {
-        // Ignorar errores de parseo, enviamos mensaje genérico.
+        // Ignore parse errors, fall back to generic message.
       }
     }
 
@@ -345,14 +345,14 @@ export async function testOllamaChat(payload: OllamaTestPayload): Promise<Ollama
   }
 
   if (!bodyText) {
-    throw new OllamaTestError("Respuesta vacía de Ollama.", response.status);
+    throw new OllamaTestError("Empty response from Ollama.", response.status);
   }
 
   try {
     return JSON.parse(bodyText) as OllamaTestResponse;
   } catch {
     throw new OllamaTestError(
-      "Respuesta inválida del servidor al parsear JSON.",
+      "Invalid server response while parsing JSON.",
       response.status
     );
   }

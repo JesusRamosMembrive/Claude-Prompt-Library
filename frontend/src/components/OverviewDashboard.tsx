@@ -4,15 +4,15 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { StatusPayload } from "../api/types";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useLintersLatestReport } from "../hooks/useLintersLatestReport";
-import { RescanButton } from "./RescanButton";
+import { useOllamaInsightsQuery } from "../hooks/useOllamaInsightsQuery";
 
 const LINTER_STATUS_LABEL: Record<string, string> = {
   pass: "OK",
-  warn: "Advertencias",
-  fail: "Con fallos",
-  skipped: "Omitido",
+  warn: "Warnings",
+  fail: "Failing",
+  skipped: "Skipped",
   error: "Error",
-  default: "Sin datos",
+  default: "No data",
 };
 
 const LINTER_STATUS_TONE: Record<string, "success" | "warn" | "danger" | "neutral"> = {
@@ -29,7 +29,7 @@ function formatDateTime(value?: string | null): string {
     return "—";
   }
   try {
-    return new Date(value).toLocaleString("es-ES");
+    return new Date(value).toLocaleString("en-US");
   } catch {
     return value;
   }
@@ -40,7 +40,7 @@ function formatDuration(ms?: number | null): string {
     return "—";
   }
   if (ms < 1000) {
-    return `${ms.toLocaleString("es-ES")} ms`;
+    return `${ms.toLocaleString("en-US")} ms`;
   }
   const seconds = ms / 1000;
   if (seconds < 60) {
@@ -52,10 +52,7 @@ function formatDuration(ms?: number | null): string {
 }
 
 function truncatePath(path: string): string {
-  if (path.length <= 60) {
-    return path;
-  }
-  return `…${path.slice(path.length - 57)}`;
+  return path;
 }
 
 interface OverviewDashboardProps {
@@ -65,31 +62,56 @@ interface OverviewDashboardProps {
 export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.Element {
   const stageStatusQuery = useStageStatusQuery();
   const lintersQuery = useLintersLatestReport();
+  const ollamaInsightsQuery = useOllamaInsightsQuery(5);
 
   const statusData = statusQuery.data;
   const rootPath = statusData?.absolute_root ?? statusData?.root_path ?? "—";
   const formattedRoot = truncatePath(rootPath);
   const watcherActive = statusData?.watcher_active ?? false;
+  const filesIndexed = statusData?.files_indexed ?? 0;
+  const lastFullScanLabel = statusData?.last_full_scan
+    ? formatDateTime(statusData.last_full_scan)
+    : "No scans yet";
 
   const detection = stageStatusQuery.data?.detection;
   const detectionAvailable = detection?.available ?? false;
+  const detectionReasons = detection?.reasons ?? [];
   const stageTone: "success" | "warn" | "neutral" =
     stageStatusQuery.isLoading ? "neutral" : detectionAvailable ? "success" : "warn";
   const stageHeadline = stageStatusQuery.isLoading
-    ? "Calculando estado…"
+    ? "Calculating status…"
     : detectionAvailable
       ? `Stage ${detection?.recommended_stage ?? "?"}`
-      : "No disponible";
+      : "Unavailable";
   const stageConfidence = detection?.confidence
     ? detection.confidence.toUpperCase()
     : detectionAvailable
-      ? "SIN CONF."
+      ? "NO CONF."
       : "—";
   const stageSummary = stageStatusQuery.isLoading
-    ? "Obteniendo estado actual del Stage Toolkit."
+    ? "Fetching the current Stage Toolkit status."
     : detectionAvailable
-      ? detection?.reasons?.[0] ?? "Toolkit en funcionamiento y sin incidencias."
-      : detection?.error ?? "Aún no hay información suficiente sobre el Stage.";
+      ? detection?.reasons?.[0] ?? "Toolkit operating without reported issues."
+      : detection?.error ?? "Not enough information about the Stage yet.";
+
+  const highlightCards = [
+    {
+      key: "root",
+      title: "Configured root",
+      value: formattedRoot,
+      tooltip: rootPath,
+    },
+    {
+      key: "files",
+      title: "Indexed files",
+      value: filesIndexed.toLocaleString("en-US"),
+    },
+    {
+      key: "scan",
+      title: "Last scan",
+      value: lastFullScanLabel,
+    },
+  ];
 
   const lintersReport = lintersQuery.data ?? null;
   const lintersStatusKey = lintersReport?.report.summary.overall_status ?? "default";
@@ -102,6 +124,46 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   const lintersCritical = lintersSummary?.critical_issues ?? 0;
   const lintersDuration = lintersSummary?.duration_ms;
   const lintersGeneratedAt = lintersReport?.report.generated_at ?? lintersReport?.generated_at;
+
+  const ollamaInsights = ollamaInsightsQuery.data ?? [];
+  const ollamaInsightsEnabled = statusData?.ollama_insights_enabled ?? false;
+  const ollamaInsightsError =
+    ollamaInsightsQuery.error instanceof Error ? ollamaInsightsQuery.error : null;
+  const latestOllamaInsight = ollamaInsights[0] ?? null;
+
+  let ollamaInsightsTone: "success" | "warn" | "danger" | "neutral" = "neutral";
+  let ollamaInsightsLabel = "No data";
+  if (ollamaInsightsQuery.isLoading) {
+    ollamaInsightsLabel = "Loading…";
+  } else if (ollamaInsightsError) {
+    ollamaInsightsTone = "danger";
+    ollamaInsightsLabel = "Error";
+  } else if (ollamaInsightsEnabled && ollamaInsights.length > 0) {
+    ollamaInsightsTone = "success";
+    ollamaInsightsLabel = "Insights active";
+  } else if (ollamaInsightsEnabled) {
+    ollamaInsightsTone = "warn";
+    ollamaInsightsLabel = "No messages";
+  } else {
+    ollamaInsightsTone = "neutral";
+    ollamaInsightsLabel = "Disabled";
+  }
+
+  let ollamaInsightsSummary =
+    "Ollama Insights is disabled. Enable recommendations from Settings.";
+  if (ollamaInsightsQuery.isLoading) {
+    ollamaInsightsSummary = "Retrieving the latest messages generated by Ollama…";
+  } else if (ollamaInsightsError) {
+    ollamaInsightsSummary = `Could not retrieve insights: ${ollamaInsightsError.message}`;
+  } else if (ollamaInsightsEnabled && latestOllamaInsight) {
+    ollamaInsightsSummary = `Latest insight generated on ${formatDateTime(latestOllamaInsight.generated_at)} by model ${latestOllamaInsight.model}.`;
+  } else if (ollamaInsightsEnabled) {
+    ollamaInsightsSummary =
+      "No insights have been generated yet. Run an analysis from the Ollama tab.";
+  }
+
+  const ollamaInsightsLastRun = statusData?.ollama_insights_last_run ?? null;
+  const ollamaInsightsNextRun = statusData?.ollama_insights_next_run ?? null;
 
   const pendingEvents = statusData?.pending_events ?? 0;
   const capabilityIssues =
@@ -116,8 +178,8 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   if (!watcherActive) {
     alerts.push({
       tone: "warn",
-      message: "Watcher inactivo: recuerda lanzar un escaneo manual para mantener el mapa actualizado.",
-      link: { label: "Ir a Stage Toolkit", to: "/stage-toolkit" },
+      message: "Watcher inactive: remember to run a manual scan to keep the map current.",
+      link: { label: "Go to Stage Toolkit", to: "/stage-toolkit" },
     });
   }
 
@@ -126,8 +188,8 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
       tone: "warn",
       message: detection?.error
         ? `Stage Toolkit: ${detection.error}`
-        : "Stage Toolkit sin detección reciente. Ejecuta un análisis para actualizarlo.",
-      link: { label: "Ver Stage Toolkit", to: "/stage-toolkit" },
+        : "Stage Toolkit has no recent detection. Run an analysis to refresh it.",
+      link: { label: "Open Stage Toolkit", to: "/stage-toolkit" },
     });
   }
 
@@ -139,28 +201,28 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
       tone: lintersStatusKey === "error" ? "danger" : "warn",
       message:
         lintersStatusKey === "error"
-          ? "Los linters fallaron. Revisa el pipeline para ver los detalles."
-          : "Los linters reportan incidencias. Consulta el detalle para priorizarlas.",
-      link: { label: "Abrir Linters", to: "/linters" },
+          ? "Linters failed. Review the pipeline for details."
+          : "Linters reported issues. Check the details to prioritize them.",
+      link: { label: "Open Linters", to: "/linters" },
     });
   }
 
   if (pendingEvents > 25) {
     alerts.push({
       tone: "info",
-      message: `Hay ${pendingEvents.toLocaleString("es-ES")} eventos pendientes por procesar.`,
-      link: { label: "Ver Code Map", to: "/code-map" },
+      message: `There are ${pendingEvents.toLocaleString("en-US")} events pending processing.`,
+      link: { label: "View Code Map", to: "/code-map" },
     });
   }
 
   if (capabilityIssues.length > 0) {
     alerts.push({
       tone: "warn",
-      message: `Capacidades inhabilitadas: ${capabilityIssues
+      message: `Capabilities unavailable: ${capabilityIssues
         .map((cap) => cap.description || cap.key)
         .slice(0, 3)
         .join(", ")}`,
-      link: { label: "Configurar Settings", to: "/settings" },
+      link: { label: "Open Settings", to: "/settings" },
     });
   }
 
@@ -168,26 +230,71 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
     <div className="overview-view">
       <section className="overview-intro">
         <div className="overview-intro__text">
-          <h2>Resumen general del workspace</h2>
-          <p>
-            Revisa el estado del Stage Toolkit, Code Map y los linters sin entrar en detalle. Si
-            necesitas profundizar, abre la vista correspondiente desde aquí.
-          </p>
+          <h2>Workspace overview</h2>
+          <p>Review Stage Toolkit, Code Map, and linters at a glance. Dive deeper from here.</p>
           <div className="overview-meta">
             <span className={`overview-meta-pill ${watcherActive ? "success" : "warn"}`}>
-              {watcherActive ? "Watcher activo" : "Watcher inactivo"}
-            </span>
-            <span className="overview-meta-path" title={rootPath}>
-              Root: {formattedRoot}
+              {watcherActive ? "Watcher active" : "Watcher inactive"}
             </span>
           </div>
         </div>
-        <div className="overview-intro__actions">
-          <RescanButton />
-          <Link className="secondary-btn" to="/settings">
-            Abrir settings
-          </Link>
+
+        <div className="overview-detection-card">
+          <span className="overview-highlight__title">Detection highlights</span>
+          {stageStatusQuery.isLoading ? (
+            <p className="overview-highlight__note">Analyzing repository…</p>
+          ) : detectionAvailable && detectionReasons.length > 0 ? (
+            <ul className="overview-highlight__list">
+              {detectionReasons.slice(0, 4).map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="overview-highlight__note">
+              {detection?.error ?? "Not enough information to report yet."}
+            </p>
+          )}
+
+          {detection?.metrics ? (
+            <div className="overview-highlight__metrics">
+              <div>
+                <span className="metric-label">Files</span>
+                <span className="metric-value">
+                  {Number(detection.metrics.file_count ?? 0).toLocaleString("en-US")}
+                </span>
+              </div>
+              <div>
+                <span className="metric-label">Approx. LOC</span>
+                <span className="metric-value">
+                  {Number(detection.metrics.lines_of_code ?? 0).toLocaleString("en-US")}
+                </span>
+              </div>
+              <div>
+                <span className="metric-label">Patterns</span>
+                <span className="metric-value">
+                  {Array.isArray(detection.metrics.patterns_found) &&
+                  detection.metrics.patterns_found.length > 0
+                    ? detection.metrics.patterns_found.slice(0, 3).join(", ")
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          ) : null}
         </div>
+
+        <section className="overview-highlight">
+          {highlightCards.map((card) => (
+            <div key={card.key} className="overview-highlight__card">
+              <span className="overview-highlight__title">{card.title}</span>
+              <span
+                className="overview-highlight__value"
+                title={card.tooltip ?? undefined}
+              >
+                {card.value}
+              </span>
+            </div>
+          ))}
+        </section>
       </section>
 
       {alerts.length > 0 ? (
@@ -213,21 +320,21 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
               <h3>Stage Toolkit</h3>
             </div>
             <Link className="overview-card__cta" to="/stage-toolkit">
-              Ver detalle →
+              View details →
             </Link>
           </header>
           <p className="overview-card__summary">{stageSummary}</p>
           <dl className="overview-metrics">
             <div>
-              <dt>Confianza</dt>
+              <dt>Confidence</dt>
               <dd>{stageConfidence}</dd>
             </div>
             <div>
-              <dt>Última detección</dt>
+              <dt>Last detection</dt>
               <dd>{formatDateTime(detection?.checked_at)}</dd>
             </div>
             <div>
-              <dt>Motivos registrados</dt>
+              <dt>Recorded reasons</dt>
               <dd>{detection?.reasons?.length ? detection.reasons.length : 0}</dd>
             </div>
           </dl>
@@ -237,31 +344,31 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
           <header className="overview-card__header">
             <div>
               <span className="overview-pill neutral">
-                {statusQuery.isLoading ? "Cargando…" : "Indexación activa"}
+                {statusQuery.isLoading ? "Loading…" : "Indexing active"}
               </span>
               <h3>Code Map</h3>
             </div>
             <Link className="overview-card__cta" to="/code-map">
-              Abrir Code Map →
+              Open Code Map →
             </Link>
           </header>
           <p className="overview-card__summary">
             {statusQuery.isLoading
-              ? "Recuperando métricas del analizador…"
-              : `El analizador tiene ${statusData?.symbols_indexed?.toLocaleString("es-ES") ?? "0"} símbolos indexados.`}
+              ? "Retrieving analyzer metrics…"
+              : `The analyzer has ${statusData?.symbols_indexed?.toLocaleString("en-US") ?? "0"} indexed symbols.`}
           </p>
           <dl className="overview-metrics">
             <div>
-              <dt>Archivos indexados</dt>
-              <dd>{statusData?.files_indexed?.toLocaleString("es-ES") ?? "—"}</dd>
+              <dt>Indexed files</dt>
+              <dd>{statusData?.files_indexed?.toLocaleString("en-US") ?? "—"}</dd>
             </div>
             <div>
-              <dt>Último escaneo</dt>
+              <dt>Last full scan</dt>
               <dd>{formatDateTime(statusData?.last_full_scan)}</dd>
             </div>
             <div>
-              <dt>Eventos pendientes</dt>
-              <dd>{pendingEvents.toLocaleString("es-ES")}</dd>
+              <dt>Pending events</dt>
+              <dd>{pendingEvents.toLocaleString("en-US")}</dd>
             </div>
           </dl>
         </article>
@@ -273,32 +380,71 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
               <h3>Linters</h3>
             </div>
             <Link className="overview-card__cta" to="/linters">
-              Ver linters →
+              View linters →
             </Link>
           </header>
           <p className="overview-card__summary">
             {lintersQuery.isLoading
-              ? "Buscando el último pipeline de linters…"
+              ? "Fetching the latest linter pipeline…"
               : lintersReport
-                ? `Último pipeline generado el ${formatDateTime(lintersGeneratedAt)}.`
-                : "Todavía no hay reportes de linters disponibles."}
+                ? `Latest pipeline generated on ${formatDateTime(lintersGeneratedAt)}.`
+                : "No linter reports available yet."}
           </p>
           <dl className="overview-metrics">
             <div>
-              <dt>Checks totales</dt>
-              <dd>{lintersSummary?.total_checks?.toLocaleString("es-ES") ?? "—"}</dd>
+              <dt>Total checks</dt>
+              <dd>{lintersSummary?.total_checks?.toLocaleString("en-US") ?? "—"}</dd>
             </div>
             <div>
-              <dt>Incidencias</dt>
-              <dd>{lintersIssues.toLocaleString("es-ES")}</dd>
+              <dt>Issues</dt>
+              <dd>{lintersIssues.toLocaleString("en-US")}</dd>
             </div>
             <div>
-              <dt>Críticas</dt>
-              <dd>{lintersCritical.toLocaleString("es-ES")}</dd>
+              <dt>Critical</dt>
+              <dd>{lintersCritical.toLocaleString("en-US")}</dd>
             </div>
             <div>
-              <dt>Duración</dt>
+              <dt>Duration</dt>
               <dd>{formatDuration(lintersDuration)}</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article className="overview-card overview-card--ollama">
+          <header className="overview-card__header">
+            <div>
+              <span className={`overview-pill ${ollamaInsightsTone}`}>{ollamaInsightsLabel}</span>
+              <h3>Ollama Insights</h3>
+            </div>
+            <Link className="overview-card__cta" to="/ollama">
+              Open Ollama →
+            </Link>
+          </header>
+          <p className="overview-card__summary">{ollamaInsightsSummary}</p>
+          {ollamaInsights.length > 0 ? (
+            <ul className="ollama-insights-list">
+              {ollamaInsights.slice(0, 4).map((insight) => (
+                <li key={insight.id} className="ollama-insights-item">
+                  <p className="ollama-insights-message">{insight.message}</p>
+                  <span className="ollama-insights-meta">
+                    {formatDateTime(insight.generated_at)} · {insight.model}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <dl className="overview-metrics">
+            <div>
+              <dt>Service</dt>
+              <dd>{ollamaInsightsEnabled ? "Enabled" : "Disabled"}</dd>
+            </div>
+            <div>
+              <dt>Last run</dt>
+              <dd>{formatDateTime(ollamaInsightsLastRun)}</dd>
+            </div>
+            <div>
+              <dt>Next run</dt>
+              <dd>{formatDateTime(ollamaInsightsNextRun)}</dd>
             </div>
           </dl>
         </article>

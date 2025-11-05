@@ -5,15 +5,15 @@ interface WatcherSectionProps {
 export function WatcherSection({ watcherActive }: WatcherSectionProps): JSX.Element {
   return (
     <section className="settings-card">
-      <h2>Watcher y sincronización</h2>
-      <p>Controla cómo se aplican los cambios del sistema de archivos.</p>
+      <h2>Watcher and sync</h2>
+      <p>Control how filesystem changes are applied.</p>
       <div className="toggle-row">
         <div>
-          <strong>Watcher activo</strong>
+          <strong>Watcher active</strong>
           <span>
             {watcherActive
-              ? "Reescanea en cuanto se detectan eventos."
-              : "Watcher deshabilitado."}
+              ? "Re-scans as soon as events are detected."
+              : "Watcher disabled."}
           </span>
         </div>
         <input type="checkbox" checked={Boolean(watcherActive)} readOnly />
@@ -21,14 +21,14 @@ export function WatcherSection({ watcherActive }: WatcherSectionProps): JSX.Elem
       <div className="toggle-row">
         <div>
           <strong>Auto-rescan</strong>
-          <span>Fuerza escaneos completos al detectar cambios mayores.</span>
+          <span>Forces full scans when major changes are detected.</span>
         </div>
         <input type="checkbox" disabled />
       </div>
       <div className="toggle-row">
         <div>
-          <strong>Persistir snapshots</strong>
-          <span>Guarda los resultados en `.code-map` para iniciar más rápido.</span>
+          <strong>Persist snapshots</strong>
+          <span>Store results in `.code-map` for faster startup.</span>
         </div>
         <input type="checkbox" checked readOnly />
       </div>

@@ -40,9 +40,9 @@ export function App(): JSX.Element {
             path="/"
             element={withLayout("Stage-Aware Workspace", <HomeView statusQuery={statusQuery} />)}
           />
-          <Route
-            path="/overview"
-            element={withLayout("Overview general", <OverviewDashboard statusQuery={statusQuery} />)}
+      <Route
+        path="/overview"
+        element={withLayout("Workspace Overview", <OverviewDashboard statusQuery={statusQuery} />)}
           />
           <Route
             path="/code-map"
@@ -64,9 +64,9 @@ export function App(): JSX.Element {
             path="/prompts"
             element={withLayout("Prompt Library", <PromptLibraryView />)}
           />
-          <Route
-            path="/linters"
-            element={withLayout("Linters & Calidad", <LintersView />)}
+      <Route
+        path="/linters"
+        element={withLayout("Linters & Quality", <LintersView />)}
           />
           <Route
             path="/settings"

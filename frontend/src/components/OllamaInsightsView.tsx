@@ -13,43 +13,43 @@ import { useSettingsQuery } from "../hooks/useSettingsQuery";
 import { useStatusQuery } from "../hooks/useStatusQuery";
 
 const HISTORY_LIMIT = 50;
-const DEFAULT_PROMPT = "Resume brevemente el propósito del repositorio actual.";
+const DEFAULT_PROMPT = "Briefly summarize the purpose of the current repository.";
 
 const INSIGHT_FOCUS_OPTIONS = [
   {
     value: "general",
-    label: "Panorama general",
-    description: "Combina refactors, recomendaciones de calidad y siguientes pasos generales.",
+    label: "General overview",
+    description: "Combine refactors, quality recommendations, and high-level next steps.",
     prompt:
-      "Analiza el estado actual del repositorio en {root}. Sugiere refactors, soluciones para problemas de linters y patrones de diseño relevantes. Si no tienes contexto, propón pasos generales.",
+      "Analyze the current state of the repository at {root}. Suggest refactors, solutions for linter issues, and relevant design patterns. If you lack context, propose general next steps.",
   },
   {
     value: "refactors",
-    label: "Refactors y limpieza",
-    description: "Prioriza simplificaciones, modularización y mejoras de legibilidad.",
+    label: "Refactors and cleanup",
+    description: "Prioritize simplifications, modularization, and readability improvements.",
     prompt:
-      "Analiza el repositorio en {root} y prioriza la detección de oportunidades de refactor. Propón simplificaciones, extracción de módulos y mejoras de legibilidad. Incluye recomendaciones concretas sobre archivos o componentes a ajustar.",
+      "Analyze the repository at {root} and prioritize spotting refactor opportunities. Recommend simplifications, module extraction, and readability improvements. Include concrete suggestions about files or components to adjust.",
   },
   {
     value: "issues",
-    label: "Posibles fallos",
-    description: "Busca riesgos de bugs, manejo de errores precario o dependencia frágil.",
+    label: "Potential issues",
+    description: "Surface bug risks, fragile dependencies, or weak error handling.",
     prompt:
-      "Revisa el repositorio en {root} buscando señales de fallos potenciales, manejo deficiente de errores, dependencias frágiles o comportamientos inconsistentes. Sugiere verificaciones adicionales y mitigaciones.",
+      "Review the repository at {root} for potential failures, poor error handling, fragile dependencies, or inconsistent behavior. Suggest additional checks and mitigations.",
   },
   {
     value: "duplication",
-    label: "Duplicación y responsabilidades",
-    description: "Detecta lógica duplicada y responsabilidades superpuestas.",
+    label: "Duplication & responsibilities",
+    description: "Detect duplicated logic and overlapping responsibilities.",
     prompt:
-      "Inspecciona {root} en busca de duplicación de lógica, funciones con responsabilidades superpuestas o módulos que deberían consolidarse. Propón estrategias para redistribuir responsabilidades y reducir redundancias.",
+      "Inspect {root} for duplicated logic, overlapping responsibilities, or modules that should be consolidated. Propose strategies to redistribute responsibilities and reduce redundancies.",
   },
   {
     value: "testing",
-    label: "Cobertura y pruebas",
-    description: "Enfócate en detectar huecos de tests y escenarios críticos sin validar.",
+    label: "Coverage & testing",
+    description: "Focus on detecting test gaps and unvalidated critical scenarios.",
     prompt:
-      "Evalúa {root} con foco en cobertura y estrategia de pruebas. Identifica áreas sin tests, escenarios críticos sin validar y oportunidades para fortalecer suites automatizadas.",
+      "Assess {root} with a focus on coverage and testing strategy. Identify areas without tests, critical scenarios left unvalidated, and opportunities to strengthen automated suites.",
   },
 ] as const;
 
@@ -79,7 +79,7 @@ function formatModelDetails(model: OllamaModelInfo): string | null {
     details.push(model.size_human);
   }
   if (model.modified_at) {
-    details.push(`actualizado ${new Date(model.modified_at).toLocaleDateString()}`);
+    details.push(`updated ${new Date(model.modified_at).toLocaleDateString()}`);
   }
   return details.length > 0 ? details.join(" · ") : null;
 }
@@ -103,13 +103,13 @@ function OllamaStatusCard({
         <header>
           <h3>Ollama</h3>
         </header>
-        <p>No se pudo obtener el estado de Ollama.</p>
+        <p>Could not fetch the Ollama status.</p>
       </article>
     );
   }
 
   const runningBadgeClass = status.running ? "stage-badge success" : "stage-badge warn";
-  const runningLabel = status.running ? "Activo" : "Detenido";
+  const runningLabel = status.running ? "Running" : "Stopped";
   const canStart = status.installed && !status.running;
 
   return (
@@ -120,12 +120,12 @@ function OllamaStatusCard({
       </header>
       <section>
         <p className="stage-meta">
-          Instalación: <strong>{status.installed ? "Detectada" : "No encontrada"}</strong>
+          Installation: <strong>{status.installed ? "Detected" : "Not found"}</strong>
         </p>
-        {status.version ? <p className="stage-meta">Versión: {status.version}</p> : null}
+        {status.version ? <p className="stage-meta">Version: {status.version}</p> : null}
         {status.binary_path ? (
           <p className="stage-meta">
-            Binario: <code>{status.binary_path}</code>
+            Binary: <code>{status.binary_path}</code>
           </p>
         ) : null}
         {status.endpoint ? (
@@ -134,11 +134,11 @@ function OllamaStatusCard({
           </p>
         ) : null}
         {lastChecked ? (
-          <p className="stage-meta">Última comprobación: {new Date(lastChecked).toLocaleString()}</p>
+          <p className="stage-meta">Last check: {new Date(lastChecked).toLocaleString()}</p>
         ) : null}
       </section>
       <section>
-        <h4>Modelos detectados</h4>
+        <h4>Detected models</h4>
         {status.models.length > 0 ? (
           <ul className="stage-list">
             {status.models.map((model) => {
@@ -152,17 +152,17 @@ function OllamaStatusCard({
             })}
           </ul>
         ) : status.running ? (
-          <p className="stage-info">No se encontraron modelos registrados.</p>
+          <p className="stage-info">No registered models found.</p>
         ) : (
-          <p className="stage-info">Inicia Ollama para enumerar los modelos disponibles.</p>
+          <p className="stage-info">Start Ollama to list the available models.</p>
         )}
       </section>
-      {status.warning ? <p className="stage-info">Aviso: {status.warning}</p> : null}
+      {status.warning ? <p className="stage-info">Warning: {status.warning}</p> : null}
       {status.error ? <p className="stage-error">Error: {status.error}</p> : null}
       {canStart ? (
         <div className="stage-form-actions">
           <button className="secondary-btn" type="button" onClick={onStart} disabled={isStarting}>
-            {isStarting ? "Iniciando…" : "Iniciar Ollama"}
+            {isStarting ? "Starting…" : "Start Ollama"}
           </button>
         </div>
       ) : null}
@@ -360,13 +360,13 @@ export function OllamaInsightsView(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(HISTORY_LIMIT) });
       setInsightsStatus(
         result.updated.length > 0
-          ? `Preferencias actualizadas (${result.updated.join(", ")}).`
-          : "No había cambios que guardar.",
+          ? `Preferences updated (${result.updated.join(", ")}).`
+          : "No changes needed saving.",
       );
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Error desconocido.";
-      setInsightsStatus(`Error al guardar: ${message}`);
+      const message = error instanceof Error ? error.message : "Unknown error.";
+      setInsightsStatus(`Error while saving: ${message}`);
     },
   });
 
@@ -374,13 +374,13 @@ export function OllamaInsightsView(): JSX.Element {
     mutationFn: (input: ManualInsightsPayload | undefined) => triggerOllamaInsights(input),
     onSuccess: (result) => {
       const timestamp = new Date(result.generated_at).toLocaleString();
-      setInsightsStatus(`Insight generado (${timestamp}).`);
+      setInsightsStatus(`Insight generated (${timestamp}).`);
       queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(HISTORY_LIMIT) });
       queryClient.invalidateQueries({ queryKey: queryKeys.status });
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "No se pudo generar el insight.";
-      setInsightsStatus(`Error al generar insight: ${message}`);
+      const message = error instanceof Error ? error.message : "Could not generate the insight.";
+      setInsightsStatus(`Error generating insight: ${message}`);
     },
   });
 
@@ -390,13 +390,13 @@ export function OllamaInsightsView(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: queryKeys.ollamaInsights(HISTORY_LIMIT) });
       setInsightsStatus(
         result.deleted > 0
-          ? `Se eliminaron ${result.deleted} insights almacenados.`
-          : "No había insights que eliminar.",
+          ? `Deleted ${result.deleted} stored insights.`
+          : "No insights to remove.",
       );
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "No se pudo limpiar el historial.";
-      setInsightsStatus(`Error al limpiar historial: ${message}`);
+      const message = error instanceof Error ? error.message : "Could not clear the history.";
+      setInsightsStatus(`Error clearing history: ${message}`);
     },
   });
 
@@ -442,9 +442,9 @@ export function OllamaInsightsView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Ollama local</h2>
+            <h2>Local Ollama</h2>
             <p>
-              Gestiona el servicio local de Ollama, revisa los modelos instalados y arráncalo si es necesario.
+              Manage the local Ollama service, review installed models, and start it when needed.
             </p>
           </div>
           <button
@@ -453,15 +453,15 @@ export function OllamaInsightsView(): JSX.Element {
             onClick={() => ollamaStatusQuery.refetch()}
             disabled={ollamaStatusQuery.isFetching}
           >
-            {ollamaStatusQuery.isFetching ? "Analizando…" : "Comprobar de nuevo"}
+            {ollamaStatusQuery.isFetching ? "Checking…" : "Check again"}
           </button>
         </header>
 
         {ollamaStatusQuery.isLoading ? (
-          <p className="stage-info">Analizando el estado de Ollama…</p>
+          <p className="stage-info">Checking Ollama status…</p>
         ) : ollamaStatusQuery.isError ? (
           <p className="stage-error">
-            No se pudo consultar el estado de Ollama. {String(ollamaStatusQuery.error)}
+            Could not query the Ollama status. {String(ollamaStatusQuery.error)}
           </p>
         ) : (
           <>
@@ -475,8 +475,8 @@ export function OllamaInsightsView(): JSX.Element {
             {ollamaStartResult ? (
               <p className="stage-meta">
                 {ollamaStartResult.already_running
-                  ? "Ollama ya estaba en ejecución."
-                  : `Ollama se inició correctamente (PID ${ollamaStartResult.process_id ?? "?"}).`}
+                  ? "Ollama was already running."
+                  : `Ollama started successfully (PID ${ollamaStartResult.process_id ?? "?"}).`}
               </p>
             ) : null}
           </>
@@ -486,20 +486,20 @@ export function OllamaInsightsView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Insights automáticos</h2>
+            <h2>Automated insights</h2>
             <p>
-              Define el modelo y la frecuencia con la que Ollama generará recomendaciones sobre tu repositorio.
+              Choose the model and cadence for Ollama to generate recommendations about your repository.
             </p>
           </div>
         </header>
 
         <article className="stage-card">
           {settingsLoading ? (
-            <p className="stage-info">Cargando preferencias…</p>
+            <p className="stage-info">Loading preferences…</p>
           ) : (
             <>
               <div className="stage-form-field stage-toggle-field">
-                <span>Activar insights</span>
+                <span>Enable insights</span>
                 <label className="stage-switch">
                   <input
                     type="checkbox"
@@ -512,7 +512,7 @@ export function OllamaInsightsView(): JSX.Element {
               </div>
 
               <div className="stage-form-field">
-                <span>Enfoque del análisis</span>
+                <span>Analysis focus</span>
                 <select
                   className="stage-select"
                   value={insightsFocus}
@@ -535,14 +535,14 @@ export function OllamaInsightsView(): JSX.Element {
               </div>
 
               <div className="stage-form-field">
-                <span>Modelo preferido</span>
+                <span>Preferred model</span>
                 <input
                   className="stage-input"
                   type="text"
                   list="ollama-insights-models"
                   value={insightsModel}
                   onChange={(event) => setInsightsModel(event.target.value)}
-                  placeholder="Ej. gpt-oss:latest"
+                  placeholder="e.g. gpt-oss:latest"
                   disabled={!insightsEnabled || insightsMutation.isPending}
                 />
                 <datalist id="ollama-insights-models">
@@ -551,12 +551,12 @@ export function OllamaInsightsView(): JSX.Element {
                   ))}
                 </datalist>
                 <p className="stage-hint">
-                  Puedes escribir cualquier modelo disponible en tu instalación de Ollama.
+                  You can enter any model available in your Ollama installation.
                 </p>
               </div>
 
               <div className="stage-form-field">
-                <span>Frecuencia (minutos)</span>
+                <span>Frequency (minutes)</span>
                 <input
                   className="stage-input"
                   type="number"
@@ -568,11 +568,11 @@ export function OllamaInsightsView(): JSX.Element {
                 />
                 {!isFrequencyValid ? (
                   <p className="stage-error">
-                    Introduce un número entre 1 y 1440 minutos o deja el campo vacío.
+                    Enter a number between 1 and 1,440 minutes or leave the field empty.
                   </p>
                 ) : (
                   <p className="stage-hint">
-                    Define cada cuánto se ejecutarán los análisis. Déjalo vacío para usar 60 minutos como valor por defecto.
+                    Choose how often analyses run. Leave it blank to use 60 minutes by default.
                   </p>
                 )}
               </div>
@@ -588,7 +588,7 @@ export function OllamaInsightsView(): JSX.Element {
                     !isFrequencyValid
                   }
                 >
-                  {insightsMutation.isPending ? "Guardando…" : "Guardar preferencias"}
+                  {insightsMutation.isPending ? "Saving…" : "Save preferences"}
                 </button>
                 <button
                   className="secondary-btn"
@@ -605,26 +605,26 @@ export function OllamaInsightsView(): JSX.Element {
                         ? String(settings.ollama_insights_frequency_minutes)
                         : "60",
                     );
-                    setInsightsStatus("Restablecido a los valores actuales.");
+                    setInsightsStatus("Reverted to the current values.");
                   }}
                   disabled={insightsMutation.isPending}
                 >
-                  Deshacer cambios
+                  Revert changes
                 </button>
               </div>
               {insightsStatus ? <p className="stage-info">{insightsStatus}</p> : null}
 
               <div className="stage-form-field">
-                <span>Historial reciente</span>
+                <span>Recent history</span>
                 {insightsQuery.isLoading ? (
-                  <p className="stage-info">Recuperando insights generados…</p>
+                  <p className="stage-info">Retrieving generated insights…</p>
                 ) : insightsQuery.isError ? (
                   <p className="stage-error">
-                    Error al cargar historial: {String(insightsHistoryError)}
+                    Error loading history: {String(insightsHistoryError)}
                   </p>
                 ) : insightsHistory.length === 0 ? (
                   <p className="stage-hint">
-                    No se han registrado insights todavía. Genera uno manualmente o espera a la próxima ejecución automática.
+                    No insights recorded yet. Generate one manually or wait for the next automatic run.
                   </p>
                 ) : (
                   <ul className="stage-list stage-insights-list">
@@ -651,7 +651,7 @@ export function OllamaInsightsView(): JSX.Element {
                   }}
                   disabled={manualInsightsMutation.isPending}
                 >
-                  {manualInsightsMutation.isPending ? "Generando…" : "Generar ahora"}
+                  {manualInsightsMutation.isPending ? "Generating…" : "Generate now"}
                 </button>
                 <button
                   className="secondary-btn"
@@ -659,15 +659,15 @@ export function OllamaInsightsView(): JSX.Element {
                   onClick={() => clearInsightsMutation.mutate()}
                   disabled={clearInsightsMutation.isPending}
                 >
-                  {clearInsightsMutation.isPending ? "Limpiando…" : "Limpiar historial"}
+                  {clearInsightsMutation.isPending ? "Clearing…" : "Clear history"}
                 </button>
                 {insightsLastRun ? (
                   <p className="stage-hint">
-                    Última ejecución: {insightsLastRun.toLocaleString()}
-                    {insightsNextRun ? ` · Próxima estimada: ${insightsNextRun.toLocaleString()}` : ""}
+                    Last run: {insightsLastRun.toLocaleString()}
+                    {insightsNextRun ? ` · Next estimated: ${insightsNextRun.toLocaleString()}` : ""}
                   </p>
                 ) : (
-                  <p className="stage-hint">Aún no se han ejecutado insights automáticamente.</p>
+                  <p className="stage-hint">No automated insights have run yet.</p>
                 )}
               </div>
             </>
@@ -680,26 +680,26 @@ export function OllamaInsightsView(): JSX.Element {
           <div>
             <h2>Ping a Ollama</h2>
             <p>
-              Envía un prompt corto al modelo local para asegurarte de que el servicio responde y mide la latencia.
+              Send a short prompt to the local model to confirm the service is responding and measure latency.
             </p>
           </div>
         </header>
 
         {showOllamaDetectionWarning ? (
           <p className="stage-info">
-            Aún no detectamos Ollama instalado. Si lo tienes en otra ruta, ajusta el campo de endpoint y prueba igualmente.
+            We have not detected an Ollama installation yet. If it lives in another path, adjust the endpoint field and test anyway.
           </p>
         ) : null}
         {showOllamaOfflineWarning ? (
           <p className="stage-error">
-            Ollama está instalado pero el endpoint <code>{ollamaEndpointHint}</code> no respondió.
-            Intenta iniciarlo con el botón anterior o hazlo manualmente.
+            Ollama is installed but the endpoint <code>{ollamaEndpointHint}</code> did not respond.
+            Try starting it with the button above or launch it manually.
           </p>
         ) : null}
 
         <form className="stage-form" onSubmit={handleOllamaTestSubmit}>
           <label className="stage-form-field">
-            <span>Modelo</span>
+            <span>Model</span>
             {availableOllamaModels.length > 0 ? (
               <select
                 className="stage-select"
@@ -718,7 +718,7 @@ export function OllamaInsightsView(): JSX.Element {
                 className="stage-input"
                 type="text"
                 value={selectedOllamaModel}
-                placeholder="Introduce el nombre del modelo (ej. llama3)"
+                placeholder="Type the model name (e.g. llama3)"
                 onChange={(event) => setSelectedOllamaModel(event.target.value)}
                 disabled={isTestingOllama}
               />
@@ -726,7 +726,7 @@ export function OllamaInsightsView(): JSX.Element {
           </label>
 
           <label className="stage-form-field">
-            <span>Endpoint (opcional)</span>
+            <span>Endpoint (optional)</span>
             <input
               className="stage-input"
               type="text"
@@ -737,15 +737,15 @@ export function OllamaInsightsView(): JSX.Element {
                 setOllamaEndpointTouched(true);
               }}
               disabled={isTestingOllama}
-              aria-label="Endpoint de Ollama"
+              aria-label="Ollama endpoint"
             />
             <p className="stage-hint">
-              Deja el campo vacío para usar el endpoint detectado automáticamente.
+              Leave the field blank to reuse the automatically detected endpoint.
             </p>
           </label>
 
           <label className="stage-form-field">
-            <span>Tiempo máximo de respuesta (segundos)</span>
+            <span>Maximum response time (seconds)</span>
             <input
               className="stage-input"
               type="number"
@@ -755,26 +755,26 @@ export function OllamaInsightsView(): JSX.Element {
               value={ollamaTimeout}
               onChange={(event) => setOllamaTimeout(event.target.value)}
               disabled={isTestingOllama}
-              aria-label="Tiempo máximo de espera para la respuesta"
+              aria-label="Maximum wait time for the response"
             />
             {showTimeoutError ? (
               <p className="stage-error">
-                Introduce un valor entre 1 y 1200 segundos o deja el campo vacío.
+                Enter a value between 1 and 1,200 seconds or leave the field empty.
               </p>
             ) : (
               <p className="stage-hint">
-                Vacío usa el valor por defecto ({parsedTimeout ?? 180} s). Usa este límite para evitar esperas largas.
+                Leaving it blank uses the default ({parsedTimeout ?? 180} s). Use this limit to avoid long waits.
               </p>
             )}
           </label>
 
           <label className="stage-form-field">
-            <span>System prompt (opcional)</span>
+            <span>System prompt (optional)</span>
             <textarea
               className="stage-textarea"
               value={ollamaSystemPrompt}
               onChange={(event) => setOllamaSystemPrompt(event.target.value)}
-              placeholder="Contexto adicional para orientar la respuesta."
+              placeholder="Additional context to guide the response."
               disabled={isTestingOllama}
             />
           </label>
@@ -790,13 +790,13 @@ export function OllamaInsightsView(): JSX.Element {
               required
             />
             <p className="stage-hint">
-              Usa un prompt breve para comprobar latencia. Para análisis completos ejecuta insights automáticos o manuales.
+              Use a short prompt to check latency. For full analyses, run automated or manual insights.
             </p>
           </label>
 
           <div className="stage-form-actions">
             <button className="primary-btn" type="submit" disabled={!canSubmitOllamaTest || isTestingOllama}>
-              {isTestingOllama ? "Enviando…" : "Probar modelo"}
+              {isTestingOllama ? "Sending…" : "Test model"}
             </button>
             <button
               className="secondary-btn"
@@ -810,7 +810,7 @@ export function OllamaInsightsView(): JSX.Element {
               }}
               disabled={isTestingOllama}
             >
-              Limpiar formulario
+              Reset form
             </button>
           </div>
         </form>
@@ -818,14 +818,14 @@ export function OllamaInsightsView(): JSX.Element {
         {hasOllamaFeedback ? (
           <article className="stage-card">
             <header>
-              <h3>Resultado</h3>
+              <h3>Result</h3>
               {ollamaTestResult ? (
                 <span className="stage-badge success">{formatLatency(ollamaTestResult.latency_ms)}</span>
               ) : null}
             </header>
             {ollamaTestError ? (
               <>
-                <p className="stage-error">{ollamaErrorMessage ?? "La prueba falló."}</p>
+                <p className="stage-error">{ollamaErrorMessage ?? "The test failed."}</p>
                 {ollamaErrorEndpoint ? (
                   <p className="stage-meta">
                     Endpoint: <code>{ollamaErrorEndpoint}</code>
@@ -836,19 +836,19 @@ export function OllamaInsightsView(): JSX.Element {
                 ) : null}
                 {isOllamaLoadingModel ? (
                   <p className="stage-info">
-                    Detectamos que el modelo sigue cargándose
-                    {ollamaLoadingSince ? <> desde {ollamaLoadingSince.toLocaleTimeString()}</> : null}.
-                    Intenta nuevamente
-                    {formattedRetrySeconds ? <> en ~{formattedRetrySeconds} s</> : " en unos segundos"} o revisa los logs con{" "}
+                    The model appears to still be loading
+                    {ollamaLoadingSince ? <> since {ollamaLoadingSince.toLocaleTimeString()}</> : null}.
+                    Try again
+                    {formattedRetrySeconds ? <> in ~{formattedRetrySeconds} s</> : " in a few seconds"} or inspect the logs with{" "}
                     <code>ollama serve</code>.
-                  </p>
+                </p>
                 ) : null}
                 {!isOllamaLoadingModel && showOllamaRetryHint ? (
                   <p className="stage-info">
-                    Ollama sugirió reintentar pronto
-                    {formattedRetrySeconds ? <> (≈{formattedRetrySeconds} s)</> : ""}. Si tarda demasiado, abre una terminal y observa{" "}
+                    Ollama suggested retrying soon
+                    {formattedRetrySeconds ? <> (≈{formattedRetrySeconds} s)</> : ""}. If it takes too long, open a terminal and watch{" "}
                     <code>ollama serve</code>.
-                  </p>
+                </p>
                 ) : null}
               </>
             ) : null}
@@ -863,7 +863,7 @@ export function OllamaInsightsView(): JSX.Element {
                   <pre className="stage-output">{ollamaTestResult.message}</pre>
                 </section>
                 <details className="stage-details">
-                  <summary>Ver JSON completo</summary>
+                  <summary>View full JSON</summary>
                   <pre className="stage-output">
                     {JSON.stringify(ollamaTestResult.raw, null, 2)}
                   </pre>

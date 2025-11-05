@@ -529,6 +529,51 @@
   border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
+.linters-fix-guide {
+  gap: 16px;
+}
+
+.linters-fix-guide__description {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.linters-fix-guide__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.linters-fix-guide__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.linters-fix-guide__name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.linters-fix-guide__note {
+  color: #cbd5f5;
+  font-size: 13px;
+}
+
+.linters-fix-guide code {
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(15, 18, 28, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 13px;
+}
+
 @media (max-width: 1200px) {
   .linters-grid {
     grid-template-columns: 1fr;

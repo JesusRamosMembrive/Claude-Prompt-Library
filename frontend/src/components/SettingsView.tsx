@@ -71,13 +71,13 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
       setCustomExcludes(sortExcludes(extractCustomExcludes(result.settings.exclude_dirs)));
       setStatusMessage(
         result.updated.length > 0
-          ? `Cambios aplicados: ${result.updated.join(", ")}`
-          : "No había cambios que guardar.",
+          ? `Applied changes: ${result.updated.join(", ")}`
+          : "No changes needed saving.",
       );
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Error desconocido";
-      setStatusMessage(`Error al guardar: ${message}`);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatusMessage(`Error while saving: ${message}`);
     },
   });
 
@@ -125,7 +125,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     }
 
     if (Object.keys(payload).length === 0) {
-      setStatusMessage("No hay cambios para guardar.");
+      setStatusMessage("There are no changes to save.");
       return;
     }
 
@@ -136,20 +136,20 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
   const handleAddExclude = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
-      return { ok: false, error: "Escribe un nombre de directorio válido." };
+      return { ok: false, error: "Enter a valid directory name." };
     }
 
     if (/[\\/]/.test(trimmed)) {
-      return { ok: false, error: "Usa solo nombres de directorio, sin rutas ni separadores." };
+      return { ok: false, error: "Use directory names only (no paths or separators)." };
     }
 
     const lowered = trimmed.toLowerCase();
     if (DEFAULT_EXCLUDES_LOWER.has(lowered)) {
-      return { ok: false, error: "Ese directorio ya se excluye por defecto." };
+      return { ok: false, error: "That directory is already excluded by default." };
     }
 
     if (customExcludes.some((dir) => dir.toLowerCase() === lowered)) {
-      return { ok: false, error: "Ese directorio ya está en tus exclusiones." };
+      return { ok: false, error: "That directory is already in your exclusions." };
     }
 
     setCustomExcludes((prev) => sortExcludes([...prev, trimmed]));
@@ -167,11 +167,11 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     mutationFn: browseForRoot,
     onSuccess: (response) => {
       setFormRoot(response.path);
-      setStatusMessage(`Directorio seleccionado: ${response.path}`);
+      setStatusMessage(`Selected directory: ${response.path}`);
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "No se pudo abrir el diálogo";
-      setStatusMessage(`Error al seleccionar directorio: ${message}`);
+      const message = error instanceof Error ? error.message : "Could not open the dialog";
+      setStatusMessage(`Error selecting directory: ${message}`);
     },
   });
 
@@ -182,12 +182,12 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
           <div className="brand-logo">⚙</div>
           <div className="brand-copy">
             <h1>Settings</h1>
-            <p>Configura el workspace y preferencias de visualización.</p>
+            <p>Configure the workspace and display preferences.</p>
           </div>
         </div>
         <div className="header-actions">
           <button className="secondary-btn" type="button" onClick={() => navigate("/")}>
-            Volver al overview
+            Back to overview
           </button>
           <button
             className="primary-btn"
@@ -195,17 +195,17 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
             onClick={handleSave}
             disabled={!isDirty || isMutating || isLoading}
           >
-            {isMutating ? "Guardando…" : "Guardar cambios"}
+            {isMutating ? "Saving…" : "Save changes"}
           </button>
         </div>
       </header>
 
       <div className="panel" style={{ gap: 12 }}>
         {settingsQuery.isLoading ? (
-          <span style={{ color: "#7f869d" }}>Cargando configuración…</span>
+          <span style={{ color: "#7f869d" }}>Loading settings…</span>
         ) : settingsQuery.isError ? (
           <div className="error-banner">
-            No se pudo cargar la configuración. {String(settingsQuery.error)}
+            Could not load settings. {String(settingsQuery.error)}
           </div>
         ) : statusMessage ? (
           <span
@@ -216,10 +216,10 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
             {statusMessage}
           </span>
         ) : (
-          <span>Los cambios se aplican y persisten en el backend.</span>
+          <span>Changes are applied and persisted in the backend.</span>
         )}
         <button type="button" onClick={activityClear}>
-          Limpiar actividad
+          Clear activity
         </button>
       </div>
 
@@ -250,24 +250,24 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
         />
 
         <section className="settings-card">
-          <h2>Próximamente</h2>
-          <p>Funcionalidades en el roadmap para iteraciones futuras.</p>
+          <h2>Coming soon</h2>
+          <p>Features on the roadmap for future iterations.</p>
           <div className="settings-tags">
-            <span className="settings-tag">Integraciones</span>
-            <span className="settings-tag">Perfiles</span>
-            <span className="settings-tag">Alertas</span>
-            <span className="settings-tag">Permisos</span>
+            <span className="settings-tag">Integrations</span>
+            <span className="settings-tag">Profiles</span>
+            <span className="settings-tag">Alerts</span>
+            <span className="settings-tag">Permissions</span>
           </div>
           <p>
-            Añadiremos soporte para múltiples workspaces, reglas de exclusión por lenguaje
-            y alertas configurables para eventos críticos.
+            We plan to add support for multiple workspaces, language-specific exclusion rules, and
+            configurable alerts for critical events.
           </p>
         </section>
       </div>
 
       <footer className="settings-footer">
-        <span>Settings sincronizados con el backend</span>
-        <span>Última actualización: {new Date().toLocaleString()}</span>
+        <span>Settings synchronized with the backend</span>
+        <span>Last updated: {new Date().toLocaleString()}</span>
       </footer>
     </div>
   );

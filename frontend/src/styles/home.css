@@ -78,17 +78,6 @@
   line-height: 1.65;
 }
 
-.home-hero__cta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.hero-cta {
-  padding: 12px 22px;
-  font-size: 0.95rem;
-}
-
 .home-summary {
   margin: 10px 0 0;
   display: grid;
@@ -284,11 +273,6 @@
   .home-hero {
     padding: 28px;
     gap: 24px;
-  }
-
-  .home-hero__cta {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .home-card {

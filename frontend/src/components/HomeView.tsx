@@ -6,38 +6,28 @@ import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 
 function detectionBadgeLabel(detection?: StageDetectionStatus): string {
   if (!detection) {
-    return "Cargando detección…";
+    return "Loading detection…";
   }
   if (!detection.available) {
-    return detection.error ?? "Detección no disponible";
+    return detection.error ?? "Detection unavailable";
   }
   const stage = detection.recommended_stage ?? "?";
-  const confidence = detection.confidence ? detection.confidence.toUpperCase() : "SIN CONF.";
+  const confidence = detection.confidence ? detection.confidence.toUpperCase() : "NO CONF.";
   return `Stage ${stage} · ${confidence}`;
 }
 
 export function HomeView({
-  statusQuery,
+  statusQuery: _statusQuery,
 }: {
   statusQuery: UseQueryResult<StatusPayload>;
 }): JSX.Element {
   const stageStatusQuery = useStageStatusQuery();
 
-  const rootPath = statusQuery.data?.absolute_root ?? statusQuery.data?.root_path ?? "—";
-  const filesIndexed = statusQuery.data?.files_indexed ?? 0;
   const detection = stageStatusQuery.data?.detection;
-  const reasons = detection?.reasons ?? [];
   const detectionAvailable = detection?.available ?? false;
 
   const detectionTone = detectionAvailable ? "success" : "warn";
   const detectionLabel = detectionBadgeLabel(detection);
-
-  const lastScan = statusQuery.data?.last_full_scan
-    ? new Date(statusQuery.data.last_full_scan).toLocaleString()
-    : "Sin escaneos todavía";
-
-  const formattedRoot =
-    rootPath.length > 60 ? `…${rootPath.slice(rootPath.length - 57)}` : rootPath;
 
   return (
     <div className="home-view">
@@ -45,70 +35,13 @@ export function HomeView({
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">
           <span className={`home-stage-pill ${detectionTone}`}>
-            {stageStatusQuery.isLoading ? "Calculando…" : detectionLabel}
+            {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
           </span>
-          <h2>Build con IA, sin perder el control.</h2>
+          <h2>Build with AI without losing control.</h2>
           <p>
-            Asegura que los agentes sigan las reglas del proyecto con el Stage Toolkit o explora el
-            código con el Code Map enriquecido.
+            Keep agents aligned with project rules using the Stage Toolkit or explore code with the
+            enriched Code Map.
           </p>
-          <dl className="home-summary">
-            <div>
-              <dt>Root configurado</dt>
-              <dd title={rootPath}>{formattedRoot}</dd>
-            </div>
-            <div>
-              <dt>Archivos indexados</dt>
-              <dd>{filesIndexed.toLocaleString("es-ES")}</dd>
-            </div>
-            <div>
-              <dt>Último escaneo</dt>
-              <dd>{lastScan}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="home-hero__panel">
-          <h3>Claves de la detección</h3>
-          {stageStatusQuery.isLoading ? (
-            <p className="home-hero__panel-loading">Analizando repositorio…</p>
-          ) : detectionAvailable && reasons.length > 0 ? (
-            <ul>
-              {reasons.slice(0, 4).map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="home-hero__panel-empty">
-              {detection?.error ?? "Aún no hay información suficiente para reportar."}
-            </p>
-          )}
-
-          {detection?.metrics ? (
-            <div className="home-hero__metrics">
-              <div>
-                <span className="metric-label">Archivos</span>
-                <span className="metric-value">
-                  {Number(detection.metrics.file_count ?? 0).toLocaleString("es-ES")}
-                </span>
-              </div>
-              <div>
-                <span className="metric-label">LOC aprox.</span>
-                <span className="metric-value">
-                  {Number(detection.metrics.lines_of_code ?? 0).toLocaleString("es-ES")}
-                </span>
-              </div>
-              <div>
-                <span className="metric-label">Patrones</span>
-                <span className="metric-value">
-                  {Array.isArray(detection.metrics.patterns_found) &&
-                  detection.metrics.patterns_found.length > 0
-                    ? detection.metrics.patterns_found.slice(0, 3).join(", ")
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          ) : null}
         </div>
       </section>
 
@@ -117,66 +50,64 @@ export function HomeView({
           <div className="home-card-body">
             <h3>Project Stage Toolkit</h3>
             <p>
-              Ejecuta <code>init_project.py</code>, valida archivos requeridos para Claude Code y
-              Codex CLI, y consulta la etapa detectada del proyecto.
+              Run <code>init_project.py</code>, validate the files required by Claude Code and Codex
+              CLI, and review the detected project stage.
             </p>
           </div>
-          <span className="home-card-cta">Abrir toolkit →</span>
+          <span className="home-card-cta">Open toolkit →</span>
+        </Link>
+
+        <Link to="/overview" className="home-card">
+          <div className="home-card-body">
+            <h3>Overview</h3>
+            <p>
+              Review detections, alerts, and recent activity from a single dashboard before diving
+              deeper.
+            </p>
+          </div>
+          <span className="home-card-cta">Open overview →</span>
         </Link>
 
         <Link to="/code-map" className="home-card">
           <div className="home-card-body">
             <h3>Code Map</h3>
             <p>
-              Navega símbolos, búsqueda semántica y actividad reciente del repositorio. Ideal para
-              explorar el código con contexto.
+              Browse symbols, semantic search, and recent repository activity—ideal for exploring
+              the code with context.
             </p>
           </div>
-          <span className="home-card-cta">Abrir Code Map →</span>
+          <span className="home-card-cta">Open Code Map →</span>
         </Link>
-
-        <article className="home-card home-card--neutral">
-          <div className="home-card-body">
-            <h3>Estado del workspace</h3>
-            <p>
-              {stageStatusQuery.isLoading
-                ? "Evaluando estado del proyecto…"
-                : detectionAvailable
-                  ? `El proyecto se recomienda como Stage ${detection?.recommended_stage} con ${detection?.confidence ?? "confianza media"}.`
-                  : "Aún no se ha podido determinar la etapa del proyecto."}
-            </p>
-            <ul className="home-card-list">
-              <li>
-                {statusQuery.data?.watcher_active
-                  ? "Watcher activo para notificar cambios."
-                  : "Watcher inactivo: ejecuta un escaneo manual cuando lo necesites."}
-              </li>
-              <li>Archivos indexados: {filesIndexed.toLocaleString("es-ES")}.</li>
-              <li>Workspace actual: {rootPath}</li>
-            </ul>
-          </div>
-        </article>
 
         <Link to="/class-uml" className="home-card">
           <div className="home-card-body">
             <h3>Class UML</h3>
             <p>
-              Diagramas UML con atributos y métodos por clase. Perfecto para entender la estructura
-              interna sin ruido externo.
+              UML diagrams with class attributes and methods—perfect for understanding internals
+              without extra noise.
             </p>
           </div>
-          <span className="home-card-cta">Ver UML →</span>
+          <span className="home-card-cta">View UML →</span>
         </Link>
 
         <Link to="/linters" className="home-card">
           <div className="home-card-body">
             <h3>Linters</h3>
             <p>
-              Revisa el estado de los linters configurados, últimos resultados y logs para mantener
-              la calidad del código.
+              Check configured linter status, latest results, and logs to maintain code quality.
             </p>
           </div>
-          <span className="home-card-cta">Ver Linters →</span>
+          <span className="home-card-cta">View linters →</span>
+        </Link>
+
+        <Link to="/ollama" className="home-card">
+          <div className="home-card-body">
+            <h3>Ollama Insights</h3>
+            <p>
+              Configure models, generate insights, and monitor scheduled runs for automated guidance.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Ollama →</span>
         </Link>
       </section>
     </div>

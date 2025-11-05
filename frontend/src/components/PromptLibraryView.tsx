@@ -18,7 +18,7 @@ function formatDate(value?: string | null): string {
     return "—";
   }
   try {
-    return new Date(value).toLocaleString("es-ES");
+    return new Date(value).toLocaleString("en-US");
   } catch {
     return value;
   }
@@ -166,7 +166,7 @@ export function PromptLibraryView(): JSX.Element {
       return;
     }
     const confirmed = window.confirm(
-      `¿Eliminar el prompt "${selectedPrompt.title}"? Esta acción no se puede deshacer.`
+      `Delete the prompt "${selectedPrompt.title}"? This action cannot be undone.`
     );
     if (!confirmed) {
       return;
@@ -194,57 +194,56 @@ export function PromptLibraryView(): JSX.Element {
         <div>
           <h2>Prompt Library</h2>
           <p>
-            Guarda tus prompts recurrentes y accede a ellos rápidamente para usarlos en tus flujos de
-            trabajo con agentes. Organiza por etiquetas, añade notas y copia con un clic.
+            Save recurring prompts and access them quickly for your agent workflows. Organize with
+            tags, add notes, and copy with a single click.
           </p>
         </div>
         <div className="prompts-hero__meta">
           <span>
-            Prompts guardados:{" "}
-            <strong>{prompts.length.toLocaleString("es-ES")}</strong>
+            Saved prompts: <strong>{prompts.length.toLocaleString("en-US")}</strong>
           </span>
           <span>
-            Etiquetas: <strong>{allTags.length}</strong>
+            Tags: <strong>{allTags.length}</strong>
           </span>
         </div>
       </section>
 
       <section className="prompts-create">
-        <h3>Nuevo prompt</h3>
+        <h3>New prompt</h3>
         <form className="prompts-create__form" onSubmit={handleCreatePrompt}>
           <div className="prompts-create__row">
             <label>
-              Título
+              Title
               <input
                 type="text"
                 value={createDraft.title}
                 onChange={(event) =>
                   setCreateDraft((draft) => ({ ...draft, title: event.target.value }))
                 }
-                placeholder="Ej. Explicar bug a un compañero"
+                placeholder="E.g. explain a bug to a teammate"
                 required
               />
             </label>
             <label>
-              Etiquetas
+              Tags
               <input
                 type="text"
                 value={createDraft.tags}
                 onChange={(event) =>
                   setCreateDraft((draft) => ({ ...draft, tags: event.target.value }))
                 }
-                placeholder="Ej. comunicación, resumen"
+                placeholder="E.g. communication, summary"
               />
             </label>
             <label>
-              Categoría
+              Category
               <select
                 value={createDraft.category}
                 onChange={(event) =>
                   setCreateDraft((draft) => ({ ...draft, category: event.target.value }))
                 }
               >
-                <option value="">Sin categoría</option>
+                <option value="">No category</option>
                 {PROMPT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
@@ -254,33 +253,35 @@ export function PromptLibraryView(): JSX.Element {
             </label>
           </div>
           <label>
-            Contenido
+            Content
             <textarea
               value={createDraft.body}
               onChange={(event) =>
                 setCreateDraft((draft) => ({ ...draft, body: event.target.value }))
               }
-              placeholder="Escribe aquí el prompt completo…"
+              placeholder="Write the full prompt here…"
               rows={7}
               required
             />
           </label>
           <label>
-            Notas
+            Notes
             <textarea
               value={createDraft.notes}
               onChange={(event) =>
                 setCreateDraft((draft) => ({ ...draft, notes: event.target.value }))
               }
-              placeholder="Detalles adicionales o contexto de uso (opcional)…"
+              placeholder="Additional details or usage context (optional)…"
               rows={3}
             />
           </label>
           <div className="prompts-create__actions">
             <button className="primary-btn" type="submit" disabled={!hasCreateDraft}>
-              Guardar prompt
+              Save prompt
             </button>
-            <span className="prompts-hint">Las etiquetas se separan por comas, punto y coma o salto de línea.</span>
+            <span className="prompts-hint">
+              Separate tags with commas, semicolons, or newlines.
+            </span>
           </div>
         </form>
       </section>
@@ -292,7 +293,7 @@ export function PromptLibraryView(): JSX.Element {
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Buscar por título, contenido o etiqueta…"
+              placeholder="Search by title, content, or tag…"
             />
             <div className="prompts-tags">
               <button
@@ -300,7 +301,7 @@ export function PromptLibraryView(): JSX.Element {
                 className={`prompts-tag ${selectedTag === null ? "is-active" : ""}`}
                 onClick={() => setSelectedTag(null)}
               >
-                Todas
+                All
               </button>
               {allTags.map((tag) => (
                 <button
@@ -318,7 +319,7 @@ export function PromptLibraryView(): JSX.Element {
           <div className="prompts-list">
             {filteredPrompts.length === 0 ? (
               <p className="prompts-empty">
-                No se encontraron prompts con los filtros actuales.
+                No prompts match the current filters.
               </p>
             ) : (
               filteredPrompts.map((prompt) => (
@@ -333,7 +334,7 @@ export function PromptLibraryView(): JSX.Element {
                   <span className="prompts-list__title">{prompt.title}</span>
                   <span className="prompts-list__meta">
                     <span>
-                      {prompt.category ?? "Sin categoría"}
+                      {prompt.category ?? "No category"}
                       {prompt.tags.length > 0
                         ? ` · ${prompt.tags
                             .slice(0, 3)
@@ -341,7 +342,7 @@ export function PromptLibraryView(): JSX.Element {
                             .join(" · ")}`
                         : ""}
                     </span>
-                    <span>Actualizado: {formatDate(prompt.updatedAt)}</span>
+                    <span>Updated: {formatDate(prompt.updatedAt)}</span>
                   </span>
                 </button>
               ))
@@ -352,7 +353,7 @@ export function PromptLibraryView(): JSX.Element {
         <div className="prompts-detail">
           {!selectedPrompt ? (
             <div className="prompts-detail__empty">
-              <p>Selecciona un prompt de la lista para ver su contenido.</p>
+              <p>Select a prompt from the list to view its contents.</p>
             </div>
           ) : (
             <div className="prompts-detail__content">
@@ -381,19 +382,19 @@ export function PromptLibraryView(): JSX.Element {
                 </div>
                 <div className="prompts-detail__actions">
                   <button className="secondary-btn" type="button" onClick={handleCopyPrompt}>
-                    Copiar
+                    Copy
                   </button>
                   <button className="secondary-btn" type="button" onClick={handleSaveChanges} disabled={!hasChanges}>
-                    Guardar cambios
+                    Save changes
                   </button>
                   <button className="danger-btn" type="button" onClick={handleDeletePrompt}>
-                    Eliminar
+                    Delete
                   </button>
                 </div>
               </header>
 
               <label>
-                Contenido
+                Content
                 <textarea
                   value={editDraft.body}
                   onChange={(event) =>
@@ -405,25 +406,25 @@ export function PromptLibraryView(): JSX.Element {
 
               <div className="prompts-detail__grid">
                 <label>
-                  Etiquetas
+                  Tags
                   <input
                     type="text"
                     value={editDraft.tags}
                     onChange={(event) =>
                       setEditDraft((draft) => ({ ...draft, tags: event.target.value }))
                     }
-                    placeholder="Producto, retro, documentación…"
+                    placeholder="Product, retro, documentation…"
                   />
                 </label>
                 <label>
-                  Categoría
+                  Category
                   <select
                     value={editDraft.category}
                     onChange={(event) =>
                       setEditDraft((draft) => ({ ...draft, category: event.target.value }))
                     }
                   >
-                    <option value="">Sin categoría</option>
+                    <option value="">No category</option>
                     {PROMPT_CATEGORIES.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -432,7 +433,7 @@ export function PromptLibraryView(): JSX.Element {
                   </select>
                 </label>
                 <label>
-                  Notas
+                  Notes
                   <textarea
                     value={editDraft.notes}
                     onChange={(event) =>
@@ -445,15 +446,15 @@ export function PromptLibraryView(): JSX.Element {
 
               <footer className="prompts-detail__footer">
                 <div>
-                  <span>Creado: {formatDate(selectedPrompt.createdAt)}</span>
-                  <span>Actualizado: {formatDate(selectedPrompt.updatedAt)}</span>
-                  <span>Último uso: {formatDate(selectedPrompt.lastUsedAt)}</span>
+                  <span>Created: {formatDate(selectedPrompt.createdAt)}</span>
+                  <span>Updated: {formatDate(selectedPrompt.updatedAt)}</span>
+                  <span>Last used: {formatDate(selectedPrompt.lastUsedAt)}</span>
                 </div>
                 {copyState !== "idle" ? (
                   <span className={`prompts-copy-state prompts-copy-state--${copyState}`}>
                     {copyState === "copied"
-                      ? "Prompt copiado al portapapeles."
-                      : "No se pudo copiar el prompt."}
+                      ? "Prompt copied to clipboard."
+                      : "Could not copy the prompt."}
                   </span>
                 ) : null}
               </footer>

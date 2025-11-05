@@ -21,12 +21,12 @@ export function HeaderBar({
 
   const rootLabel = rootPath ?? "CODE_MAP_ROOT";
   const description = lastFullScan
-    ? `Último escaneo: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} archivos`
-    : `${filesIndexed ?? 0} archivos indexados`;
+    ? `Last scan: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} files`
+    : `${filesIndexed ?? 0} indexed files`;
 
   const navLinks = [
     { to: "/overview", label: "Overview" },
-    { to: "/", label: "Inicio" },
+    { to: "/", label: "Home" },
     { to: "/stage-toolkit", label: "Stage Toolkit" },
     { to: "/ollama", label: "Ollama" },
     { to: "/code-map", label: "Code Map" },
@@ -59,7 +59,7 @@ export function HeaderBar({
         </nav>
         <div className="status-indicator" title={`Root: ${rootLabel}`}>
           <span className="status-dot" style={{ opacity: watcherActive ? 1 : 0.4 }} />
-          {watcherActive ? "Watcher activo" : "Watcher inactivo"}
+          {watcherActive ? "Watcher active" : "Watcher inactive"}
         </div>
         <Link className="secondary-btn" to="/settings">
           Settings

@@ -3634,7 +3634,7 @@
   {
     "path": "frontend/index.html",
     "relative": true,
-    "modified_at": "2025-10-29T11:39:17.505630+00:00",
+    "modified_at": "2025-11-05T16:07:25.676865+00:00",
     "symbols": [
       {
         "name": "root",
@@ -3649,7 +3649,7 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T12:19:03.017576+00:00",
+    "modified_at": "2025-11-05T16:07:30.681854+00:00",
     "symbols": [
       {
         "name": "App",
@@ -3671,7 +3671,7 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-11-05T12:19:58.323329+00:00",
+    "modified_at": "2025-11-05T16:18:23.792145+00:00",
     "symbols": [
       {
         "name": "buildUrl",
@@ -3896,7 +3896,7 @@
   {
     "path": "frontend/src/components/ActivityFeed.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T11:39:17.508367+00:00",
+    "modified_at": "2025-11-05T16:16:29.520462+00:00",
     "symbols": [
       {
         "name": "formatTimeAgo",
@@ -3976,7 +3976,7 @@
   {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T11:22:24.050022+00:00",
+    "modified_at": "2025-11-05T16:15:43.034589+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -3995,35 +3995,35 @@
       {
         "name": "ClassDetailsPanel",
         "kind": "function",
-        "lineno": 409,
+        "lineno": 410,
         "parent": null,
         "docstring": null
       },
       {
         "name": "clamp",
         "kind": "function",
-        "lineno": 515,
+        "lineno": 516,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleClick",
         "kind": "function",
-        "lineno": 647,
+        "lineno": 648,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handler",
         "kind": "function",
-        "lineno": 711,
+        "lineno": 712,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parseSvgDimension",
         "kind": "function",
-        "lineno": 818,
+        "lineno": 819,
         "parent": null,
         "docstring": null
       }
@@ -4048,7 +4048,7 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.643631+00:00",
+    "modified_at": "2025-11-05T16:16:16.141499+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
@@ -4070,7 +4070,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T12:19:15.064559+00:00",
+    "modified_at": "2025-11-05T16:16:43.026425+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -4085,7 +4085,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T12:19:34.464532+00:00",
+    "modified_at": "2025-11-05T17:03:57.053965+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -4107,61 +4107,61 @@
   {
     "path": "frontend/src/components/LintersView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T17:39:39.895518+00:00",
+    "modified_at": "2025-11-05T16:45:28.266905+00:00",
     "symbols": [
       {
         "name": "formatDate",
         "kind": "function",
-        "lineno": 39,
+        "lineno": 53,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatDuration",
         "kind": "function",
-        "lineno": 50,
+        "lineno": 64,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatLine",
         "kind": "function",
-        "lineno": 61,
+        "lineno": 75,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatIssuesSample",
         "kind": "function",
-        "lineno": 68,
+        "lineno": 82,
         "parent": null,
         "docstring": null
       },
       {
         "name": "filterHistory",
         "kind": "function",
-        "lineno": 75,
+        "lineno": 89,
         "parent": null,
         "docstring": null
       },
       {
         "name": "firstIssueSample",
         "kind": "function",
-        "lineno": 85,
+        "lineno": 99,
         "parent": null,
         "docstring": null
       },
       {
         "name": "LintersView",
         "kind": "function",
-        "lineno": 99,
+        "lineno": 113,
         "parent": null,
         "docstring": null
       },
       {
         "name": "refetchAll",
         "kind": "function",
-        "lineno": 127,
+        "lineno": 141,
         "parent": null,
         "docstring": null
       }
@@ -4171,7 +4171,7 @@
   {
     "path": "frontend/src/components/OllamaInsightsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-04T20:41:00.746995+00:00",
+    "modified_at": "2025-11-05T16:18:04.691199+00:00",
     "symbols": [
       {
         "name": "normalizeFocus",
@@ -4235,7 +4235,7 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-01T06:58:51.036459+00:00",
+    "modified_at": "2025-11-05T17:26:59.459004+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
@@ -4261,7 +4261,7 @@
       {
         "name": "OverviewDashboard",
         "kind": "function",
-        "lineno": 65,
+        "lineno": 62,
         "parent": null,
         "docstring": null
       }
@@ -4271,7 +4271,7 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.643631+00:00",
+    "modified_at": "2025-11-05T16:16:56.850387+00:00",
     "symbols": [
       {
         "name": "PreviewPane",
@@ -4286,7 +4286,7 @@
   {
     "path": "frontend/src/components/PromptLibraryView.tsx",
     "relative": true,
-    "modified_at": "2025-11-04T09:36:42.947126+00:00",
+    "modified_at": "2025-11-05T16:17:27.779301+00:00",
     "symbols": [
       {
         "name": "parseTagsInput",
@@ -4358,7 +4358,7 @@
   {
     "path": "frontend/src/components/SearchPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.643631+00:00",
+    "modified_at": "2025-11-05T16:09:32.248560+00:00",
     "symbols": [
       {
         "name": "SearchPanel",
@@ -4373,7 +4373,7 @@
   {
     "path": "frontend/src/components/SettingsView.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.644631+00:00",
+    "modified_at": "2025-11-05T16:21:03.321217+00:00",
     "symbols": [
       {
         "name": "extractCustomExcludes",
@@ -4423,7 +4423,7 @@
   {
     "path": "frontend/src/components/Sidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-04T09:36:42.947126+00:00",
+    "modified_at": "2025-11-05T16:10:44.838378+00:00",
     "symbols": [
       {
         "name": "Sidebar",
@@ -4435,35 +4435,35 @@
       {
         "name": "TreeNodeItem",
         "kind": "function",
-        "lineno": 81,
+        "lineno": 80,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleClick",
         "kind": "function",
-        "lineno": 96,
+        "lineno": 95,
         "parent": null,
         "docstring": null
       },
       {
         "name": "filterTree",
         "kind": "function",
-        "lineno": 146,
+        "lineno": 145,
         "parent": null,
         "docstring": null
       },
       {
         "name": "matcher",
         "kind": "function",
-        "lineno": 147,
+        "lineno": 146,
         "parent": null,
         "docstring": null
       },
       {
         "name": "walk",
         "kind": "function",
-        "lineno": 149,
+        "lineno": 148,
         "parent": null,
         "docstring": null
       }
@@ -4473,7 +4473,7 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-11-04T20:26:02.657107+00:00",
+    "modified_at": "2025-11-05T16:08:29.767713+00:00",
     "symbols": [
       {
         "name": "formatList",
@@ -4523,7 +4523,7 @@
   {
     "path": "frontend/src/components/StatusPanel.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.644631+00:00",
+    "modified_at": "2025-11-05T16:10:55.906349+00:00",
     "symbols": [
       {
         "name": "formatRelative",
@@ -4552,7 +4552,7 @@
   {
     "path": "frontend/src/components/__tests__/PreviewPane.test.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.645580+00:00",
+    "modified_at": "2025-11-05T16:17:13.889340+00:00",
     "symbols": [
       {
         "name": "createWrapper",
@@ -4567,7 +4567,7 @@
   {
     "path": "frontend/src/components/settings/DocstringsSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.645718+00:00",
+    "modified_at": "2025-11-05T16:09:07.760620+00:00",
     "symbols": [
       {
         "name": "DocstringsSection",
@@ -4582,7 +4582,7 @@
   {
     "path": "frontend/src/components/settings/ExcludeDirsSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.645801+00:00",
+    "modified_at": "2025-11-05T16:08:39.597689+00:00",
     "symbols": [
       {
         "name": "ExcludeDirsSection",
@@ -4604,7 +4604,7 @@
   {
     "path": "frontend/src/components/settings/RootPathSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.645801+00:00",
+    "modified_at": "2025-11-05T16:09:15.647601+00:00",
     "symbols": [
       {
         "name": "RootPathSection",
@@ -4619,7 +4619,7 @@
   {
     "path": "frontend/src/components/settings/WatcherSection.tsx",
     "relative": true,
-    "modified_at": "2025-10-31T12:37:21.645801+00:00",
+    "modified_at": "2025-11-05T16:09:23.842581+00:00",
     "symbols": [
       {
         "name": "WatcherSection",

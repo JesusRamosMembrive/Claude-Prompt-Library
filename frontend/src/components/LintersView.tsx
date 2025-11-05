@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 
 import type {
   LinterCheckStatus,
@@ -14,9 +13,9 @@ import { useMarkNotificationRead } from "../hooks/useMarkNotificationRead";
 
 const STATUS_LABELS: Record<LinterCheckStatus, string> = {
   pass: "OK",
-  warn: "Advertencias",
-  fail: "Fallo",
-  skipped: "Omitido",
+  warn: "Warnings",
+  fail: "Fail",
+  skipped: "Skipped",
   error: "Error",
 };
 
@@ -36,12 +35,27 @@ const SEVERITY_CLASS: Record<LinterSeverity, string> = {
   critical: "linters-pill--fail",
 };
 
+const TOOL_FIX_GUIDE: Array<{ key: string; name: string; command: string; note?: string }> = [
+  {
+    key: "ruff",
+    name: "Ruff",
+    command: "ruff check --fix .",
+    note: "Applies Ruff's quick fixes for lint violations.",
+  },
+  {
+    key: "black",
+    name: "Black",
+    command: "black .",
+    note: "Formats Python files in place using Black's style.",
+  },
+];
+
 function formatDate(value?: string | null): string {
   if (!value) {
     return "—";
   }
   try {
-    return new Date(value).toLocaleString("es-ES");
+    return new Date(value).toLocaleString("en-US");
   } catch {
     return value;
   }
@@ -117,7 +131,7 @@ export function LintersView(): JSX.Element {
 
   const statusLabel = latestReport
     ? STATUS_LABELS[latestReport.report.summary.overall_status]
-    : "Sin datos";
+    : "No data";
 
   const isLoadingAny =
     latestReportQuery.isLoading || historyQuery.isLoading || notificationsQuery.isLoading;
@@ -137,29 +151,29 @@ export function LintersView(): JSX.Element {
     const { summary, metrics } = latestReport.report;
     return [
       {
-        label: "Checks totales",
+        label: "Total checks",
         value: summary.total_checks,
       },
       {
-        label: "Incidencias",
+        label: "Issues",
         value: summary.issues_total,
         highlight: summary.issues_total > 0,
       },
       {
-        label: "Críticas",
+        label: "Critical",
         value: summary.critical_issues,
         highlight: summary.critical_issues > 0,
       },
       {
-        label: "Tiempo total",
+        label: "Total time",
         value: formatDuration(summary.duration_ms ?? metrics.pipeline_duration_ms),
       },
       {
-        label: "Archivos analizados",
+        label: "Files scanned",
         value: summary.files_scanned ?? metrics.files_scanned ?? "—",
       },
       {
-        label: "Líneas analizadas",
+        label: "Lines scanned",
         value: summary.lines_scanned ?? metrics.lines_scanned ?? "—",
       },
     ];
@@ -183,14 +197,27 @@ export function LintersView(): JSX.Element {
   const selectedTool =
     latestReport?.report.tools.find((tool) => tool.key === selectedToolKey) ?? null;
 
+  const fixGuideEntries = useMemo(() => {
+    const detectedKeys = new Set(
+      (latestReport?.report.tools ?? []).map((tool) => tool.key)
+    );
+    const filtered = TOOL_FIX_GUIDE.filter((entry) => {
+      if (detectedKeys.size === 0) {
+        return true;
+      }
+      return detectedKeys.has(entry.key);
+    });
+    return filtered.length > 0 ? filtered : TOOL_FIX_GUIDE;
+  }, [latestReport]);
+
   return (
     <div className="linters-view">
       <header className="linters-hero">
         <div>
-          <h2>Estado de los linters</h2>
+          <h2>Linter status</h2>
           <p>
-            Consulta el resultado más reciente del pipeline de calidad, revisa el historial y
-            gestiona las notificaciones generadas por las herramientas.
+            Review the latest quality pipeline results, browse the history, and manage tool-generated
+            notifications.
           </p>
         </div>
         <div className="linters-hero__actions">
@@ -200,19 +227,15 @@ export function LintersView(): JSX.Element {
             onClick={refetchAll}
             disabled={latestReportQuery.isFetching || historyQuery.isFetching}
           >
-            {latestReportQuery.isFetching || historyQuery.isFetching ? "Actualizando…" : "Refrescar"}
+            {latestReportQuery.isFetching || historyQuery.isFetching ? "Refreshing…" : "Refresh"}
           </button>
-          <Link className="primary-btn" to="/settings">
-            Configurar proyecto
-          </Link>
         </div>
       </header>
 
       {hasError ? (
         <section className="linters-error">
           <p>
-            No se pudieron recuperar los reportes de linters. Intenta refrescar la página o revisa el
-            backend.
+            Could not retrieve linter reports. Try refreshing the page or checking the backend.
           </p>
         </section>
       ) : null}
@@ -224,10 +247,10 @@ export function LintersView(): JSX.Element {
               <div className="linters-panel__header">
                 <div>
                   <span className={`linters-status-pill ${statusClass}`}>{statusLabel}</span>
-                  <h3 className="linters-panel__title">Reporte más reciente</h3>
+                  <h3 className="linters-panel__title">Most recent report</h3>
                 </div>
                 <span className="linters-panel__timestamp">
-                  Generado: {formatDate(latestReport.generated_at)}
+                  Generated: {formatDate(latestReport.generated_at)}
                 </span>
               </div>
 
@@ -245,15 +268,15 @@ export function LintersView(): JSX.Element {
 
               <div className="linters-subgrid">
                 <section>
-                  <h4>Herramientas</h4>
+                  <h4>Tools</h4>
                   <table className="linters-table">
                     <thead>
                       <tr>
-                        <th>Herramienta</th>
-                        <th>Estado</th>
-                        <th>Incidencias</th>
-                        <th>Duración</th>
-                        <th>Versión</th>
+                        <th>Tool</th>
+                        <th>Status</th>
+                        <th>Issues</th>
+                        <th>Duration</th>
+                        <th>Version</th>
                         <th />
                       </tr>
                     </thead>
@@ -283,7 +306,7 @@ export function LintersView(): JSX.Element {
                               className="linters-link"
                               onClick={() => setSelectedToolKey(tool.key)}
                             >
-                              Ver detalles
+                              View details
                             </button>
                           </td>
                         </tr>
@@ -300,13 +323,13 @@ export function LintersView(): JSX.Element {
                           <h4>{selectedTool.name}</h4>
                         </div>
                         <span className="linters-tool-details__meta">
-                          {selectedTool.issues_found} incidencias ·{" "}
+                          {selectedTool.issues_found} issues ·{" "}
                           {formatDuration(selectedTool.duration_ms)}
                         </span>
                       </div>
                       <div className="linters-tool-details__body">
                         {selectedTool.issues_found === 0 ? (
-                          <p className="linters-empty">Sin incidencias reportadas.</p>
+                          <p className="linters-empty">No issues reported.</p>
                         ) : (
                           <ul className="linters-issues">
                             {selectedTool.issues_sample.map((issue, index) => (
@@ -329,7 +352,7 @@ export function LintersView(): JSX.Element {
                                 <p>{issue.message}</p>
                                 {issue.suggestion ? (
                                   <p className="linters-issues__suggestion">
-                                    Recomendación: {issue.suggestion}
+                                    Recommendation: {issue.suggestion}
                                   </p>
                                 ) : null}
                               </li>
@@ -340,13 +363,13 @@ export function LintersView(): JSX.Element {
                           <div className="linters-logs">
                             {selectedTool.stdout_excerpt ? (
                               <details>
-                                <summary>Salida estándar</summary>
+                                <summary>Standard output</summary>
                                 <pre>{selectedTool.stdout_excerpt}</pre>
                               </details>
                             ) : null}
                             {selectedTool.stderr_excerpt ? (
                               <details>
-                                <summary>Salida de error</summary>
+                                <summary>Error output</summary>
                                 <pre>{selectedTool.stderr_excerpt}</pre>
                               </details>
                             ) : null}
@@ -358,9 +381,9 @@ export function LintersView(): JSX.Element {
                 </section>
 
                 <section>
-                  <h4>Reglas personalizadas</h4>
+                  <h4>Custom rules</h4>
                   {latestReport.report.custom_rules.length === 0 ? (
-                    <p className="linters-empty">No hay reglas configuradas.</p>
+                    <p className="linters-empty">No custom rules configured.</p>
                   ) : (
                     <ul className="linters-list">
                       {latestReport.report.custom_rules.map((rule) => (
@@ -396,7 +419,7 @@ export function LintersView(): JSX.Element {
 
               <div className="linters-notes">
                 <div>
-                  <h4>Notas</h4>
+                  <h4>Notes</h4>
                   {latestReport.report.notes.length > 0 ? (
                     <ul>
                       {latestReport.report.notes.map((note) => (
@@ -404,11 +427,11 @@ export function LintersView(): JSX.Element {
                       ))}
                     </ul>
                   ) : (
-                    <p className="linters-empty">El pipeline no generó notas adicionales.</p>
+                    <p className="linters-empty">The pipeline did not produce additional notes.</p>
                   )}
                 </div>
                 <div>
-                  <h4>Cobertura</h4>
+                  <h4>Coverage</h4>
                   {coverage ? (
                     <dl className="linters-coverage">
                       <div>
@@ -428,19 +451,19 @@ export function LintersView(): JSX.Element {
                         </dd>
                       </div>
                       <div>
-                        <dt>Líneas pendientes</dt>
+                        <dt>Missing lines</dt>
                         <dd>{coverage.missing_lines ?? "—"}</dd>
                       </div>
                     </dl>
                   ) : (
-                    <p className="linters-empty">No hay datos de cobertura disponibles.</p>
+                    <p className="linters-empty">No coverage data available.</p>
                   )}
                 </div>
               </div>
 
               {firstSample ? (
                 <div className="linters-sample">
-                  <h4>Ejemplo destacado</h4>
+                  <h4>Highlighted example</h4>
                   <p>{formatIssuesSample(firstSample)}</p>
                 </div>
               ) : null}
@@ -448,13 +471,12 @@ export function LintersView(): JSX.Element {
           ) : (
             <div className="linters-empty-state">
               {isLoadingAny ? (
-                <p>Cargando reporte de linters…</p>
+                <p>Loading linter report…</p>
               ) : (
                 <>
-                  <p>Aún no se ha generado ningún reporte de linters.</p>
+                  <p>No linter reports have been generated yet.</p>
                   <p>
-                    Lanza un escaneo completo o realiza cambios en el proyecto para que el pipeline se
-                    ejecute automáticamente.
+                    Run a full scan or make changes in the project so the pipeline runs automatically.
                   </p>
                 </>
               )}
@@ -465,13 +487,13 @@ export function LintersView(): JSX.Element {
         <aside className="linters-aside">
           <section className="linters-panel">
             <div className="linters-panel__header">
-              <h3 className="linters-panel__title">Historial reciente</h3>
+              <h3 className="linters-panel__title">Recent history</h3>
               <span className="linters-panel__timestamp">
-                {historyQuery.isFetching ? "Actualizando…" : ""}
+                {historyQuery.isFetching ? "Refreshing…" : ""}
               </span>
             </div>
             {historyItems.length === 0 ? (
-              <p className="linters-empty">Sin historial adicional.</p>
+              <p className="linters-empty">No additional history.</p>
             ) : (
               <ul className="linters-history">
                 {historyItems.map((item) => (
@@ -484,7 +506,7 @@ export function LintersView(): JSX.Element {
                         {formatDate(item.generated_at)}
                       </span>
                       <span className="linters-history__issues">
-                        {item.issues_total} incidencias · {item.critical_issues} críticas
+                        {item.issues_total} issues · {item.critical_issues} critical
                       </span>
                     </div>
                   </li>
@@ -495,13 +517,13 @@ export function LintersView(): JSX.Element {
 
           <section className="linters-panel">
             <div className="linters-panel__header">
-              <h3 className="linters-panel__title">Notificaciones</h3>
+              <h3 className="linters-panel__title">Notifications</h3>
               <span className="linters-panel__timestamp">
-                {notificationsQuery.isFetching ? "Actualizando…" : ""}
+                {notificationsQuery.isFetching ? "Refreshing…" : ""}
               </span>
             </div>
             {notifications.length === 0 ? (
-              <p className="linters-empty">Sin notificaciones recientes.</p>
+              <p className="linters-empty">No recent notifications.</p>
             ) : (
               <ul className="linters-notifications">
                 {notifications.map((notification) => (
@@ -526,7 +548,7 @@ export function LintersView(): JSX.Element {
                           onClick={() => markNotification.mutate({ id: notification.id, read: false })}
                           disabled={markNotification.isPending}
                         >
-                          Marcar como no leído
+                          Mark as unread
                         </button>
                       ) : (
                         <button
@@ -535,7 +557,7 @@ export function LintersView(): JSX.Element {
                           onClick={() => markNotification.mutate({ id: notification.id, read: true })}
                           disabled={markNotification.isPending}
                         >
-                          Marcar como leído
+                          Mark as read
                         </button>
                       )}
                     </div>
@@ -546,6 +568,27 @@ export function LintersView(): JSX.Element {
           </section>
         </aside>
       </section>
+
+      {fixGuideEntries.length > 0 ? (
+        <section className="linters-panel linters-fix-guide">
+          <div>
+            <h3 className="linters-panel__title">Auto-fix commands</h3>
+            <p className="linters-fix-guide__description">
+              Use these commands to apply automated fixes for the most common tools. Tools not listed
+              here require manual changes.
+            </p>
+          </div>
+          <ul className="linters-fix-guide__list">
+            {fixGuideEntries.map((entry) => (
+              <li key={entry.key} className="linters-fix-guide__item">
+                <span className="linters-fix-guide__name">{entry.name}</span>
+                <code>{entry.command}</code>
+                {entry.note ? <span className="linters-fix-guide__note">{entry.note}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

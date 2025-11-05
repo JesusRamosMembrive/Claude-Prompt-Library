@@ -114,19 +114,19 @@ export function ClassUMLView(): JSX.Element {
 
   return (
     <div className="uml-view">
-      <section className="uml-search-section" aria-label="Búsqueda de clases">
+      <section className="uml-search-section" aria-label="Class search">
         <div className="uml-search-container">
           <label htmlFor="uml-search" className="sr-only">
-            Buscar clase
+            Search class
           </label>
           <input
             id="uml-search"
             type="text"
             className="uml-search-input"
-            placeholder="Buscar clase por nombre, módulo o archivo..."
+            placeholder="Search class by name, module, or file..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Buscar clase por nombre, módulo o archivo"
+            aria-label="Search class by name, module, or file"
             aria-autocomplete="list"
             aria-controls={filteredClasses.length > 0 ? "uml-search-results" : undefined}
             aria-expanded={filteredClasses.length > 0}
@@ -140,7 +140,7 @@ export function ClassUMLView(): JSX.Element {
                   className="uml-search-result-item"
                   onClick={() => handleSearchSelect(cls.id)}
                   role="option"
-                  aria-label={`Seleccionar clase ${cls.name} del módulo ${cls.module}`}
+                  aria-label={`Select class ${cls.name} from module ${cls.module}`}
                 >
                   <div className="search-result-name">{cls.name}</div>
                   <div className="search-result-path">{cls.module}</div>
@@ -148,7 +148,7 @@ export function ClassUMLView(): JSX.Element {
               ))}
               {filteredClasses.length > 10 && (
                 <div className="uml-search-more">
-                  +{filteredClasses.length - 10} resultados más
+                  +{filteredClasses.length - 10} more results
                 </div>
               )}
             </div>
@@ -158,14 +158,14 @@ export function ClassUMLView(): JSX.Element {
 
       <section className="uml-controls">
         <div className="control-block">
-          <h2>Prefijos de módulo</h2>
+          <h2>Module prefixes</h2>
           <input
             type="text"
             className="uml-filter-input"
             value={prefixInput}
             onChange={(event) => setPrefixInput(event.target.value)}
-            placeholder="Ej: api, src"
-            aria-label="Filtrar por prefijos de módulo (separados por coma)"
+            placeholder="E.g. api, src"
+            aria-label="Filter by module prefixes (comma separated)"
           />
         </div>
 
@@ -175,11 +175,11 @@ export function ClassUMLView(): JSX.Element {
             checked={includeExternal}
             onChange={() => setIncludeExternal((prev) => !prev)}
           />
-          <span>Incluir clases externas</span>
+          <span>Include external classes</span>
         </label>
 
         <div className="control-block">
-          <h2>Tipos de relaciones</h2>
+          <h2>Relationship types</h2>
           <div className="control-row">
             <label className="control-checkbox">
               <input
@@ -187,7 +187,7 @@ export function ClassUMLView(): JSX.Element {
                 checked={edgeTypes.has("inheritance")}
                 onChange={() => toggleEdgeType("inheritance")}
               />
-              <span style={{ color: "#60a5fa" }}>Herencia</span>
+              <span style={{ color: "#60a5fa" }}>Inheritance</span>
             </label>
             <label className="control-checkbox">
               <input
@@ -195,7 +195,7 @@ export function ClassUMLView(): JSX.Element {
                 checked={edgeTypes.has("association")}
                 onChange={() => toggleEdgeType("association")}
               />
-              <span style={{ color: "#f97316" }}>Asociación</span>
+              <span style={{ color: "#f97316" }}>Association</span>
             </label>
             <label className="control-checkbox">
               <input
@@ -203,7 +203,7 @@ export function ClassUMLView(): JSX.Element {
                 checked={edgeTypes.has("instantiation")}
                 onChange={() => toggleEdgeType("instantiation")}
               />
-              <span style={{ color: "#10b981" }}>Instanciación</span>
+              <span style={{ color: "#10b981" }}>Instantiation</span>
             </label>
             <label className="control-checkbox">
               <input
@@ -211,7 +211,7 @@ export function ClassUMLView(): JSX.Element {
                 checked={edgeTypes.has("reference")}
                 onChange={() => toggleEdgeType("reference")}
               />
-              <span style={{ color: "#a855f7" }}>Referencias</span>
+              <span style={{ color: "#a855f7" }}>References</span>
             </label>
           </div>
         </div>
@@ -253,13 +253,13 @@ export function ClassUMLView(): JSX.Element {
           onClick={() => query.refetch()}
           disabled={query.isFetching}
         >
-          {query.isFetching ? "Actualizando…" : "Regenerar"}
+          {query.isFetching ? "Refreshing…" : "Regenerate"}
         </button>
       </section>
 
       {!query.isLoading && !query.isError && classCount > 0 && (
-        <section className="uml-legend" aria-label="Leyenda de relaciones">
-          <h3>Leyenda</h3>
+        <section className="uml-legend" aria-label="Relationship legend">
+          <h3>Legend</h3>
           <div className="legend-items">
             <div className="legend-item">
               <svg width="40" height="20" viewBox="0 0 40 20">
@@ -285,7 +285,7 @@ export function ClassUMLView(): JSX.Element {
                   </marker>
                 </defs>
               </svg>
-              <span>Herencia (extends)</span>
+              <span>Inheritance (extends)</span>
             </div>
             <div className="legend-item">
               <svg width="40" height="20" viewBox="0 0 40 20">
@@ -299,7 +299,7 @@ export function ClassUMLView(): JSX.Element {
                   strokeDasharray="5,3"
                 />
               </svg>
-              <span>Asociación (uses)</span>
+              <span>Association (uses)</span>
             </div>
             <div className="legend-item">
               <svg width="40" height="20" viewBox="0 0 40 20">
@@ -313,7 +313,7 @@ export function ClassUMLView(): JSX.Element {
                   strokeDasharray="5,3"
                 />
               </svg>
-              <span>Instanciación (creates)</span>
+              <span>Instantiation (creates)</span>
             </div>
             <div className="legend-item">
               <svg width="40" height="20" viewBox="0 0 40 20">
@@ -327,38 +327,38 @@ export function ClassUMLView(): JSX.Element {
                   strokeDasharray="2,2"
                 />
               </svg>
-              <span>Referencias (refers)</span>
+              <span>References (refers)</span>
             </div>
           </div>
         </section>
       )}
 
       {stats && !query.isLoading && !query.isError && (
-        <section className="uml-stats" aria-label="Resumen del modelo UML">
+        <section className="uml-stats" aria-label="UML model summary">
           <div className="uml-stat">
-            <span className="uml-stat-label">Clases</span>
+            <span className="uml-stat-label">Classes</span>
             <strong className="uml-stat-value">{stats.classes ?? classCount}</strong>
           </div>
           <div className="uml-stat">
-            <span className="uml-stat-label">Herencias</span>
+            <span className="uml-stat-label">Inheritance</span>
             <strong className="uml-stat-value" style={{ color: "#60a5fa" }}>
               {stats.inheritance_edges ?? 0}
             </strong>
           </div>
           <div className="uml-stat">
-            <span className="uml-stat-label">Asociaciones</span>
+            <span className="uml-stat-label">Associations</span>
             <strong className="uml-stat-value" style={{ color: "#f97316" }}>
               {stats.association_edges ?? 0}
             </strong>
           </div>
           <div className="uml-stat">
-            <span className="uml-stat-label">Instanciaciones</span>
+            <span className="uml-stat-label">Instantiations</span>
             <strong className="uml-stat-value" style={{ color: "#10b981" }}>
               {stats.instantiation_edges ?? 0}
             </strong>
           </div>
           <div className="uml-stat">
-            <span className="uml-stat-label">Referencias</span>
+            <span className="uml-stat-label">References</span>
             <strong className="uml-stat-value" style={{ color: "#a855f7" }}>
               {stats.reference_edges ?? 0}
             </strong>
@@ -370,14 +370,14 @@ export function ClassUMLView(): JSX.Element {
         {query.isLoading ? (
           <div className="uml-loading" role="status">
             <div className="uml-spinner" aria-hidden="true"></div>
-            <p className="summary-info">Calculando modelo UML…</p>
+            <p className="summary-info">Generating UML model…</p>
           </div>
         ) : query.isError ? (
           <p className="summary-error" role="alert">
-            No se pudo generar el modelo: {String(query.error)}
+            Could not generate the model: {String(query.error)}
           </p>
         ) : classCount === 0 ? (
-          <p className="summary-info">No hay clases para los filtros seleccionados.</p>
+          <p className="summary-info">No classes match the selected filters.</p>
         ) : svgMarkup ? (
           <>
             <UmlSvgContainer
@@ -395,7 +395,7 @@ export function ClassUMLView(): JSX.Element {
             )}
           </>
         ) : (
-          <p className="summary-info">El backend no devolvió un diagrama válido.</p>
+          <p className="summary-info">The backend did not return a valid diagram.</p>
         )}
       </section>
     </div>
@@ -430,8 +430,8 @@ function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.
           type="button"
           className="link-btn"
           onClick={onClose}
-          aria-label="Cerrar panel de detalles"
-          title="Cerrar (Esc)"
+          aria-label="Close details panel"
+          title="Close (Esc)"
         >
           ✕
         </button>
@@ -439,15 +439,15 @@ function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.
 
       <div className="class-details-body">
         <section className="class-details-section">
-          <h3>Información</h3>
+          <h3>Information</h3>
           <dl>
-            <dt>Módulo</dt>
+            <dt>Module</dt>
             <dd>{classInfo.module}</dd>
-            <dt>Archivo</dt>
+            <dt>File</dt>
             <dd>{classInfo.file}</dd>
             {classInfo.bases.length > 0 && (
               <>
-                <dt>Hereda de</dt>
+                <dt>Inherits from</dt>
                 <dd>{classInfo.bases.join(", ")}</dd>
               </>
             )}
@@ -456,13 +456,13 @@ function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.
 
         {classInfo.attributes.length > 0 && (
           <section className="class-details-section">
-            <h3>Atributos ({classInfo.attributes.length})</h3>
+            <h3>Attributes ({classInfo.attributes.length})</h3>
             <ul className="class-members-list">
               {classInfo.attributes.map((attr, idx) => (
                 <li key={idx}>
                   <code className="member-name">{attr.name}</code>
                   {attr.type && <span className="member-type">: {attr.type}</span>}
-                  {attr.optional && <span className="member-optional"> (opcional)</span>}
+                  {attr.optional && <span className="member-optional"> (optional)</span>}
                 </li>
               ))}
             </ul>
@@ -471,7 +471,7 @@ function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.
 
         {classInfo.methods.length > 0 && (
           <section className="class-details-section">
-            <h3>Métodos ({classInfo.methods.length})</h3>
+            <h3>Methods ({classInfo.methods.length})</h3>
             <ul className="class-members-list">
               {classInfo.methods.map((method, idx) => (
                 <li key={idx}>
@@ -488,7 +488,7 @@ function ClassDetailsPanel({ classInfo, onClose }: ClassDetailsPanelProps): JSX.
 
         {classInfo.associations.length > 0 && (
           <section className="class-details-section">
-            <h3>Asociaciones ({classInfo.associations.length})</h3>
+            <h3>Associations ({classInfo.associations.length})</h3>
             <ul className="class-associations-list">
               {classInfo.associations.map((assoc, idx) => (
                 <li key={idx}>
