@@ -7,13 +7,6 @@ export const queryKeys = {
   preview: (path: string) => ["preview", path] as const,
   stageStatus: ["stage-status"] as const,
   ollamaInsights: (limit: number) => ["ollama", "insights", limit] as const,
-  classGraph: (includeExternal: boolean, edgeTypes: string[], prefixes?: string[]) =>
-    [
-      "class-graph",
-      includeExternal,
-      [...edgeTypes].sort().join(","),
-      prefixes ? [...prefixes].sort().join(",") : "",
-    ] as const,
   classUml: (includeExternal: boolean, prefixes?: string[], edgeTypes?: string[]) =>
     [
       "class-uml",
