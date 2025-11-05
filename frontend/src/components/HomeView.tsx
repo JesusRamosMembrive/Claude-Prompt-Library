@@ -157,18 +157,6 @@ export function HomeView({
           </div>
         </article>
 
-        <Link to="/class-graph" className="home-card">
-          <div className="home-card-body">
-            <h3>Class Graph</h3>
-            <p>
-              Visualiza cómo los módulos del proyecto se relacionan entre sí: herencias,
-              composiciones e instancias internas. Ajusta filtros para explorar distintos niveles de
-              complejidad.
-            </p>
-          </div>
-          <span className="home-card-cta">Ir al grafo →</span>
-        </Link>
-
         <Link to="/class-uml" className="home-card">
           <div className="home-card-body">
             <h3>Class UML</h3>

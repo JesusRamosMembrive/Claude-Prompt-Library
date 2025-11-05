@@ -3,7 +3,6 @@ import { HomeView } from "./components/HomeView";
 import { CodeMapDashboard } from "./components/CodeMapDashboard";
 import { SettingsView } from "./components/SettingsView";
 import { StageToolkitView } from "./components/StageToolkitView";
-import { ClassGraphView } from "./components/ClassGraphView";
 import { ClassUMLView } from "./components/ClassUMLView";
 import { LintersView } from "./components/LintersView";
 import { OverviewDashboard } from "./components/OverviewDashboard";
@@ -56,10 +55,6 @@ export function App(): JSX.Element {
           <Route
             path="/ollama"
             element={withLayout("Ollama Insights", <OllamaInsightsView />)}
-          />
-          <Route
-            path="/class-graph"
-            element={withLayout("Class Graph", <ClassGraphView />)}
           />
           <Route
             path="/class-uml"

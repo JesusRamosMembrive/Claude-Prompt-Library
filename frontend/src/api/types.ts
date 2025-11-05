@@ -229,33 +229,6 @@ export interface BrowseDirectoryResponse {
   path: string;
 }
 
-export interface ClassGraphNode {
-  id: string;
-  name: string;
-  module: string;
-  file: string;
-}
-
-export interface ClassGraphEdge {
-  source: string;
-  target: string;
-  type: "inherits" | "instantiates" | "references";
-  internal: boolean;
-  raw_target: string;
-}
-
-export interface ClassGraphStats {
-  nodes: number;
-  edges: number;
-  edges_by_type: Record<string, number>;
-}
-
-export interface ClassGraphResponse {
-  nodes: ClassGraphNode[];
-  edges: ClassGraphEdge[];
-  stats: ClassGraphStats;
-}
-
 export interface UMLAttribute {
   name: string;
   type?: string | null;

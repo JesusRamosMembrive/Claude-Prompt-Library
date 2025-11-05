@@ -31,7 +31,6 @@ export function HeaderBar({
     { to: "/ollama", label: "Ollama" },
     { to: "/code-map", label: "Code Map" },
     { to: "/prompts", label: "Prompts" },
-    { to: "/class-graph", label: "Class Graph" },
     { to: "/class-uml", label: "Class UML" },
     { to: "/linters", label: "Linters" },
   ];

@@ -8,7 +8,6 @@ import type {
   StageStatusPayload,
   StageInitPayload,
   StageInitResponse,
-  ClassGraphResponse,
   BrowseDirectoryResponse,
   UMLDiagramResponse,
   LintersReportRecord,
@@ -404,33 +403,6 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
     method: "POST",
     body: JSON.stringify(payload),
   });
-}
-
-/**
- * Obtiene el grafo de clases del workspace.
- */
-export function getClassGraph(options?: {
-  includeExternal?: boolean;
-  edgeTypes?: string[];
-  modulePrefixes?: string[];
-}): Promise<ClassGraphResponse> {
-  const params = new URLSearchParams();
-  if (options?.includeExternal === false) {
-    params.set("include_external", "false");
-  }
-  if (options?.edgeTypes && options.edgeTypes.length > 0) {
-    options.edgeTypes.forEach((edge) => params.append("edge_types", edge));
-  }
-  if (options?.modulePrefixes && options.modulePrefixes.length > 0) {
-    options.modulePrefixes.forEach((prefix) => {
-      if (prefix.trim()) {
-        params.append("module_prefix", prefix.trim());
-      }
-    });
-  }
-  const query = params.toString();
-  const path = `/graph/classes${query ? `?${query}` : ""}`;
-  return fetchJson<ClassGraphResponse>(path);
 }
 
 export function getClassUml(options?: {
