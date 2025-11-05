@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import ast
 import html
-import subprocess
+import shutil
+import subprocess  # nosec B404 - se invoca Graphviz 'dot' de forma controlada
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
@@ -408,16 +409,17 @@ def render_uml_svg(
         edge_types: Set of edge types to include in diagram
     """
     dot = build_uml_dot(model, edge_types)
+    dot_binary = shutil.which("dot")
+    if not dot_binary:
+        raise RuntimeError("Graphviz 'dot' command no encontrado")
     try:
-        result = subprocess.run(
-            ["dot", "-Tsvg"],
+        result = subprocess.run(  # nosec B603 - se ejecuta binario validado de Graphviz
+            [dot_binary, "-Tsvg"],
             input=dot.encode("utf-8"),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
         )
-    except FileNotFoundError as exc:  # pragma: no cover
-        raise RuntimeError("Graphviz 'dot' command no encontrado") from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover
         raise RuntimeError(exc.stderr.decode("utf-8", errors="ignore")) from exc
 

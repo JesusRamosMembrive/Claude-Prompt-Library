@@ -14,9 +14,9 @@ import socket
 import sys
 import time
 from dataclasses import dataclass
-from urllib import error as urlerror
-from urllib import request as urlrequest
 from urllib.parse import urlparse
+
+import httpx
 
 DEFAULT_ENDPOINT = "http://127.0.0.1:11434"
 
@@ -28,45 +28,26 @@ class HttpResponse:
     latency_ms: float
 
 
-def build_request(
-    method: str, url: str, data: dict | None = None
-) -> urlrequest.Request:
-    payload = json.dumps(data).encode("utf-8") if data is not None else None
-    headers = {"Content-Type": "application/json"}
-    return urlrequest.Request(
-        url=url, data=payload, headers=headers, method=method.upper()
-    )
-
-
-def perform_request(req: urlrequest.Request, timeout: float) -> HttpResponse:
+def perform_request(
+    method: str, url: str, data: dict | None, timeout: float
+) -> HttpResponse:
     start = time.perf_counter()
     try:
-        with urlrequest.urlopen(req, timeout=timeout) as response:
-            body = response.read().decode(
-                response.headers.get_content_charset() or "utf-8"
-            )
-            return HttpResponse(
-                status=str(response.status),
-                body=body,
-                latency_ms=(time.perf_counter() - start) * 1000,
-            )
-    except urlerror.HTTPError as exc:
-        try:
-            detail = exc.read().decode("utf-8", errors="replace")
-        except Exception:
-            detail = exc.reason if isinstance(exc.reason, str) else repr(exc.reason)
+        response = httpx.request(method.upper(), url, json=data, timeout=timeout)
+        status = f"HTTP {response.status_code}"
+        body = response.text
         return HttpResponse(
-            status=f"HTTP {exc.code}",
-            body=detail,
+            status=status,
+            body=body,
             latency_ms=(time.perf_counter() - start) * 1000,
         )
-    except socket.timeout:
+    except httpx.TimeoutException:
         return HttpResponse(
             status="timeout",
             body="Tiempo de espera agotado.",
             latency_ms=(time.perf_counter() - start) * 1000,
         )
-    except Exception as exc:
+    except httpx.RequestError as exc:
         return HttpResponse(
             status="error",
             body=str(exc),
@@ -127,8 +108,9 @@ def main() -> int:
         return 1
     print(f"✅ Puerto accesible ({host}:{port}) en {tcp_info}")
 
-    tags_request = build_request("GET", f"{endpoint}/api/tags")
-    tags_response = perform_request(tags_request, timeout=args.timeout)
+    tags_response = perform_request(
+        "GET", f"{endpoint}/api/tags", data=None, timeout=args.timeout
+    )
     print(
         f"\n📦 /api/tags · estado={tags_response.status} · latencia={tags_response.latency_ms:.0f} ms"
     )
@@ -138,18 +120,16 @@ def main() -> int:
     except json.JSONDecodeError:
         print(tags_response.body or "(respuesta vacía)")
 
-    chat_request = build_request(
-        "POST",
-        f"{endpoint}/api/chat",
-        data={
-            "model": args.model,
-            "messages": [
-                {"role": "user", "content": args.prompt},
-            ],
-            "stream": False,
-        },
+    chat_payload = {
+        "model": args.model,
+        "messages": [
+            {"role": "user", "content": args.prompt},
+        ],
+        "stream": False,
+    }
+    chat_response = perform_request(
+        "POST", f"{endpoint}/api/chat", data=chat_payload, timeout=args.timeout
     )
-    chat_response = perform_request(chat_request, timeout=args.timeout)
     print(
         f"\n💬 /api/chat · estado={chat_response.status} · latencia={chat_response.latency_ms:.0f} ms"
     )

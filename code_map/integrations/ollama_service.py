@@ -6,18 +6,19 @@ Utilidades para interactuar con la API HTTP de Ollama.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
-import socket
-import subprocess
+import subprocess  # nosec B404 - required for invoking the Ollama CLI safely
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-from urllib import error as urlerror
 from urllib import parse as urlparse
-from urllib import request as urlrequest
+
+import httpx
 
 DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
 OLLAMA_HOST_ENV = "OLLAMA_HOST"
@@ -25,6 +26,9 @@ MODEL_WARMUP_RETRY_AFTER_SECONDS = 10.0
 _LOADING_STATE_TTL = timedelta(minutes=3)
 _LOADING_LOCK = threading.Lock()
 _LOADING_STATE: Dict[Tuple[str, str], datetime] = {}
+ALLOWED_URL_SCHEMES = {"http", "https"}
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_endpoint(raw: Optional[str]) -> str:
@@ -56,28 +60,30 @@ def _normalize_endpoint(raw: Optional[str]) -> str:
     return urlparse.urlunparse(normalized).rstrip("/")
 
 
-def _build_request(url: str, data: Dict[str, Any]) -> urlrequest.Request:
-    payload = json.dumps(data).encode("utf-8")
-    return urlrequest.Request(
-        url=url,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+def _validate_url(url: str) -> str:
+    parsed = urlparse.urlparse(url)
+    scheme = parsed.scheme or "http"
+    if scheme not in ALLOWED_URL_SCHEMES:
+        raise ValueError(f"Unsupported URL scheme: {scheme}")
+    return url
 
 
 def _fetch_json(
     url: str, *, timeout: float = 1.5
 ) -> tuple[Optional[dict], Optional[str]]:
     """Realiza una petición GET y parsea JSON si es posible."""
-    request = urlrequest.Request(url, headers={"Accept": "application/json"})
+    safe_url = _validate_url(url)
     try:
-        with urlrequest.urlopen(request, timeout=timeout) as response:
-            charset = response.headers.get_content_charset() or "utf-8"
-            body = response.read()
-            text = body.decode(charset, errors="replace")
-            return json.loads(text), None
-    except (urlerror.URLError, json.JSONDecodeError) as exc:
+        response = httpx.get(
+            safe_url,
+            headers={"Accept": "application/json"},
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        return response.json(), None
+    except httpx.HTTPStatusError as exc:
+        return None, exc.response.text.strip() or str(exc)
+    except (httpx.RequestError, json.JSONDecodeError) as exc:
         return None, str(exc)
 
 
@@ -165,17 +171,6 @@ def _clear_model_loading(endpoint: str, model: str) -> None:
     """Elimina el estado de carga registrado para un modelo."""
     with _LOADING_LOCK:
         _LOADING_STATE.pop((endpoint, model), None)
-
-
-def _extract_http_error_payload(exc: urlerror.HTTPError) -> str:
-    """Extrae el cuerpo de error HTTP en formato texto."""
-    try:
-        payload = exc.read()
-        if payload:
-            return payload.decode("utf-8", errors="replace")
-    except Exception:
-        pass
-    return str(exc)
 
 
 @dataclass(frozen=True)
@@ -309,60 +304,18 @@ def chat_with_ollama(
         timeout: Tiempo máximo de espera para la respuesta en segundos.
     """
     resolved_endpoint = _normalize_endpoint(endpoint or os.environ.get(OLLAMA_HOST_ENV))
-    url = f"{resolved_endpoint}/api/chat"
+    api_url = _validate_url(f"{resolved_endpoint}/api/chat")
     payload = {
         "model": model,
         "messages": [message.__dict__ for message in messages],
         "stream": False,
     }
 
-    request = _build_request(url, payload)
     previous_loading = _get_model_loading(resolved_endpoint, model)
     start = time.perf_counter()
     try:
-        with urlrequest.urlopen(request, timeout=timeout) as response:
-            body = response.read()
-            text = body.decode(response.headers.get_content_charset() or "utf-8")
-            data = json.loads(text)
-            status_code = response.status
-    except urlerror.HTTPError as exc:
-        original_error = _extract_http_error_payload(exc)
-        if exc.code in (503, 504):
-            loading_started = _ensure_model_loading(resolved_endpoint, model)
-            raise OllamaChatError(
-                "Ollama respondió que el servicio no está listo (posible carga del modelo). Intenta de nuevo en unos segundos.",
-                endpoint=resolved_endpoint,
-                original_error=original_error,
-                status_code=exc.code,
-                reason_code="service_unavailable",
-                retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
-                loading_since=loading_started,
-            ) from exc
-        raise OllamaChatError(
-            "Error HTTP al invocar Ollama.",
-            endpoint=resolved_endpoint,
-            original_error=original_error,
-            status_code=exc.code,
-        ) from exc
-    except urlerror.URLError as exc:
-        if isinstance(exc.reason, socket.timeout):
-            loading_started = previous_loading or _ensure_model_loading(
-                resolved_endpoint, model
-            )
-            raise OllamaChatError(
-                "Ollama tardó demasiado en responder. El modelo podría seguir cargándose. Intenta de nuevo en unos segundos.",
-                endpoint=resolved_endpoint,
-                original_error="timeout",
-                reason_code="timeout",
-                retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
-                loading_since=loading_started,
-            ) from exc
-        raise OllamaChatError(
-            "No se pudo conectar con el servidor Ollama.",
-            endpoint=resolved_endpoint,
-            original_error=str(exc.reason),
-        ) from exc
-    except TimeoutError as exc:
+        response = httpx.post(api_url, json=payload, timeout=timeout)
+    except httpx.TimeoutException as exc:
         loading_started = previous_loading or _ensure_model_loading(
             resolved_endpoint, model
         )
@@ -374,6 +327,43 @@ def chat_with_ollama(
             retry_after_seconds=MODEL_WARMUP_RETRY_AFTER_SECONDS,
             loading_since=loading_started,
         ) from exc
+    except httpx.RequestError as exc:
+        raise OllamaChatError(
+            "No se pudo conectar con el servidor Ollama.",
+            endpoint=resolved_endpoint,
+            original_error=str(exc),
+        ) from exc
+
+    status_code = response.status_code
+    if status_code in (503, 504):
+        loading_started = _ensure_model_loading(resolved_endpoint, model)
+        retry_after = response.headers.get("Retry-After")
+        retry_seconds: Optional[float] = MODEL_WARMUP_RETRY_AFTER_SECONDS
+        if retry_after:
+            try:
+                retry_seconds = float(retry_after)
+            except ValueError:
+                retry_seconds = MODEL_WARMUP_RETRY_AFTER_SECONDS
+        raise OllamaChatError(
+            "Ollama respondió que el servicio no está listo (posible carga del modelo). Intenta de nuevo en unos segundos.",
+            endpoint=resolved_endpoint,
+            original_error=response.text.strip() or "service unavailable",
+            status_code=status_code,
+            reason_code="service_unavailable",
+            retry_after_seconds=retry_seconds,
+            loading_since=loading_started,
+        )
+
+    if status_code >= 400:
+        raise OllamaChatError(
+            "Error HTTP al invocar Ollama.",
+            endpoint=resolved_endpoint,
+            original_error=response.text.strip() or str(status_code),
+            status_code=status_code,
+        )
+
+    try:
+        data = response.json()
     except json.JSONDecodeError as exc:
         raise OllamaChatError(
             "Respuesta inválida de Ollama (JSON no parseable).",
@@ -472,9 +462,18 @@ def _run_command(
     command: List[str], *, timeout: float = 2.0
 ) -> tuple[Optional[str], Optional[str]]:
     """Ejecuta un comando y devuelve (stdout/stderr combinado, error)."""
+    if not command:
+        return None, "Comando vacío."
+    executable = Path(command[0])
+    if not executable.is_absolute():
+        resolved = shutil.which(command[0])
+        if not resolved:
+            return None, "Comando no encontrado."
+        executable = Path(resolved)
+    sanitized_command = [str(executable)] + command[1:]
     try:
-        completed = subprocess.run(
-            command,
+        completed = subprocess.run(  # nosec B603 - parámetros controlados
+            sanitized_command,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -487,7 +486,7 @@ def _run_command(
     except Exception as exc:  # pragma: no cover
         # Intentional broad exception: subprocess errors are unpredictable
         # (permission errors, resource limits, OS-specific issues, etc.)
-        return None, f"Error ejecutando {' '.join(command)}: {exc}"
+        return None, f"Error ejecutando {' '.join(sanitized_command)}: {exc}"
 
     output = (completed.stdout or completed.stderr or "").strip()
     return output or None, None
@@ -533,12 +532,14 @@ def start_ollama_server(
         )
 
     try:
-        process = subprocess.Popen(
-            [binary_path, "serve"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            close_fds=True,
+        process = (
+            subprocess.Popen(  # nosec B603 - se ejecuta binario controlado (ollama)
+                [binary_path, "serve"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+                close_fds=True,
+            )
         )
     except Exception as exc:  # pragma: no cover
         # Intentional broad exception: subprocess.Popen can fail for many reasons

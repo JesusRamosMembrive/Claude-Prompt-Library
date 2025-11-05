@@ -85,23 +85,25 @@ def list_insights(
     _ensure_table(env)
     normalized_root = _normalize_root(root_path)
     params: list[object] = []
-    where = ""
+    clauses: list[str] = []
     if normalized_root:
-        where = "WHERE (root_path IS NULL OR root_path = ?)"
+        clauses.append("(root_path IS NULL OR root_path = ?)")
         params.append(normalized_root)
+
+    query_parts = [
+        "SELECT id, model, message, generated_at, root_path",
+        "FROM ollama_insights",
+    ]
+    if clauses:
+        query_parts.append("WHERE " + " AND ".join(clauses))
+    query_parts.append("ORDER BY generated_at DESC")
+    query_parts.append("LIMIT ?")
     params.append(limit)
 
+    sql = "\n".join(query_parts)
+
     with open_database(env) as connection:
-        rows = connection.execute(
-            f"""
-            SELECT id, model, message, generated_at, root_path
-            FROM ollama_insights
-            {where}
-            ORDER BY generated_at DESC
-            LIMIT ?
-            """,
-            params,
-        ).fetchall()
+        rows = connection.execute(sql, params).fetchall()
 
     insights: list[StoredInsight] = []
     for row in rows:

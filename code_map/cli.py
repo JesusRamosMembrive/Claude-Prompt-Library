@@ -63,7 +63,10 @@ def run(
         resolve_path=True,
         show_default=False,
     ),
-    host: str = typer.Option("0.0.0.0", help="Host donde exponer la API."),
+    host: str = typer.Option(
+        "127.0.0.1",
+        help="Host donde exponer la API (usa 0.0.0.0 para acceso externo controlado).",
+    ),
     port: int = typer.Option(8000, help="Puerto donde escuchar."),
     log_level: str = typer.Option(
         "info",

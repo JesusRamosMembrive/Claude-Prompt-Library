@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import logging
 import re
-import subprocess
+import shutil
+import subprocess  # nosec B404 - ejecución controlada de la CLI de Claude
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -39,19 +40,14 @@ def run_claude_init(
         log.info("[dry-run] Would run 'claude -p /init' in %s", project_path)
         return False
 
-    try:
-        result = subprocess.run(
-            ["which", "claude"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            log.warning("'claude' command not found in PATH")
-            return False
+    claude_binary = shutil.which("claude")
+    if not claude_binary:
+        log.warning("'claude' command not found in PATH")
+        return False
 
-        exec_result = subprocess.run(
-            ["claude", "-p", "/init"],
+    try:
+        exec_result = subprocess.run(  # nosec B603 - invocación explícita y validada
+            [claude_binary, "-p", "/init"],
             cwd=str(project_path),
             capture_output=True,
             text=True,

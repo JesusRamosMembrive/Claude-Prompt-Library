@@ -16,8 +16,8 @@ import argparse
 import json
 import sys
 import time
-from urllib import request as urlrequest
-from urllib import error as urlerror
+
+import httpx
 
 DEFAULT_API_BASE = "http://127.0.0.1:8000"
 
@@ -76,46 +76,37 @@ def run() -> int:
     if args.timeout:
         payload["timeout_seconds"] = args.timeout
 
-    data = json.dumps(payload).encode("utf-8")
-    req = urlrequest.Request(
-        url=url,
-        data=data,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
-    )
-
     print(f"POST {url}")
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
     start = time.perf_counter()
+    timeout = args.timeout or 120.0
     try:
-        with urlrequest.urlopen(req, timeout=120) as response:
-            body = response.read().decode(
-                response.headers.get_content_charset() or "utf-8"
-            )
-            latency_ms = (time.perf_counter() - start) * 1000
-            print(f"\n✅ Respuesta {response.status} en {latency_ms:.0f} ms")
-            try:
-                parsed = json.loads(body)
-            except json.JSONDecodeError:
-                print(body or "(sin cuerpo)")
-                return 0
-
-            print(json.dumps(parsed, ensure_ascii=False, indent=2))
-            return 0
-
-    except urlerror.HTTPError as exc:
+        response = httpx.post(
+            url,
+            json=payload,
+            headers={"Accept": "application/json"},
+            timeout=timeout,
+        )
         latency_ms = (time.perf_counter() - start) * 1000
-        detail_text = exc.read().decode("utf-8", errors="replace")
-        print(f"\n⚠️  Respuesta HTTP {exc.code} en {latency_ms:.0f} ms")
+        if response.status_code >= 400:
+            print(f"\n⚠️  Respuesta HTTP {response.status_code} en {latency_ms:.0f} ms")
+            try:
+                detail = response.json()
+                print(json.dumps(detail, ensure_ascii=False, indent=2))
+            except json.JSONDecodeError:
+                print(response.text or "(sin detalle)")
+            return 2
+
+        print(f"\n✅ Respuesta {response.status_code} en {latency_ms:.0f} ms")
         try:
-            detail = json.loads(detail_text)
-            print(json.dumps(detail, ensure_ascii=False, indent=2))
+            parsed = response.json()
+            print(json.dumps(parsed, ensure_ascii=False, indent=2))
         except json.JSONDecodeError:
-            print(detail_text or "(sin detalle)")
-        return 2
-    except urlerror.URLError as exc:
-        print(f"\n❌ Error de transporte: {exc.reason}")
+            print(response.text or "(sin cuerpo)")
+        return 0
+    except httpx.RequestError as exc:
+        print(f"\n❌ Error de transporte: {exc}")
         return 3
 
 

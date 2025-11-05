@@ -7,15 +7,18 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404 - invoca herramientas de linters definidas por la app
 import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
-from xml.etree import ElementTree
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
+
+from defusedxml import ElementTree as _ElementTree  # type: ignore[import-not-found, import-untyped]
+
+ElementTree = cast(Any, _ElementTree)
 
 from ..scanner import DEFAULT_EXCLUDED_DIRS
 from .report_schema import (
@@ -347,12 +350,14 @@ def _execute_tool(
 
     start = time.perf_counter()
     try:
-        completed = subprocess.run(
-            effective_command,
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=spec.timeout,
+        completed = (
+            subprocess.run(  # nosec B603 - comandos provienen de ToolSpec controlado
+                effective_command,
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=spec.timeout,
+            )
         )
     except subprocess.TimeoutExpired as exc:
         duration_ms = int((time.perf_counter() - start) * 1000)

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Mapping, Optional
 class CheckStatus(str, Enum):
     """Posibles estados de una verificación."""
 
-    PASS = "pass"
+    PASS = "pass"  # nosec B105 - etiqueta simbólica de estado, no credencial
     WARN = "warn"
     FAIL = "fail"
     SKIPPED = "skipped"
@@ -165,7 +165,10 @@ def _serialize_value(value: Any) -> Any:
 def report_to_dict(report: LintersReport) -> Dict[str, Any]:
     """Serializa un LintersReport a un diccionario listo para JSON."""
     data = _serialize_value(report)
-    assert isinstance(data, dict)
+    if not isinstance(data, dict):
+        raise TypeError(
+            "La serialización de LintersReport debe producir un diccionario"
+        )
     return data
 
 

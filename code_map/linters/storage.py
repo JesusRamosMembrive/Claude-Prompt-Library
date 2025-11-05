@@ -305,13 +305,15 @@ def list_notifications(
         clauses.append("(root_path IS NULL OR root_path = ?)")
         params.append(normalized_root)
 
-    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
-    query = (
-        "SELECT id, created_at, channel, severity, title, message, payload, root_path, read "
-        "FROM notifications"
-        f"{where} ORDER BY created_at DESC LIMIT ?"
-    )
+    query_parts = [
+        "SELECT id, created_at, channel, severity, title, message, payload, root_path, read",
+        "FROM notifications",
+    ]
+    if clauses:
+        query_parts.append("WHERE " + " AND ".join(clauses))
+    query_parts.append("ORDER BY created_at DESC LIMIT ?")
     params.append(limit)
+    query = " ".join(query_parts)
 
     with open_database(env) as connection:
         rows = connection.execute(query, params).fetchall()
