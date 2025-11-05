@@ -402,8 +402,38 @@ def render_uml_svg(model: Dict[str, object], edge_types: Optional[Set[str]] = No
     return result.stdout.decode("utf-8")
 
 
-def _analyze(root: Path) -> Iterable[ModuleModel]:
+def _analyze(root: Path, excluded_dirs: Optional[Set[str]] = None) -> Iterable[ModuleModel]:
+    """Analyze Python files in the root directory, excluding certain directories.
+
+    Args:
+        root: Root directory to scan
+        excluded_dirs: Set of directory names to exclude (e.g., .venv, __pycache__)
+    """
+    if excluded_dirs is None:
+        excluded_dirs = {
+            "__pycache__",
+            ".git",
+            ".hg",
+            ".mypy_cache",
+            ".pytest_cache",
+            ".ruff_cache",
+            ".svn",
+            ".tox",
+            ".venv",
+            "venv",
+            "env",
+            ".code-map",
+            "node_modules",
+            ".next",
+            "dist",
+            "build",
+        }
+
     for path in root.rglob("*.py"):
+        # Check if any part of the path is in excluded_dirs
+        if any(part in excluded_dirs for part in path.relative_to(root).parts):
+            continue
+
         try:
             module = ".".join(path.relative_to(root).with_suffix("").parts)
             tree = ast.parse(path.read_text(encoding="utf-8"))

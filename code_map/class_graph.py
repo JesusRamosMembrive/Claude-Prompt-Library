@@ -326,7 +326,31 @@ def build_class_graph(
 
 
 def _analyze_modules(root: Path) -> Iterable[ModuleInfo]:
+    """Analyze Python modules in root, excluding common directories like .venv."""
+    excluded_dirs = {
+        "__pycache__",
+        ".git",
+        ".hg",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".svn",
+        ".tox",
+        ".venv",
+        "venv",
+        "env",
+        ".code-map",
+        "node_modules",
+        ".next",
+        "dist",
+        "build",
+    }
+
     for path in root.rglob("*.py"):
+        # Skip files in excluded directories
+        if any(part in excluded_dirs for part in path.relative_to(root).parts):
+            continue
+
         try:
             module = _module_name_from_path(root, path)
             tree = ast.parse(path.read_text(encoding="utf-8"))
