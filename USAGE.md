@@ -73,6 +73,7 @@ python init_project.py [OPTIONS] <project_path>
 - `--detect-only` - Only detect stage, don't initialize framework
 - `--agent {claude|codex|both}` - Choose which assistants to configure (default: both)
 - `--dry-run` - Print the planned changes without modifying the filesystem
+- `--skip-claude-init` - Skip running `claude -p "/init"` even if the CLI is installed
 - `--log-level LEVEL` - Adjust logging verbosity (`INFO`, `DEBUG`, etc.)
 - `-h, --help` - Show help message
 
@@ -108,14 +109,14 @@ python init_project.py --existing ~/projects/my-existing-app --log-level DEBUG
    - `02-stage2-rules.md` - Structuring rules
    - `02-stage3-rules.md` - Production rules
 
-3. **Copies subagents** (4 specialized agents):
+3. **Copies stage-aware agents** (4 specialized assistants):
    - `architect-generic.md` - Evolutionary architecture
    - `implementer.md` - Stage-appropriate implementation
    - `code-reviewer-optimized.md` - Complexity validation
    - `stage-keeper-architecture.md` - Framework documentation
 
 4. **Generates CLAUDE.md:**
-   - Runs `claude -p "/init"` if Claude CLI available
+   - Runs `claude -p "/init"` if Claude CLI available (unless `--skip-claude-init` is provided)
    - Creates basic template if not
    - Appends custom workflow instructions
 

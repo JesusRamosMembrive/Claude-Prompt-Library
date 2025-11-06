@@ -20,7 +20,7 @@ export function RescanButton(): JSX.Element {
       disabled={mutation.isPending}
       aria-live="polite"
     >
-      {mutation.isPending ? "Re-escaneando…" : "Re-escaneo manual"}
+      {mutation.isPending ? "Re-escaneando…" : "Re-scan"}
     </button>
   );
 }

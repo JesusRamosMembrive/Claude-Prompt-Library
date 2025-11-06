@@ -75,6 +75,9 @@ class ProjectInitializer:
             logger_override=self.log,
         )
 
+        if self._should_prepare_claude():
+            self._ensure_agents_directory(dest_dir / ".claude")
+
         claude_cli_invoked = False
         claude_md_created = False
         claude_instructions_appended = False
@@ -183,6 +186,36 @@ class ProjectInitializer:
                 )
 
         return template_sources, template_destinations
+
+    def _ensure_agents_directory(self, claude_dir: Path) -> None:
+        if self.config.dry_run:
+            return
+
+        subagents_dir = claude_dir / "subagents"
+        agents_dir = claude_dir / "agents"
+
+        if subagents_dir.exists():
+            if agents_dir.exists():
+                for entry in subagents_dir.iterdir():
+                    target = agents_dir / entry.name
+                    if target.exists():
+                        self.log.warning(
+                            "Agent file already exists, leaving original in place: %s",
+                            target,
+                        )
+                        continue
+                    entry.rename(target)
+                try:
+                    subagents_dir.rmdir()
+                except OSError:
+                    self.log.warning(
+                        "Could not remove deprecated subagents directory (not empty): %s",
+                        subagents_dir,
+                    )
+            else:
+                subagents_dir.rename(agents_dir)
+        elif not agents_dir.exists() and claude_dir.exists():
+            agents_dir.mkdir(parents=True, exist_ok=True)
 
     def _should_prepare_claude(self) -> bool:
         return self.config.agent_selection in {"claude", "both"}

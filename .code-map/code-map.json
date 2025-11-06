@@ -45,7 +45,7 @@
   {
     "path": "claude_assess.py",
     "relative": true,
-    "modified_at": "2025-11-05T19:03:50.154497+00:00",
+    "modified_at": "2025-11-05T20:52:42.964128+00:00",
     "symbols": [],
     "errors": []
   },
@@ -1347,7 +1347,7 @@
   {
     "path": "code_map/cli.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:56:10.702456+00:00",
+    "modified_at": "2025-11-05T20:52:25.056194+00:00",
     "symbols": [
       {
         "name": "_validate_root",
@@ -1373,28 +1373,28 @@
       {
         "name": "config_show",
         "kind": "function",
-        "lineno": 112,
+        "lineno": 115,
         "parent": null,
         "docstring": "Muestra la configuraci\u00f3n almacenada actualmente."
       },
       {
         "name": "config_set_root",
         "kind": "function",
-        "lineno": 121,
+        "lineno": 124,
         "parent": null,
         "docstring": "Actualiza la ra\u00edz analizada por el backend."
       },
       {
         "name": "config_reset",
         "kind": "function",
-        "lineno": 131,
+        "lineno": 134,
         "parent": null,
         "docstring": "Restablece la ra\u00edz al directorio actual."
       },
       {
         "name": "main",
         "kind": "function",
-        "lineno": 138,
+        "lineno": 141,
         "parent": null,
         "docstring": "Punto de entrada para `python -m code_map`."
       }
@@ -1696,7 +1696,7 @@
   {
     "path": "code_map/insights/storage.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:51:30.210058+00:00",
+    "modified_at": "2025-11-05T20:52:36.307153+00:00",
     "symbols": [
       {
         "name": "StoredInsight",
@@ -1729,14 +1729,14 @@
       {
         "name": "clear_insights",
         "kind": "function",
-        "lineno": 123,
+        "lineno": 125,
         "parent": null,
         "docstring": "Elimina insights almacenados. Si se indica root_path, borra s\u00f3lo los asociados."
       },
       {
         "name": "_normalize_root",
         "kind": "function",
-        "lineno": 144,
+        "lineno": 146,
         "parent": null,
         "docstring": null
       }
@@ -1753,194 +1753,187 @@
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:39.717578+00:00",
+    "modified_at": "2025-11-05T21:01:06.784263+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
         "kind": "function",
-        "lineno": 30,
+        "lineno": 34,
         "parent": null,
         "docstring": "Normaliza el endpoint del servidor Ollama asegurando esquema y puerto."
       },
       {
-        "name": "_build_request",
+        "name": "_validate_url",
         "kind": "function",
-        "lineno": 59,
+        "lineno": 63,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_fetch_json",
         "kind": "function",
-        "lineno": 69,
+        "lineno": 71,
         "parent": null,
         "docstring": "Realiza una petici\u00f3n GET y parsea JSON si es posible."
       },
       {
         "name": "_format_bytes",
         "kind": "function",
-        "lineno": 84,
+        "lineno": 90,
         "parent": null,
         "docstring": "Convierte un tama\u00f1o en bytes a formato legible."
       },
       {
         "name": "_parse_modified",
         "kind": "function",
-        "lineno": 102,
+        "lineno": 108,
         "parent": null,
         "docstring": "Parsea timestamps ISO8601 flexibles."
       },
       {
         "name": "_current_timestamp",
         "kind": "function",
-        "lineno": 130,
+        "lineno": 136,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_prune_loading_locked",
         "kind": "function",
-        "lineno": 134,
+        "lineno": 140,
         "parent": null,
         "docstring": "Elimina marcas de modelos carg\u00e1ndose que hayan caducado."
       },
       {
         "name": "_ensure_model_loading",
         "kind": "function",
-        "lineno": 145,
+        "lineno": 151,
         "parent": null,
         "docstring": "Marca un modelo como en proceso de carga y devuelve el timestamp de inicio."
       },
       {
         "name": "_get_model_loading",
         "kind": "function",
-        "lineno": 156,
+        "lineno": 162,
         "parent": null,
         "docstring": "Devuelve el instante en el que detectamos que el modelo empez\u00f3 a cargar."
       },
       {
         "name": "_clear_model_loading",
         "kind": "function",
-        "lineno": 164,
+        "lineno": 170,
         "parent": null,
         "docstring": "Elimina el estado de carga registrado para un modelo."
       },
       {
-        "name": "_extract_http_error_payload",
-        "kind": "function",
-        "lineno": 170,
-        "parent": null,
-        "docstring": "Extrae el cuerpo de error HTTP en formato texto."
-      },
-      {
         "name": "OllamaModelInfo",
         "kind": "class",
-        "lineno": 182,
+        "lineno": 177,
         "parent": null,
         "docstring": "Modelo instalado disponible para Ollama."
       },
       {
         "name": "OllamaStatus",
         "kind": "class",
-        "lineno": 194,
+        "lineno": 189,
         "parent": null,
         "docstring": "Estado detectado para Ollama."
       },
       {
         "name": "OllamaDiscovery",
         "kind": "class",
-        "lineno": 208,
+        "lineno": 203,
         "parent": null,
         "docstring": "Resultado completo de la detecci\u00f3n de Ollama."
       },
       {
         "name": "OllamaStartResult",
         "kind": "class",
-        "lineno": 216,
+        "lineno": 211,
         "parent": null,
         "docstring": "Resultado al intentar iniciar el servidor Ollama."
       },
       {
         "name": "OllamaChatError",
         "kind": "class",
-        "lineno": 227,
+        "lineno": 222,
         "parent": null,
         "docstring": "Error al comunicarse con Ollama.\n\nAttributes:\n    message: Descripci\u00f3n breve de la causa.\n    endpoint: URL del servidor objetivo.\n    original_error: Texto del error original si est\u00e1 disponible.\n    status_code: C\u00f3digo HTTP retornado por Ollama (si hubo respuesta).\n    reason_code: Identificador interno del tipo de error detectado.\n    retry_after_seconds: Tiempo recomendado antes de reintentar.\n    loading_since: Momento en que se detect\u00f3 que el modelo inici\u00f3 carga."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 241,
+        "lineno": 236,
         "parent": "OllamaChatError",
         "docstring": null
       },
       {
         "name": "OllamaStartError",
         "kind": "class",
-        "lineno": 261,
+        "lineno": 256,
         "parent": null,
         "docstring": "Error al intentar iniciar el servidor Ollama."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 264,
+        "lineno": 259,
         "parent": "OllamaStartError",
         "docstring": null
       },
       {
         "name": "OllamaChatMessage",
         "kind": "class",
-        "lineno": 277,
+        "lineno": 272,
         "parent": null,
         "docstring": "Mensaje individual para el formato de chat de Ollama."
       },
       {
         "name": "OllamaChatResponse",
         "kind": "class",
-        "lineno": 285,
+        "lineno": 280,
         "parent": null,
         "docstring": "Respuesta normalizada de una petici\u00f3n de chat."
       },
       {
         "name": "chat_with_ollama",
         "kind": "function",
-        "lineno": 295,
+        "lineno": 290,
         "parent": null,
         "docstring": "Ejecuta una llamada s\u00edncrona a la API de chat de Ollama.\n\nArgs:\n    model: Identificador del modelo a usar (p. ej. ``\"llama3\"``).\n    messages: Secuencia de mensajes siguiendo el formato chat.\n    endpoint: URL base del servidor Ollama (opcional).\n    timeout: Tiempo m\u00e1ximo de espera para la respuesta en segundos."
       },
       {
         "name": "_detect_ollama",
         "kind": "function",
-        "lineno": 406,
+        "lineno": 396,
         "parent": null,
         "docstring": "Detecta la instalaci\u00f3n y estado de ejecuci\u00f3n de Ollama."
       },
       {
         "name": "discover_ollama",
         "kind": "function",
-        "lineno": 465,
+        "lineno": 455,
         "parent": null,
         "docstring": "Obtiene el estado actual de Ollama."
       },
       {
         "name": "_run_command",
         "kind": "function",
-        "lineno": 471,
+        "lineno": 461,
         "parent": null,
         "docstring": "Ejecuta un comando y devuelve (stdout/stderr combinado, error)."
       },
       {
         "name": "_extract_version",
         "kind": "function",
-        "lineno": 496,
+        "lineno": 495,
         "parent": null,
         "docstring": "Extrae un token de versi\u00f3n de una salida CLI."
       },
       {
         "name": "start_ollama_server",
         "kind": "function",
-        "lineno": 509,
+        "lineno": 508,
         "parent": null,
         "docstring": "Intenta iniciar el servidor Ollama (`ollama serve`) y confirma que est\u00e1 operativo."
       }
@@ -2128,138 +2121,138 @@
   {
     "path": "code_map/linters/pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:58:39.060524+00:00",
+    "modified_at": "2025-11-05T21:02:51.817944+00:00",
     "symbols": [
       {
         "name": "_safe_severity",
         "kind": "function",
-        "lineno": 57,
+        "lineno": 60,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ToolSpec",
         "kind": "class",
-        "lineno": 69,
+        "lineno": 72,
         "parent": null,
         "docstring": "Metadatos para ejecutar una herramienta est\u00e1ndar del pipeline."
       },
       {
         "name": "LinterRunOptions",
         "kind": "class",
-        "lineno": 81,
+        "lineno": 84,
         "parent": null,
         "docstring": "Configuraci\u00f3n opcional para ajustar la ejecuci\u00f3n del pipeline."
       },
       {
         "name": "from_names",
         "kind": "method",
-        "lineno": 89,
+        "lineno": 92,
         "parent": "LinterRunOptions",
         "docstring": null
       },
       {
         "name": "_which",
         "kind": "function",
-        "lineno": 96,
+        "lineno": 99,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_truncate_output",
         "kind": "function",
-        "lineno": 101,
+        "lineno": 104,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_ensure_text",
         "kind": "function",
-        "lineno": 107,
+        "lineno": 110,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_ruff",
         "kind": "function",
-        "lineno": 115,
+        "lineno": 118,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_bandit",
         "kind": "function",
-        "lineno": 142,
+        "lineno": 145,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_default_parser",
         "kind": "function",
-        "lineno": 163,
+        "lineno": 166,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_should_skip",
         "kind": "function",
-        "lineno": 248,
+        "lineno": 251,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_check_max_file_length",
         "kind": "function",
-        "lineno": 253,
+        "lineno": 256,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_execute_tool",
         "kind": "function",
-        "lineno": 324,
+        "lineno": 327,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_extract_coverage",
         "kind": "function",
-        "lineno": 416,
+        "lineno": 421,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_aggregate_summary",
         "kind": "function",
-        "lineno": 440,
+        "lineno": 445,
         "parent": null,
         "docstring": null
       },
       {
         "name": "run_linters_pipeline",
         "kind": "function",
-        "lineno": 526,
+        "lineno": 531,
         "parent": null,
         "docstring": "Ejecuta las herramientas est\u00e1ndar y devuelve un reporte completo."
       },
       {
         "name": "_select_tool_specs",
         "kind": "function",
-        "lineno": 630,
+        "lineno": 635,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_project_stats",
         "kind": "function",
-        "lineno": 639,
+        "lineno": 644,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_skipped_report",
         "kind": "function",
-        "lineno": 659,
+        "lineno": 664,
         "parent": null,
         "docstring": null
       }
@@ -2269,7 +2262,7 @@
   {
     "path": "code_map/linters/report_schema.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:39.811473+00:00",
+    "modified_at": "2025-11-05T21:05:27.483462+00:00",
     "symbols": [
       {
         "name": "CheckStatus",
@@ -2351,70 +2344,70 @@
       {
         "name": "_parse_datetime",
         "kind": "function",
-        "lineno": 172,
+        "lineno": 175,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_safe_status",
         "kind": "function",
-        "lineno": 178,
+        "lineno": 181,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_safe_severity",
         "kind": "function",
-        "lineno": 185,
+        "lineno": 188,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_issue",
         "kind": "function",
-        "lineno": 192,
+        "lineno": 195,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_tool",
         "kind": "function",
-        "lineno": 204,
+        "lineno": 207,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_custom_rule",
         "kind": "function",
-        "lineno": 220,
+        "lineno": 223,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_coverage",
         "kind": "function",
-        "lineno": 233,
+        "lineno": 236,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_summary",
         "kind": "function",
-        "lineno": 241,
+        "lineno": 244,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_chart_data",
         "kind": "function",
-        "lineno": 256,
+        "lineno": 259,
         "parent": null,
         "docstring": null
       },
       {
         "name": "report_from_dict",
         "kind": "function",
-        "lineno": 269,
+        "lineno": 272,
         "parent": null,
         "docstring": null
       }
@@ -2424,7 +2417,7 @@
   {
     "path": "code_map/linters/storage.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:54:26.542677+00:00",
+    "modified_at": "2025-11-05T21:04:59.781403+00:00",
     "symbols": [
       {
         "name": "_normalize_root",
@@ -2541,7 +2534,7 @@
       {
         "name": "mark_notification_read",
         "kind": "function",
-        "lineno": 322,
+        "lineno": 324,
         "parent": null,
         "docstring": "Actualiza el estado de le\u00eddo de una notificaci\u00f3n."
       }
@@ -2885,7 +2878,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:39.595957+00:00",
+    "modified_at": "2025-11-06T16:17:48.210624+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -3267,229 +3260,229 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:45:11.536912+00:00",
+    "modified_at": "2025-11-05T21:05:14.488349+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
         "kind": "class",
-        "lineno": 17,
+        "lineno": 18,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MethodInfo",
         "kind": "class",
-        "lineno": 24,
+        "lineno": 25,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClassModel",
         "kind": "class",
-        "lineno": 31,
+        "lineno": 32,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ModuleModel",
         "kind": "class",
-        "lineno": 46,
+        "lineno": 47,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLModuleAnalyzer",
         "kind": "class",
-        "lineno": 53,
+        "lineno": 54,
         "parent": null,
         "docstring": null
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 54,
+        "lineno": 55,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_Import",
         "kind": "method",
-        "lineno": 60,
+        "lineno": 61,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_ImportFrom",
         "kind": "method",
-        "lineno": 66,
+        "lineno": 67,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_resolve_relative",
         "kind": "method",
-        "lineno": 77,
+        "lineno": 78,
         "parent": "UMLModuleAnalyzer",
         "docstring": "Resolve relative imports to absolute module paths."
       },
       {
         "name": "visit_ClassDef",
         "kind": "method",
-        "lineno": 81,
+        "lineno": 82,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_FunctionDef",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 100,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_Call",
         "kind": "method",
-        "lineno": 111,
+        "lineno": 112,
         "parent": "UMLModuleAnalyzer",
         "docstring": "Detect class instantiation: instance = SomeClass()"
       },
       {
         "name": "visit_AnnAssign",
         "kind": "method",
-        "lineno": 121,
+        "lineno": 122,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "visit_Assign",
         "kind": "method",
-        "lineno": 139,
+        "lineno": 140,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_track_association",
         "kind": "method",
-        "lineno": 160,
+        "lineno": 161,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_expr_to_name",
         "kind": "method",
-        "lineno": 167,
+        "lineno": 168,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_collect_attribute",
         "kind": "method",
-        "lineno": 180,
+        "lineno": 181,
         "parent": "UMLModuleAnalyzer",
         "docstring": null
       },
       {
         "name": "_extract_type_names",
         "kind": "method",
-        "lineno": 190,
+        "lineno": 191,
         "parent": "UMLModuleAnalyzer",
         "docstring": "Extract all class names from type annotation (handles Union, List, Optional, etc.)"
       },
       {
         "name": "_is_optional",
         "kind": "function",
-        "lineno": 245,
+        "lineno": 246,
         "parent": null,
         "docstring": null
       },
       {
         "name": "build_uml_model",
         "kind": "function",
-        "lineno": 257,
+        "lineno": 258,
         "parent": null,
         "docstring": null
       },
       {
         "name": "build_uml_dot",
         "kind": "function",
-        "lineno": 332,
+        "lineno": 333,
         "parent": null,
         "docstring": "Generate Graphviz DOT format from UML model.\n\nArgs:\n    model: UML model with classes and relationships\n    edge_types: Set of edge types to include. Valid values:\n               \"inheritance\", \"association\", \"instantiation\", \"reference\"\n               If None, defaults to all types."
       },
       {
         "name": "render_uml_svg",
         "kind": "function",
-        "lineno": 401,
+        "lineno": 402,
         "parent": null,
         "docstring": "Render UML model to SVG using Graphviz.\n\nArgs:\n    model: UML model with classes and relationships\n    edge_types: Set of edge types to include in diagram"
       },
       {
         "name": "_analyze",
         "kind": "function",
-        "lineno": 427,
+        "lineno": 429,
         "parent": null,
         "docstring": "Analyze Python files in the root directory, excluding certain directories.\n\nArgs:\n    root: Root directory to scan\n    excluded_dirs: Set of directory names to exclude (e.g., .venv, __pycache__)"
       },
       {
         "name": "_filter_modules",
         "kind": "function",
-        "lineno": 471,
+        "lineno": 473,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_definitions",
         "kind": "function",
-        "lineno": 489,
+        "lineno": 491,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_bases",
         "kind": "function",
-        "lineno": 498,
+        "lineno": 500,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_associations",
         "kind": "function",
-        "lineno": 514,
+        "lineno": 516,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_resolve_references",
         "kind": "function",
-        "lineno": 532,
+        "lineno": 534,
         "parent": null,
         "docstring": "Resolve a set of raw class names to fully qualified names."
       },
       {
         "name": "_resolve_reference",
         "kind": "function",
-        "lineno": 551,
+        "lineno": 553,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_possible_names",
         "kind": "function",
-        "lineno": 560,
+        "lineno": 562,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_escape_id",
         "kind": "function",
-        "lineno": 587,
+        "lineno": 589,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_node_label",
         "kind": "function",
-        "lineno": 591,
+        "lineno": 593,
         "parent": null,
         "docstring": null
       }
@@ -4127,7 +4120,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T16:16:43.026425+00:00",
+    "modified_at": "2025-11-06T09:26:16.925280+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -4142,7 +4135,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T17:03:57.053965+00:00",
+    "modified_at": "2025-11-06T09:40:02.407112+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -4292,33 +4285,54 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-05T17:26:59.459004+00:00",
+    "modified_at": "2025-11-06T10:17:53.052091+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
         "kind": "function",
-        "lineno": 27,
+        "lineno": 34,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatDuration",
         "kind": "function",
-        "lineno": 38,
+        "lineno": 45,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 54,
+        "lineno": 61,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "parseTimestamp",
+        "kind": "function",
+        "lineno": 65,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatRelativeTime",
+        "kind": "function",
+        "lineno": 73,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OverviewDashboard",
         "kind": "function",
-        "lineno": 62,
+        "lineno": 113,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "dismissNotification",
+        "kind": "function",
+        "lineno": 411,
         "parent": null,
         "docstring": null
       }
@@ -4400,7 +4414,7 @@
   {
     "path": "frontend/src/components/RescanButton.tsx",
     "relative": true,
-    "modified_at": "2025-10-29T11:39:17.508461+00:00",
+    "modified_at": "2025-11-06T09:25:32.255509+00:00",
     "symbols": [
       {
         "name": "RescanButton",
@@ -5228,7 +5242,7 @@
   {
     "path": "stage_init/cli.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:40.399209+00:00",
+    "modified_at": "2025-11-06T16:17:40.506579+00:00",
     "symbols": [
       {
         "name": "build_parser",
@@ -5240,21 +5254,21 @@
       {
         "name": "main",
         "kind": "function",
-        "lineno": 55,
+        "lineno": 60,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_print_summary",
         "kind": "function",
-        "lineno": 89,
+        "lineno": 95,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_print_file_change",
         "kind": "function",
-        "lineno": 150,
+        "lineno": 156,
         "parent": null,
         "docstring": null
       }
@@ -5264,7 +5278,7 @@
   {
     "path": "stage_init/initializer.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:40.276951+00:00",
+    "modified_at": "2025-11-06T10:26:35.599008+00:00",
     "symbols": [
       {
         "name": "InitializationConfig",
@@ -5304,49 +5318,56 @@
       {
         "name": "_resolve_destination",
         "kind": "method",
-        "lineno": 141,
+        "lineno": 144,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_ensure_directory",
         "kind": "method",
-        "lineno": 147,
+        "lineno": 150,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_build_placeholders",
         "kind": "method",
-        "lineno": 155,
+        "lineno": 158,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_prepare_template_mappings",
         "kind": "method",
-        "lineno": 163,
+        "lineno": 166,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
-        "name": "_should_prepare_claude",
-        "kind": "method",
-        "lineno": 187,
-        "parent": "ProjectInitializer",
-        "docstring": null
-      },
-      {
-        "name": "_should_prepare_codex",
+        "name": "_ensure_agents_directory",
         "kind": "method",
         "lineno": 190,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
+        "name": "_should_prepare_claude",
+        "kind": "method",
+        "lineno": 220,
+        "parent": "ProjectInitializer",
+        "docstring": null
+      },
+      {
+        "name": "_should_prepare_codex",
+        "kind": "method",
+        "lineno": 223,
+        "parent": "ProjectInitializer",
+        "docstring": null
+      },
+      {
         "name": "_write_basic_claude_md",
         "kind": "method",
-        "lineno": 193,
+        "lineno": 226,
         "parent": "ProjectInitializer",
         "docstring": null
       }
@@ -5356,40 +5377,40 @@
   {
     "path": "stage_init/stage_update.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:40.292745+00:00",
+    "modified_at": "2025-11-05T21:06:37.382043+00:00",
     "symbols": [
       {
         "name": "StageUpdateResult",
         "kind": "class",
-        "lineno": 21,
+        "lineno": 22,
         "parent": null,
         "docstring": "Captures information about stage detection and file updates."
       },
       {
         "name": "run_claude_init",
         "kind": "function",
-        "lineno": 30,
+        "lineno": 31,
         "parent": null,
         "docstring": "Invoke `claude -p \"/init\"` within the project path to generate CLAUDE.md."
       },
       {
         "name": "append_custom_instructions",
         "kind": "function",
-        "lineno": 79,
+        "lineno": 75,
         "parent": null,
         "docstring": "Append custom instructions to CLAUDE.md if they are not already present."
       },
       {
         "name": "detect_project_stage",
         "kind": "function",
-        "lineno": 135,
+        "lineno": 131,
         "parent": null,
         "docstring": "Detect the stage for the given project root."
       },
       {
         "name": "update_current_phase_with_stage",
         "kind": "function",
-        "lineno": 148,
+        "lineno": 144,
         "parent": null,
         "docstring": "Inject detected stage details into 01-current-phase.md."
       }
@@ -6072,7 +6093,7 @@
   {
     "path": "tests/test_stage_initializer.py",
     "relative": true,
-    "modified_at": "2025-11-01T08:14:14.702596+00:00",
+    "modified_at": "2025-11-05T21:07:48.289782+00:00",
     "symbols": [
       {
         "name": "_silence_logs",
@@ -6101,7 +6122,7 @@
   {
     "path": "tools/debug_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:46:45.128695+00:00",
+    "modified_at": "2025-11-05T21:09:09.326592+00:00",
     "symbols": [
       {
         "name": "HttpResponse",
@@ -6111,37 +6132,30 @@
         "docstring": null
       },
       {
-        "name": "build_request",
+        "name": "perform_request",
         "kind": "function",
         "lineno": 31,
         "parent": null,
         "docstring": null
       },
       {
-        "name": "perform_request",
-        "kind": "function",
-        "lineno": 41,
-        "parent": null,
-        "docstring": null
-      },
-      {
         "name": "check_tcp",
         "kind": "function",
-        "lineno": 77,
+        "lineno": 58,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parse_args",
         "kind": "function",
-        "lineno": 86,
+        "lineno": 67,
         "parent": null,
         "docstring": null
       },
       {
         "name": "main",
         "kind": "function",
-        "lineno": 114,
+        "lineno": 95,
         "parent": null,
         "docstring": null
       }
@@ -6151,7 +6165,7 @@
   {
     "path": "tools/test_backend_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-05T18:44:40.587336+00:00",
+    "modified_at": "2025-11-05T21:08:57.087528+00:00",
     "symbols": [
       {
         "name": "parse_args",

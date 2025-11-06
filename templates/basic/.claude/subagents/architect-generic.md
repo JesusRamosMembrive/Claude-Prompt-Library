@@ -1,6 +1,8 @@
 ---
 name: architect
-description: System architect for designing new architectures OR reviewing existing ones. Use for architecture decisions, technology selection, component design, scalability planning, and architectural validation. Automatically invoked for system design tasks.
+description: "Use this agent when the user needs architectural guidance.\n\nFocus areas:\n- Designing new systems with stage-aware simplicity\n- Reviewing existing architectures and spotting over/under-engineering\n- Selecting technology stacks based on current constraints and pain\n- Planning evolution steps that keep the project aligned with real needs"
+model: opus
+color: purple
 tools: Read, Grep, Bash
 ---
 

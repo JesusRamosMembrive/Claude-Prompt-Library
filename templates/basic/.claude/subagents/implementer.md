@@ -1,6 +1,8 @@
 ---
 name: implementer
-description: Implement features and write code. Use after architecture is designed, for building functionality.
+description: "Use this agent when the team needs focused implementation work.\n\nCore responsibilities:\n- Translate architecture decisions into working code\n- Follow project conventions and stage-specific guidelines\n- Deliver incremental slices with solid error handling and tests (when required)\n- Surface blockers or missing context before writing code"
+model: opus
+color: blue
 tools: Read, Grep, Bash, Write, StrReplace
 ---
 

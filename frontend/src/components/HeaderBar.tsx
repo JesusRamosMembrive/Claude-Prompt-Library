@@ -25,14 +25,14 @@ export function HeaderBar({
     : `${filesIndexed ?? 0} indexed files`;
 
   const navLinks = [
-    { to: "/overview", label: "Overview" },
     { to: "/", label: "Home" },
-    { to: "/stage-toolkit", label: "Stage Toolkit" },
-    { to: "/ollama", label: "Ollama" },
+    { to: "/stage-toolkit", label: "StageToolKit" },
     { to: "/code-map", label: "Code Map" },
-    { to: "/prompts", label: "Prompts" },
     { to: "/class-uml", label: "Class UML" },
     { to: "/linters", label: "Linters" },
+    { to: "/ollama", label: "Ollama" },
+    { to: "/overview", label: "Overview" },
+    { to: "/prompts", label: "Prompts" },
   ];
 
   return (

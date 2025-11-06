@@ -26,10 +26,10 @@ CLAUDE_REQUIRED: Tuple[str, ...] = (
     ".claude/02-stage1-rules.md",
     ".claude/02-stage2-rules.md",
     ".claude/02-stage3-rules.md",
-    ".claude/subagents/architect-generic.md",
-    ".claude/subagents/code-reviewer-optimized.md",
-    ".claude/subagents/implementer.md",
-    ".claude/subagents/stage-keeper-architecture.md",
+    ".claude/agents/architect-generic.md",
+    ".claude/agents/code-reviewer-optimized.md",
+    ".claude/agents/implementer.md",
+    ".claude/agents/stage-keeper-architecture.md",
 )
 
 CLAUDE_OPTIONAL: Tuple[str, ...] = (
@@ -202,6 +202,7 @@ async def run_initializer(root: Path, agents: AgentSelection) -> Dict[str, objec
     else:
         # explicitar para mantener coherencia aunque el default sea ambos
         command.extend(["--agent", "both"])
+    command.append("--skip-claude-init")
 
     process = await asyncio.create_subprocess_exec(
         *command,

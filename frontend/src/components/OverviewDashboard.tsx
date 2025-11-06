@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
 
@@ -22,6 +23,12 @@ const LINTER_STATUS_TONE: Record<string, "success" | "warn" | "danger" | "neutra
   error: "danger",
   skipped: "neutral",
   default: "neutral",
+};
+
+const NOTIFICATION_LABEL: Record<"info" | "warn" | "danger", string> = {
+  info: "Heads-up",
+  warn: "Warning",
+  danger: "Needs attention",
 };
 
 function formatDateTime(value?: string | null): string {
@@ -53,6 +60,50 @@ function formatDuration(ms?: number | null): string {
 
 function truncatePath(path: string): string {
   return path;
+}
+
+function parseTimestamp(value?: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  if (diff < 0) {
+    return "Upcoming";
+  }
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) {
+    return "Just now";
+  }
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} hr${hours === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.floor(hours / 24);
+  if (days < 7) {
+    return `${days} day${days === 1 ? "" : "s"} ago`;
+  }
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+interface ActivityItem {
+  id: string;
+  label: string;
+  description: string;
+  timestamp: number;
+  formattedDate: string;
+  link?: { label: string; to: string };
 }
 
 interface OverviewDashboardProps {
@@ -169,6 +220,119 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   const capabilityIssues =
     statusData?.capabilities?.filter((capability) => !capability.available) ?? [];
 
+  const activityTimeline = useMemo<ActivityItem[]>(() => {
+    const items: ActivityItem[] = [];
+    const stageTimestamp = parseTimestamp(detection?.checked_at);
+    if (stageTimestamp) {
+      items.push({
+        id: "stage-detection",
+        label: "Stage detection run",
+        description: stageSummary,
+        timestamp: stageTimestamp,
+        formattedDate: new Date(stageTimestamp).toLocaleString("en-US"),
+        link: { label: "Stage Toolkit", to: "/stage-toolkit" },
+      });
+    }
+
+    const scanTimestamp = parseTimestamp(statusData?.last_full_scan);
+    if (scanTimestamp) {
+      items.push({
+        id: "full-scan",
+        label: "Full repository scan",
+        description: `Indexed ${filesIndexed.toLocaleString("en-US")} files.`,
+        timestamp: scanTimestamp,
+        formattedDate: new Date(scanTimestamp).toLocaleString("en-US"),
+        link: { label: "Open Code Map", to: "/code-map" },
+      });
+    }
+
+    const eventsTimestamp = parseTimestamp(statusData?.last_event_batch);
+    if (eventsTimestamp) {
+      items.push({
+        id: "event-batch",
+        label: "Event batch processed",
+        description:
+          pendingEvents > 0
+            ? `${pendingEvents.toLocaleString("en-US")} events pending review.`
+            : "All events processed.",
+        timestamp: eventsTimestamp,
+        formattedDate: new Date(eventsTimestamp).toLocaleString("en-US"),
+        link: { label: "Review activity", to: "/code-map" },
+      });
+    }
+
+    const lintersTimestamp = parseTimestamp(lintersGeneratedAt);
+    if (lintersTimestamp) {
+      items.push({
+        id: `linters-${lintersTimestamp}`,
+        label: "Linter pipeline run",
+        description: `${lintersLabel} · ${lintersIssues.toLocaleString("en-US")} issue${lintersIssues === 1 ? "" : "s"}.`,
+        timestamp: lintersTimestamp,
+        formattedDate: new Date(lintersTimestamp).toLocaleString("en-US"),
+        link: { label: "View linters", to: "/linters" },
+      });
+    }
+
+    if (latestOllamaInsight) {
+      const insightTimestamp = parseTimestamp(latestOllamaInsight.generated_at);
+      if (insightTimestamp) {
+        const truncatedMessage =
+          latestOllamaInsight.message.length > 160
+            ? `${latestOllamaInsight.message.slice(0, 157)}…`
+            : latestOllamaInsight.message;
+        items.push({
+          id: `ollama-insight-${latestOllamaInsight.id}`,
+          label: `Ollama insight (${latestOllamaInsight.model})`,
+          description: truncatedMessage,
+          timestamp: insightTimestamp,
+          formattedDate: new Date(insightTimestamp).toLocaleString("en-US"),
+          link: { label: "Open Ollama", to: "/ollama" },
+        });
+      }
+    } else {
+      const lastRunTimestamp = parseTimestamp(ollamaInsightsLastRun);
+      if (lastRunTimestamp) {
+        items.push({
+          id: "ollama-last-run",
+          label: "Ollama scheduled run",
+          description: "Last schedule completed successfully.",
+          timestamp: lastRunTimestamp,
+          formattedDate: new Date(lastRunTimestamp).toLocaleString("en-US"),
+          link: { label: "Open Ollama", to: "/ollama" },
+        });
+      }
+    }
+
+    const nextRunTimestamp = parseTimestamp(ollamaInsightsNextRun);
+    if (nextRunTimestamp && nextRunTimestamp > Date.now()) {
+      items.push({
+        id: "ollama-next-run",
+        label: "Next Ollama run",
+        description: `Scheduled for ${new Date(nextRunTimestamp).toLocaleString("en-US")}.`,
+        timestamp: nextRunTimestamp,
+        formattedDate: new Date(nextRunTimestamp).toLocaleString("en-US"),
+        link: { label: "Adjust schedule", to: "/ollama" },
+      });
+    }
+
+    return items
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 6);
+  }, [
+    detection?.checked_at,
+    stageSummary,
+    statusData?.last_full_scan,
+    filesIndexed,
+    statusData?.last_event_batch,
+    pendingEvents,
+    lintersGeneratedAt,
+    lintersLabel,
+    lintersIssues,
+    latestOllamaInsight,
+    ollamaInsightsLastRun,
+    ollamaInsightsNextRun,
+  ]);
+
   const alerts: Array<{
     tone: "info" | "warn" | "danger";
     message: string;
@@ -226,8 +390,61 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
     });
   }
 
+  const [dismissedNotifications, setDismissedNotifications] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const notifications = useMemo(
+    () =>
+      alerts.map((alert, index) => ({
+        ...alert,
+        id: `${alert.tone}-${index}-${alert.message}`,
+        label: NOTIFICATION_LABEL[alert.tone],
+      })),
+    [alerts],
+  );
+
+  const visibleNotifications = notifications.filter(
+    (notification) => !dismissedNotifications[notification.id],
+  );
+
+  const dismissNotification = (id: string) => {
+    setDismissedNotifications((prev) => ({ ...prev, [id]: true }));
+  };
+
   return (
     <div className="overview-view">
+      {visibleNotifications.length > 0 ? (
+        <div className="overview-toasts" role="status" aria-live="polite">
+          {visibleNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`overview-toast overview-toast--${notification.tone}`}
+            >
+              <div className="overview-toast__content">
+                <div className="overview-toast__header">
+                  <span className="overview-toast__label">{notification.label}</span>
+                  <button
+                    type="button"
+                    className="overview-toast__dismiss"
+                    onClick={() => dismissNotification(notification.id)}
+                    aria-label="Dismiss notification"
+                  >
+                    ×
+                  </button>
+                </div>
+                <p className="overview-toast__message">{notification.message}</p>
+                {notification.link ? (
+                  <Link className="overview-toast__link" to={notification.link.to}>
+                    {notification.link.label} →
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <section className="overview-intro">
         <div className="overview-intro__text">
           <h2>Workspace overview</h2>
@@ -298,17 +515,28 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
       </section>
 
       {alerts.length > 0 ? (
-        <section className="overview-alerts">
-          {alerts.map((alert, index) => (
-            <div key={`${alert.message}-${index}`} className={`overview-alert overview-alert--${alert.tone}`}>
-              <span>{alert.message}</span>
-              {alert.link ? (
-                <Link className="overview-alert__cta" to={alert.link.to}>
-                  {alert.link.label} →
-                </Link>
-              ) : null}
-            </div>
-          ))}
+        <section className="overview-review">
+          <div className="overview-section-header">
+            <h3>Review queue</h3>
+            <span className="overview-section-subtitle">
+              Quick reminders of what to investigate next.
+            </span>
+          </div>
+          <div className="overview-alerts">
+            {alerts.map((alert, index) => (
+              <div
+                key={`${alert.message}-${index}`}
+                className={`overview-alert overview-alert--${alert.tone}`}
+              >
+                <span>{alert.message}</span>
+                {alert.link ? (
+                  <Link className="overview-alert__cta" to={alert.link.to}>
+                    {alert.link.label} →
+                  </Link>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
 
@@ -449,6 +677,38 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
           </dl>
         </article>
       </section>
+
+      {activityTimeline.length > 0 ? (
+        <section className="overview-timeline">
+          <div className="overview-section-header">
+            <h3>Recent activity</h3>
+            <span className="overview-section-subtitle">
+              Track the latest runs and updates across the workspace.
+            </span>
+          </div>
+          <ul className="overview-timeline__list">
+            {activityTimeline.map((item) => (
+              <li key={item.id} className="overview-timeline__item">
+                <div className="overview-timeline__meta">
+                  <span className="overview-timeline__label">{item.label}</span>
+                  <span className="overview-timeline__time">
+                    {formatRelativeTime(item.timestamp)}
+                  </span>
+                </div>
+                <p className="overview-timeline__description">{item.description}</p>
+                <div className="overview-timeline__footer">
+                  <span className="overview-timeline__date">{item.formattedDate}</span>
+                  {item.link ? (
+                    <Link className="overview-timeline__cta" to={item.link.to}>
+                      {item.link.label} →
+                    </Link>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

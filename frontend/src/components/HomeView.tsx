@@ -109,6 +109,26 @@ export function HomeView({
           </div>
           <span className="home-card-cta">Open Ollama →</span>
         </Link>
+
+        <Link to="/prompts" className="home-card">
+          <div className="home-card-body">
+            <h3>Prompts</h3>
+            <p>
+              Explore reusable prompt templates to guide agents and capture team best practices.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Prompts →</span>
+        </Link>
+
+        <Link to="/settings" className="home-card">
+          <div className="home-card-body">
+            <h3>Settings</h3>
+            <p>
+              Configure project paths, automation toggles, and integrations to match your workflow.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Settings →</span>
+        </Link>
       </section>
     </div>
   );

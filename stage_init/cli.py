@@ -44,6 +44,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Simulate actions without modifying the filesystem",
     )
     parser.add_argument(
+        "--skip-claude-init",
+        action="store_true",
+        help="Do not invoke `claude -p /init` even if the CLI is available",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
@@ -77,6 +82,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         existing_project=args.existing,
         agent_selection=args.agent,
         dry_run=args.dry_run,
+        run_claude_init=not args.skip_claude_init,
     )
 
     initializer = ProjectInitializer(config, logger_override=log)
