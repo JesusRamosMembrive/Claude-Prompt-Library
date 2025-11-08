@@ -42,6 +42,28 @@ python -m code_map run --host 0.0.0.0 --port 8000 --log-level info
 ### Opciones adicionales
 - `CODE_MAP_INCLUDE_DOCSTRINGS` (`true` por defecto): controla si el motor añade docstrings en los resultados. Ajusta a `0` o `false` para omitirlos.
 
+## Empaquetar el backend con PyInstaller
+
+Cuando necesites distribuir el backend como ejecutable autónomo, usa `pyinstaller` apuntando al módulo principal `code_map` (el mismo que ejecutas con `python -m code_map`). Pasos recomendados:
+
+1. Activa `.venv` e instala PyInstaller si aún no está presente:
+   ```bash
+   .venv/bin/pip install pyinstaller
+   ```
+2. Genera el binario de una sola pieza:
+   ```bash
+   pyinstaller --name code-map-backend --onefile code_map/__main__.py
+   ```
+   - En lugar de un script suelto, apuntamos al `__main__` del paquete (`python -m code_map` hace exactamente lo mismo).
+   - PyInstaller dejará el ejecutable final en `dist/code-map-backend` (o `code-map-backend.exe` en Windows).
+3. Copia el ejecutable donde lo vayas a publicar (por ejemplo, una release en GitHub) o súbelo a tu web.
+4. Al ejecutar el binario, pasa los mismos argumentos que usarías con `python -m code_map`:
+   ```bash
+   ./code-map-backend --host 0.0.0.0 --port 8000 --root /ruta/al/proyecto
+   ```
+
+Recuerda incluir junto al ejecutable cualquier archivo de configuración requerido (`.code-map/code-map.json`, etc.) o documentar cómo generar la configuración al primer arranque.
+
 ## Validación manual
 1. **Crear/editar archivos** en la ruta configurada:
    ```bash

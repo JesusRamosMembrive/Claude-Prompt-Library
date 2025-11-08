@@ -164,6 +164,7 @@ export function ClassUMLView(): JSX.Element {
   const [graphvizForm, setGraphvizForm] = useState<GraphvizFormState>(() => ({
     ...DEFAULT_GRAPHVIZ_FORM,
   }));
+  const [isGraphvizSidebarOpen, setIsGraphvizSidebarOpen] = useState(true);
 
   // Edge type filters - default to inheritance + association only (no clutter)
   const [edgeTypes, setEdgeTypes] = useState<Set<string>>(
@@ -262,7 +263,8 @@ export function ClassUMLView(): JSX.Element {
   }, []);
 
   return (
-    <div className="uml-view">
+    <div className={`uml-view ${isGraphvizSidebarOpen ? "sidebar-open" : ""}`}>
+      <div className="uml-content">
       <section className="uml-search-section" aria-label="Class search">
         <div className="uml-search-container">
           <label htmlFor="uml-search" className="sr-only">
@@ -402,424 +404,17 @@ export function ClassUMLView(): JSX.Element {
           onClick={() => query.refetch()}
           disabled={query.isFetching}
         >
-        {query.isFetching ? "Refreshing…" : "Regenerate"}
-      </button>
-    </section>
+          {query.isFetching ? "Refreshing…" : "Regenerate"}
+        </button>
 
-      <section className="uml-graphviz-panel">
-        <div className="graphviz-header">
-          <div>
-            <h2>Graphviz layout & styling</h2>
-            <p>Adjust the rendering engine, spacing, palette, and edge styles before regenerating the SVG.</p>
-          </div>
-          <button type="button" className="link-btn" onClick={resetGraphvizOptions}>
-            Reset styling
-          </button>
-        </div>
-
-        <div className="graphviz-groups">
-          <div className="graphviz-group">
-            <h3>Layout</h3>
-            <div className="graphviz-grid">
-              <label className="graphviz-field">
-                <span>Engine</span>
-                <select
-                  value={graphvizForm.layoutEngine}
-                  onChange={(event) => handleGraphvizInputChange("layoutEngine", event.target.value)}
-                >
-                  {GRAPHVIZ_LAYOUT_ENGINES.map((engine) => (
-                    <option key={engine} value={engine}>
-                      {engine.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Rank direction</span>
-                <select
-                  value={graphvizForm.rankdir}
-                  onChange={(event) => handleGraphvizInputChange("rankdir", event.target.value)}
-                >
-                  {GRAPHVIZ_RANKDIRS.map((dir) => (
-                    <option key={dir} value={dir}>
-                      {dir}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Splines</span>
-                <select
-                  value={graphvizForm.splines}
-                  onChange={(event) => handleGraphvizInputChange("splines", event.target.value)}
-                >
-                  {GRAPHVIZ_SPLINES.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {mode}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Node spacing</span>
-                <input
-                  type="number"
-                  min={0.1}
-                  max={5}
-                  step={0.1}
-                  value={graphvizForm.nodesep}
-                  onChange={(event) => handleGraphvizInputChange("nodesep", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Rank spacing</span>
-                <input
-                  type="number"
-                  min={0.4}
-                  max={8}
-                  step={0.1}
-                  value={graphvizForm.ranksep}
-                  onChange={(event) => handleGraphvizInputChange("ranksep", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Padding</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={5}
-                  step={0.1}
-                  value={graphvizForm.pad}
-                  onChange={(event) => handleGraphvizInputChange("pad", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Margin</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={5}
-                  step={0.1}
-                  value={graphvizForm.margin}
-                  onChange={(event) => handleGraphvizInputChange("margin", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Background</span>
-                <div className="graphviz-color-input">
-                  <input
-                    type="color"
-                    value={graphvizForm.bgcolor}
-                    aria-label="Pick background color"
-                    onChange={(event) => handleGraphvizInputChange("bgcolor", event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={graphvizForm.bgcolor}
-                    onChange={(event) => handleGraphvizInputChange("bgcolor", event.target.value)}
-                  />
-                </div>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Graph font</span>
-                <input
-                  type="text"
-                  value={graphvizForm.graphFontname}
-                  onChange={(event) => handleGraphvizInputChange("graphFontname", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Graph font size</span>
-                <input
-                  type="number"
-                  min={6}
-                  max={32}
-                  step={1}
-                  value={graphvizForm.graphFontsize}
-                  onChange={(event) => handleGraphvizInputChange("graphFontsize", event.target.value)}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="graphviz-group">
-            <h3>Nodes</h3>
-            <div className="graphviz-grid">
-              <label className="graphviz-field">
-                <span>Shape</span>
-                <select
-                  value={graphvizForm.nodeShape}
-                  onChange={(event) => handleGraphvizInputChange("nodeShape", event.target.value)}
-                >
-                  {GRAPHVIZ_NODE_SHAPES.map((shape) => (
-                    <option key={shape} value={shape}>
-                      {shape}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Style</span>
-                <input
-                  type="text"
-                  value={graphvizForm.nodeStyle}
-                  onChange={(event) => handleGraphvizInputChange("nodeStyle", event.target.value)}
-                  placeholder="rounded,filled"
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Fill</span>
-                <div className="graphviz-color-input">
-                  <input
-                    type="color"
-                    value={graphvizForm.nodeFillcolor}
-                    aria-label="Pick node fill color"
-                    onChange={(event) => handleGraphvizInputChange("nodeFillcolor", event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={graphvizForm.nodeFillcolor}
-                    onChange={(event) => handleGraphvizInputChange("nodeFillcolor", event.target.value)}
-                  />
-                </div>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Border</span>
-                <div className="graphviz-color-input">
-                  <input
-                    type="color"
-                    value={graphvizForm.nodeColor}
-                    aria-label="Pick node border color"
-                    onChange={(event) => handleGraphvizInputChange("nodeColor", event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={graphvizForm.nodeColor}
-                    onChange={(event) => handleGraphvizInputChange("nodeColor", event.target.value)}
-                  />
-                </div>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Text color</span>
-                <div className="graphviz-color-input">
-                  <input
-                    type="color"
-                    value={graphvizForm.nodeFontcolor}
-                    aria-label="Pick node text color"
-                    onChange={(event) => handleGraphvizInputChange("nodeFontcolor", event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={graphvizForm.nodeFontcolor}
-                    onChange={(event) => handleGraphvizInputChange("nodeFontcolor", event.target.value)}
-                  />
-                </div>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Node font</span>
-                <input
-                  type="text"
-                  value={graphvizForm.nodeFontname}
-                  onChange={(event) => handleGraphvizInputChange("nodeFontname", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Node font size</span>
-                <input
-                  type="number"
-                  min={6}
-                  max={32}
-                  step={1}
-                  value={graphvizForm.nodeFontsize}
-                  onChange={(event) => handleGraphvizInputChange("nodeFontsize", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Min width</span>
-                <input
-                  type="number"
-                  min={0.2}
-                  max={6}
-                  step={0.1}
-                  value={graphvizForm.nodeWidth}
-                  onChange={(event) => handleGraphvizInputChange("nodeWidth", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Min height</span>
-                <input
-                  type="number"
-                  min={0.2}
-                  max={6}
-                  step={0.1}
-                  value={graphvizForm.nodeHeight}
-                  onChange={(event) => handleGraphvizInputChange("nodeHeight", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Margin X</span>
-                <input
-                  type="number"
-                  min={0.02}
-                  max={1}
-                  step={0.01}
-                  value={graphvizForm.nodeMarginX}
-                  onChange={(event) => handleGraphvizInputChange("nodeMarginX", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Margin Y</span>
-                <input
-                  type="number"
-                  min={0.02}
-                  max={1}
-                  step={0.01}
-                  value={graphvizForm.nodeMarginY}
-                  onChange={(event) => handleGraphvizInputChange("nodeMarginY", event.target.value)}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="graphviz-group">
-            <h3>Edges & relationships</h3>
-            <div className="graphviz-grid">
-              <label className="graphviz-field">
-                <span>Default edge color</span>
-                <div className="graphviz-color-input">
-                  <input
-                    type="color"
-                    value={graphvizForm.edgeColor}
-                    aria-label="Pick edge color"
-                    onChange={(event) => handleGraphvizInputChange("edgeColor", event.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={graphvizForm.edgeColor}
-                    onChange={(event) => handleGraphvizInputChange("edgeColor", event.target.value)}
-                  />
-                </div>
-              </label>
-
-              <label className="graphviz-field">
-                <span>Edge font</span>
-                <input
-                  type="text"
-                  value={graphvizForm.edgeFontname}
-                  onChange={(event) => handleGraphvizInputChange("edgeFontname", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Edge font size</span>
-                <input
-                  type="number"
-                  min={6}
-                  max={24}
-                  step={1}
-                  value={graphvizForm.edgeFontsize}
-                  onChange={(event) => handleGraphvizInputChange("edgeFontsize", event.target.value)}
-                />
-              </label>
-
-              <label className="graphviz-field">
-                <span>Stroke width</span>
-                <input
-                  type="number"
-                  min={0.5}
-                  max={4}
-                  step={0.1}
-                  value={graphvizForm.edgePenwidth}
-                  onChange={(event) => handleGraphvizInputChange("edgePenwidth", event.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className="graphviz-relations">
-              {RELATION_META.map(({ key, label, helper, colorKey, arrowKey, styleKey }) => (
-                <div key={key} className="graphviz-relation-row">
-                  <div className="graphviz-relation-label">
-                    <span>{label}</span>
-                    <small>{helper}</small>
-                  </div>
-                  <div className="graphviz-relation-controls">
-                    <label>
-                      <span>Color</span>
-                      <div className="graphviz-color-input">
-                        <input
-                          type="color"
-                          value={graphvizForm[colorKey]}
-                          aria-label={`Pick ${label} color`}
-                          onChange={(event) =>
-                            handleGraphvizInputChange(colorKey, event.target.value)
-                          }
-                        />
-                        <input
-                          type="text"
-                          value={graphvizForm[colorKey]}
-                          onChange={(event) =>
-                            handleGraphvizInputChange(colorKey, event.target.value)
-                          }
-                        />
-                      </div>
-                    </label>
-
-                    <label>
-                      <span>Arrowhead</span>
-                      <select
-                        value={graphvizForm[arrowKey]}
-                        onChange={(event) =>
-                          handleGraphvizInputChange(arrowKey, event.target.value)
-                        }
-                      >
-                        {GRAPHVIZ_ARROWHEADS.map((arrow) => (
-                          <option key={arrow} value={arrow}>
-                            {arrow}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label>
-                      <span>Line style</span>
-                      <select
-                        value={graphvizForm[styleKey]}
-                        onChange={(event) =>
-                          handleGraphvizInputChange(styleKey, event.target.value)
-                        }
-                      >
-                        {GRAPHVIZ_EDGE_STYLES.map((style) => (
-                          <option key={style} value={style}>
-                            {style}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <button
+          className="secondary-btn"
+          type="button"
+          onClick={() => setIsGraphvizSidebarOpen((prev) => !prev)}
+          aria-label={isGraphvizSidebarOpen ? "Hide Graphviz options" : "Show Graphviz options"}
+        >
+          {isGraphvizSidebarOpen ? "Hide Options" : "Show Options"}
+        </button>
       </section>
 
       {!query.isLoading && !query.isError && classCount > 0 && (
@@ -963,6 +558,440 @@ export function ClassUMLView(): JSX.Element {
           <p className="summary-info">The backend did not return a valid diagram.</p>
         )}
       </section>
+      </div>
+      {isGraphvizSidebarOpen && (
+        <aside
+          className="graphviz-sidebar"
+          role="dialog"
+          aria-label="Graphviz layout and styling options"
+          aria-modal="false"
+        >
+          <div className="graphviz-header">
+            <div>
+              <h2>Graphviz layout & styling</h2>
+              <p>
+                Adjust the rendering engine, spacing, palette, and edge styles before regenerating
+                the SVG.
+              </p>
+            </div>
+            <button type="button" className="link-btn" onClick={resetGraphvizOptions}>
+              Reset styling
+            </button>
+          </div>
+
+          <div className="graphviz-groups">
+            <div className="graphviz-group">
+              <h3>Layout</h3>
+              <div className="graphviz-grid">
+                <label className="graphviz-field">
+                  <span>Engine</span>
+                  <select
+                    value={graphvizForm.layoutEngine}
+                    onChange={(event) => handleGraphvizInputChange("layoutEngine", event.target.value)}
+                  >
+                    {GRAPHVIZ_LAYOUT_ENGINES.map((engine) => (
+                      <option key={engine} value={engine}>
+                        {engine.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Rank direction</span>
+                  <select
+                    value={graphvizForm.rankdir}
+                    onChange={(event) => handleGraphvizInputChange("rankdir", event.target.value)}
+                  >
+                    {GRAPHVIZ_RANKDIRS.map((dir) => (
+                      <option key={dir} value={dir}>
+                        {dir}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Splines</span>
+                  <select
+                    value={graphvizForm.splines}
+                    onChange={(event) => handleGraphvizInputChange("splines", event.target.value)}
+                  >
+                    {GRAPHVIZ_SPLINES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Node spacing</span>
+                  <input
+                    type="number"
+                    min={0.1}
+                    max={5}
+                    step={0.1}
+                    value={graphvizForm.nodesep}
+                    onChange={(event) => handleGraphvizInputChange("nodesep", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Rank spacing</span>
+                  <input
+                    type="number"
+                    min={0.4}
+                    max={8}
+                    step={0.1}
+                    value={graphvizForm.ranksep}
+                    onChange={(event) => handleGraphvizInputChange("ranksep", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Padding</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={graphvizForm.pad}
+                    onChange={(event) => handleGraphvizInputChange("pad", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Margin</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={graphvizForm.margin}
+                    onChange={(event) => handleGraphvizInputChange("margin", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Background</span>
+                  <div className="graphviz-color-input">
+                    <input
+                      type="color"
+                      value={graphvizForm.bgcolor}
+                      aria-label="Pick background color"
+                      onChange={(event) => handleGraphvizInputChange("bgcolor", event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      value={graphvizForm.bgcolor}
+                      onChange={(event) => handleGraphvizInputChange("bgcolor", event.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Graph font</span>
+                  <input
+                    type="text"
+                    value={graphvizForm.graphFontname}
+                    onChange={(event) => handleGraphvizInputChange("graphFontname", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Graph font size</span>
+                  <input
+                    type="number"
+                    min={6}
+                    max={32}
+                    step={1}
+                    value={graphvizForm.graphFontsize}
+                    onChange={(event) => handleGraphvizInputChange("graphFontsize", event.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="graphviz-group">
+              <h3>Nodes</h3>
+              <div className="graphviz-grid">
+                <label className="graphviz-field">
+                  <span>Shape</span>
+                  <select
+                    value={graphvizForm.nodeShape}
+                    onChange={(event) => handleGraphvizInputChange("nodeShape", event.target.value)}
+                  >
+                    {GRAPHVIZ_NODE_SHAPES.map((shape) => (
+                      <option key={shape} value={shape}>
+                        {shape}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Style</span>
+                  <input
+                    type="text"
+                    value={graphvizForm.nodeStyle}
+                    onChange={(event) => handleGraphvizInputChange("nodeStyle", event.target.value)}
+                    placeholder="rounded,filled"
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Fill</span>
+                  <div className="graphviz-color-input">
+                    <input
+                      type="color"
+                      value={graphvizForm.nodeFillcolor}
+                      aria-label="Pick node fill color"
+                      onChange={(event) =>
+                        handleGraphvizInputChange("nodeFillcolor", event.target.value)
+                      }
+                    />
+                    <input
+                      type="text"
+                      value={graphvizForm.nodeFillcolor}
+                      onChange={(event) =>
+                        handleGraphvizInputChange("nodeFillcolor", event.target.value)
+                      }
+                    />
+                  </div>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Border</span>
+                  <div className="graphviz-color-input">
+                    <input
+                      type="color"
+                      value={graphvizForm.nodeColor}
+                      aria-label="Pick node border color"
+                      onChange={(event) => handleGraphvizInputChange("nodeColor", event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      value={graphvizForm.nodeColor}
+                      onChange={(event) => handleGraphvizInputChange("nodeColor", event.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Text color</span>
+                  <div className="graphviz-color-input">
+                    <input
+                      type="color"
+                      value={graphvizForm.nodeFontcolor}
+                      aria-label="Pick node text color"
+                      onChange={(event) =>
+                        handleGraphvizInputChange("nodeFontcolor", event.target.value)
+                      }
+                    />
+                    <input
+                      type="text"
+                      value={graphvizForm.nodeFontcolor}
+                      onChange={(event) =>
+                        handleGraphvizInputChange("nodeFontcolor", event.target.value)
+                      }
+                    />
+                  </div>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Node font</span>
+                  <input
+                    type="text"
+                    value={graphvizForm.nodeFontname}
+                    onChange={(event) => handleGraphvizInputChange("nodeFontname", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Node font size</span>
+                  <input
+                    type="number"
+                    min={6}
+                    max={32}
+                    step={1}
+                    value={graphvizForm.nodeFontsize}
+                    onChange={(event) => handleGraphvizInputChange("nodeFontsize", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Min width</span>
+                  <input
+                    type="number"
+                    min={0.2}
+                    max={6}
+                    step={0.1}
+                    value={graphvizForm.nodeWidth}
+                    onChange={(event) => handleGraphvizInputChange("nodeWidth", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Min height</span>
+                  <input
+                    type="number"
+                    min={0.2}
+                    max={6}
+                    step={0.1}
+                    value={graphvizForm.nodeHeight}
+                    onChange={(event) => handleGraphvizInputChange("nodeHeight", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Margin X</span>
+                  <input
+                    type="number"
+                    min={0.02}
+                    max={1}
+                    step={0.01}
+                    value={graphvizForm.nodeMarginX}
+                    onChange={(event) => handleGraphvizInputChange("nodeMarginX", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Margin Y</span>
+                  <input
+                    type="number"
+                    min={0.02}
+                    max={1}
+                    step={0.01}
+                    value={graphvizForm.nodeMarginY}
+                    onChange={(event) => handleGraphvizInputChange("nodeMarginY", event.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="graphviz-group">
+              <h3>Edges & relationships</h3>
+              <div className="graphviz-grid">
+                <label className="graphviz-field">
+                  <span>Default edge color</span>
+                  <div className="graphviz-color-input">
+                    <input
+                      type="color"
+                      value={graphvizForm.edgeColor}
+                      aria-label="Pick edge color"
+                      onChange={(event) => handleGraphvizInputChange("edgeColor", event.target.value)}
+                    />
+                    <input
+                      type="text"
+                      value={graphvizForm.edgeColor}
+                      onChange={(event) => handleGraphvizInputChange("edgeColor", event.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Edge font</span>
+                  <input
+                    type="text"
+                    value={graphvizForm.edgeFontname}
+                    onChange={(event) => handleGraphvizInputChange("edgeFontname", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Edge font size</span>
+                  <input
+                    type="number"
+                    min={6}
+                    max={24}
+                    step={1}
+                    value={graphvizForm.edgeFontsize}
+                    onChange={(event) => handleGraphvizInputChange("edgeFontsize", event.target.value)}
+                  />
+                </label>
+
+                <label className="graphviz-field">
+                  <span>Stroke width</span>
+                  <input
+                    type="number"
+                    min={0.5}
+                    max={4}
+                    step={0.1}
+                    value={graphvizForm.edgePenwidth}
+                    onChange={(event) => handleGraphvizInputChange("edgePenwidth", event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div className="graphviz-relations">
+                {RELATION_META.map(({ key, label, helper, colorKey, arrowKey, styleKey }) => (
+                  <div key={key} className="graphviz-relation-row">
+                    <div className="graphviz-relation-label">
+                      <span>{label}</span>
+                      <small>{helper}</small>
+                    </div>
+                    <div className="graphviz-relation-controls">
+                      <label>
+                        <span>Color</span>
+                        <div className="graphviz-color-input">
+                          <input
+                            type="color"
+                            value={graphvizForm[colorKey]}
+                            aria-label={`Pick ${label} color`}
+                            onChange={(event) =>
+                              handleGraphvizInputChange(colorKey, event.target.value)
+                            }
+                          />
+                          <input
+                            type="text"
+                            value={graphvizForm[colorKey]}
+                            onChange={(event) =>
+                              handleGraphvizInputChange(colorKey, event.target.value)
+                            }
+                          />
+                        </div>
+                      </label>
+
+                      <label>
+                        <span>Arrowhead</span>
+                        <select
+                          value={graphvizForm[arrowKey]}
+                          onChange={(event) =>
+                            handleGraphvizInputChange(arrowKey, event.target.value)
+                          }
+                        >
+                          {GRAPHVIZ_ARROWHEADS.map((arrow) => (
+                            <option key={arrow} value={arrow}>
+                              {arrow}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label>
+                        <span>Line style</span>
+                        <select
+                          value={graphvizForm[styleKey]}
+                          onChange={(event) =>
+                            handleGraphvizInputChange(styleKey, event.target.value)
+                          }
+                        >
+                          {GRAPHVIZ_EDGE_STYLES.map((style) => (
+                            <option key={style} value={style}>
+                              {style}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

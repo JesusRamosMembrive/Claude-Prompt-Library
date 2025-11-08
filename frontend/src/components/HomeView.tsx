@@ -17,7 +17,7 @@ function detectionBadgeLabel(detection?: StageDetectionStatus): string {
 }
 
 export function HomeView({
-  statusQuery: _statusQuery,
+  statusQuery,
 }: {
   statusQuery: UseQueryResult<StatusPayload>;
 }): JSX.Element {
@@ -28,9 +28,30 @@ export function HomeView({
 
   const detectionTone = detectionAvailable ? "success" : "warn";
   const detectionLabel = detectionBadgeLabel(detection);
+  const backendOffline =
+    statusQuery.isError || (!statusQuery.isFetching && !statusQuery.data && !statusQuery.isLoading);
+  const executableUrl = "https://github.com/jesusramos/Claude-Prompt-Library/releases/latest";
 
   return (
     <div className="home-view">
+      {backendOffline && (
+        <div className="home-alert home-alert--error" role="alert">
+          <div className="home-alert__text">
+            <strong>Backend desconectado.</strong>
+            <span>
+              Inicia el servidor local o descarga el ejecutable empaquetado para Code Map.
+            </span>
+          </div>
+          <a
+            className="home-alert__cta"
+            href={executableUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Descargar ejecutable →
+          </a>
+        </div>
+      )}
       <section className="home-hero">
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">

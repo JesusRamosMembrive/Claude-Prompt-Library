@@ -193,9 +193,7 @@ export function DetailPanel(): JSX.Element {
 
       {selectedPath && (
         <div className="preview-container">
-          <h3 style={{ margin: "0 0 8px", color: "#7f869d", fontSize: "13px" }}>
-            Preview
-          </h3>
+          <h3 className="preview-title">Preview</h3>
           <PreviewPane path={selectedPath} />
         </div>
       )}

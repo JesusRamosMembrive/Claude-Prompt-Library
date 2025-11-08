@@ -1,9 +1,17 @@
 .uml-view {
   display: flex;
+  gap: 24px;
+  padding: 16px 20px 32px;
+  min-height: 100vh;
+  height: 100%;
+}
+
+.uml-content {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 20px 32px;
-  height: 100%;
+  min-width: 0;
 }
 
 /* Screen reader only - for accessibility */
@@ -22,6 +30,7 @@
 /* Search section */
 .uml-search-section {
   position: relative;
+  flex-shrink: 0;
 }
 
 .uml-search-container {
@@ -127,17 +136,29 @@
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 16px;
   padding: 16px;
+  flex-shrink: 0;
 }
 
-.uml-graphviz-panel {
+/* Graphviz options sidebar */
+.graphviz-sidebar {
+  position: sticky;
+  top: 120px;
+  align-self: flex-start;
+  width: 380px;
+  max-width: 90vw;
+  max-height: calc(100vh - 160px);
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 18px;
+  padding: 20px;
   border-radius: 18px;
   border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(11, 16, 32, 0.7);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  background: rgba(11, 16, 32, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  z-index: 10;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .graphviz-header {
@@ -396,6 +417,7 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 14px;
   padding: 16px;
+  flex-shrink: 0;
 }
 
 .uml-stat {
@@ -423,8 +445,8 @@
 }
 
 .uml-canvas {
-  flex: 1;
-  min-height: 640px;
+  flex: 1 1 auto;
+  min-height: 500px;
   background: radial-gradient(circle at top, rgba(34, 197, 255, 0.08), transparent 55%),
     rgba(10, 12, 20, 0.82);
   border: 1px solid rgba(148, 163, 184, 0.2);
@@ -432,6 +454,8 @@
   overflow: hidden;
   position: relative;
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.12), 0 18px 36px rgba(15, 23, 42, 0.46);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Loading state */
@@ -714,4 +738,44 @@
 .legend-item span {
   font-size: 0.85rem;
   color: #cbd5f5;
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+  .uml-view {
+    flex-direction: column;
+  }
+
+  .graphviz-sidebar {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    padding: 16px;
+    top: 0;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .graphviz-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .graphviz-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .graphviz-sidebar {
+    padding: 12px;
+  }
+
+  .graphviz-group {
+    padding: 12px;
+  }
+
+  .graphviz-field label span {
+    font-size: 0.8rem;
+  }
 }
