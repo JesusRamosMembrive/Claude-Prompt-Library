@@ -257,6 +257,46 @@ export interface UMLDiagramResponse {
   stats: Record<string, number>;
 }
 
+export interface GraphvizOptionsPayload {
+  layoutEngine?: string;
+  rankdir?: string;
+  splines?: string;
+  nodesep?: number;
+  ranksep?: number;
+  pad?: number;
+  margin?: number;
+  bgcolor?: string;
+  graphFontname?: string;
+  graphFontsize?: number;
+  nodeShape?: string;
+  nodeStyle?: string;
+  nodeFillcolor?: string;
+  nodeColor?: string;
+  nodeFontcolor?: string;
+  nodeFontname?: string;
+  nodeFontsize?: number;
+  nodeWidth?: number;
+  nodeHeight?: number;
+  nodeMarginX?: number;
+  nodeMarginY?: number;
+  edgeColor?: string;
+  edgeFontname?: string;
+  edgeFontsize?: number;
+  edgePenwidth?: number;
+  inheritanceStyle?: string;
+  inheritanceColor?: string;
+  associationColor?: string;
+  instantiationColor?: string;
+  referenceColor?: string;
+  inheritanceArrowhead?: string;
+  associationArrowhead?: string;
+  instantiationArrowhead?: string;
+  referenceArrowhead?: string;
+  associationStyle?: string;
+  instantiationStyle?: string;
+  referenceStyle?: string;
+}
+
 export type LinterCheckStatus = "pass" | "warn" | "fail" | "skipped" | "error";
 export type LinterSeverity = "info" | "low" | "medium" | "high" | "critical";
 

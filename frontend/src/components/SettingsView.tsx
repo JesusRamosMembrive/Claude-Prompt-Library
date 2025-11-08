@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
 import { browseForRoot, updateSettings } from "../api/client";
 import type { SettingsPayload, SettingsUpdatePayload } from "../api/types";
@@ -12,7 +11,6 @@ import { useSelectionStore } from "../state/useSelectionStore";
 import { DocstringsSection } from "./settings/DocstringsSection";
 import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
 import { RootPathSection } from "./settings/RootPathSection";
-import { WatcherSection } from "./settings/WatcherSection";
 
 interface SettingsViewProps {
   settingsQuery: UseQueryResult<SettingsPayload>;
@@ -34,7 +32,6 @@ function sortExcludes(list: string[]): string[] {
 export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element {
   const activityClear = useActivityStore((state) => state.clear);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const settings = settingsQuery.data;
   const originalRoot = settings?.root_path ?? "";
@@ -177,17 +174,43 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
 
   return (
     <div className="settings-view">
-      <header className="header-bar">
-        <div className="header-left">
-          <div className="brand-logo">⚙</div>
-          <div className="brand-copy">
-            <h1>Settings</h1>
-            <p>Configure the workspace and display preferences.</p>
-          </div>
+      <section className="settings-status-banner" aria-live="polite">
+        <div className="settings-status-body">
+          {settingsQuery.isLoading ? (
+            <>
+              <span
+                className="settings-status-dot settings-status-dot--loading"
+                aria-hidden="true"
+              />
+              <span className="settings-status-text settings-status-text--muted">
+                Loading settings…
+              </span>
+            </>
+          ) : settingsQuery.isError ? (
+            <div className="error-banner">
+              Could not load settings. {String(settingsQuery.error)}
+            </div>
+          ) : (
+            <>
+              <span
+                className={`settings-status-dot ${
+                  statusTone === "error" ? "settings-status-dot--error" : "settings-status-dot--info"
+                }`}
+                aria-hidden="true"
+              />
+              <span
+                className={`settings-status-text${
+                  statusTone === "error" ? " settings-status-text--error" : ""
+                }`}
+              >
+                {statusMessage ?? "Changes are applied and persisted in the backend."}
+              </span>
+            </>
+          )}
         </div>
-        <div className="header-actions">
-          <button className="secondary-btn" type="button" onClick={() => navigate("/")}>
-            Back to overview
+        <div className="settings-status-actions">
+          <button className="ghost-btn" type="button" onClick={activityClear}>
+            Clear activity
           </button>
           <button
             className="primary-btn"
@@ -198,30 +221,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
             {isMutating ? "Saving…" : "Save changes"}
           </button>
         </div>
-      </header>
-
-      <div className="panel" style={{ gap: 12 }}>
-        {settingsQuery.isLoading ? (
-          <span style={{ color: "#7f869d" }}>Loading settings…</span>
-        ) : settingsQuery.isError ? (
-          <div className="error-banner">
-            Could not load settings. {String(settingsQuery.error)}
-          </div>
-        ) : statusMessage ? (
-          <span
-            style={{
-              color: statusTone === "error" ? "#f97316" : "#7dd3fc",
-            }}
-          >
-            {statusMessage}
-          </span>
-        ) : (
-          <span>Changes are applied and persisted in the backend.</span>
-        )}
-        <button type="button" onClick={activityClear}>
-          Clear activity
-        </button>
-      </div>
+      </section>
 
       <div className="settings-grid">
         <RootPathSection
@@ -241,7 +241,22 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
           onRemove={handleRemoveExclude}
         />
 
-        <WatcherSection watcherActive={settings?.watcher_active} />
+        <section className="settings-card watcher-info-card">
+          <h2>Watcher and sync</h2>
+          <p>Realtime updates are always enabled to keep your workspace in sync.</p>
+          <div className="settings-status-body watcher-info-body">
+            <span className="settings-status-dot settings-status-dot--info" aria-hidden="true" />
+            <div className="watcher-info-copy">
+              <span className="settings-status-text">
+                Watcher is active and continuously listens for file system events.
+              </span>
+              <span className="settings-status-text">
+                Significant changes trigger automatic rescans and snapshots persist to{" "}
+                <code>.code-map</code> for faster startup.
+              </span>
+            </div>
+          </div>
+        </section>
 
         <DocstringsSection
           includeDocstrings={formDocstrings}

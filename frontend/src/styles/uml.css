@@ -129,6 +129,176 @@
   padding: 16px;
 }
 
+.uml-graphviz-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(11, 16, 32, 0.7);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.graphviz-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.graphviz-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.graphviz-header p {
+  margin: 4px 0 0;
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.85rem;
+}
+
+.graphviz-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.graphviz-group {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(13, 18, 32, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.graphviz-group h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #cbd5f5;
+}
+
+.graphviz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.graphviz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.graphviz-field input,
+.graphviz-field select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.7);
+  color: #f8fafc;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.graphviz-field input:focus,
+.graphviz-field select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.graphviz-color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graphviz-color-input input[type="color"] {
+  width: 38px;
+  height: 32px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.graphviz-color-input input[type="text"] {
+  flex: 1;
+}
+
+.graphviz-relations {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.graphviz-relation-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(8, 12, 24, 0.75);
+}
+
+.graphviz-relation-label {
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.graphviz-relation-label span {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.graphviz-relation-label small {
+  color: rgba(226, 232, 240, 0.6);
+  font-size: 0.75rem;
+}
+
+.graphviz-relation-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.graphviz-relation-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.graphviz-relation-controls select,
+.graphviz-relation-controls input[type="text"] {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.7);
+  color: #f8fafc;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
 .uml-filter-input {
   width: 100%;
   min-width: 200px;

@@ -22,6 +22,7 @@ import type {
   OllamaInsightEntry,
   OllamaInsightsResponse,
   OllamaInsightsClearResponse,
+  GraphvizOptionsPayload,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -409,6 +410,7 @@ export function getClassUml(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
   edgeTypes?: string[];
+  graphvizOptions?: GraphvizOptionsPayload;
 }): Promise<UMLDiagramResponse> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -426,6 +428,7 @@ export function getClassUml(options?: {
       params.append("edge_types", type);
     });
   }
+  appendGraphvizParams(params, options?.graphvizOptions);
   const query = params.toString();
   return fetchJson(`/graph/uml${query ? `?${query}` : ""}`);
 }
@@ -434,6 +437,7 @@ export async function getClassUmlSvg(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
   edgeTypes?: string[];
+  graphvizOptions?: GraphvizOptionsPayload;
 }): Promise<string> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -452,6 +456,7 @@ export async function getClassUmlSvg(options?: {
       params.append("edge_types", type);
     });
   }
+  appendGraphvizParams(params, options?.graphvizOptions);
   const query = params.toString();
   const response = await fetch(buildUrl(`/graph/uml/svg${query ? `?${query}` : ""}`));
   if (!response.ok) {
@@ -485,6 +490,62 @@ export async function getPreview(path: string): Promise<{ content: string; conte
   const content = await response.text();
   const contentType = response.headers.get("Content-Type") ?? "text/plain";
   return { content, contentType };
+}
+
+const GRAPHVIZ_PARAM_ENTRIES: Array<[keyof GraphvizOptionsPayload, string]> = [
+  ["layoutEngine", "layout_engine"],
+  ["rankdir", "rankdir"],
+  ["splines", "splines"],
+  ["nodesep", "nodesep"],
+  ["ranksep", "ranksep"],
+  ["pad", "pad"],
+  ["margin", "margin"],
+  ["bgcolor", "bgcolor"],
+  ["graphFontname", "graph_fontname"],
+  ["graphFontsize", "graph_fontsize"],
+  ["nodeShape", "node_shape"],
+  ["nodeStyle", "node_style"],
+  ["nodeFillcolor", "node_fillcolor"],
+  ["nodeColor", "node_color"],
+  ["nodeFontcolor", "node_fontcolor"],
+  ["nodeFontname", "node_fontname"],
+  ["nodeFontsize", "node_fontsize"],
+  ["nodeWidth", "node_width"],
+  ["nodeHeight", "node_height"],
+  ["nodeMarginX", "node_margin_x"],
+  ["nodeMarginY", "node_margin_y"],
+  ["edgeColor", "edge_color"],
+  ["edgeFontname", "edge_fontname"],
+  ["edgeFontsize", "edge_fontsize"],
+  ["edgePenwidth", "edge_penwidth"],
+  ["inheritanceStyle", "inheritance_style"],
+  ["inheritanceColor", "inheritance_color"],
+  ["associationColor", "association_color"],
+  ["instantiationColor", "instantiation_color"],
+  ["referenceColor", "reference_color"],
+  ["inheritanceArrowhead", "inheritance_arrowhead"],
+  ["associationArrowhead", "association_arrowhead"],
+  ["instantiationArrowhead", "instantiation_arrowhead"],
+  ["referenceArrowhead", "reference_arrowhead"],
+  ["associationStyle", "association_style"],
+  ["instantiationStyle", "instantiation_style"],
+  ["referenceStyle", "reference_style"],
+];
+
+function appendGraphvizParams(
+  params: URLSearchParams,
+  options?: GraphvizOptionsPayload,
+): void {
+  if (!options) {
+    return;
+  }
+  for (const [key, queryKey] of GRAPHVIZ_PARAM_ENTRIES) {
+    const value = options[key];
+    if (value === undefined || value === null) {
+      continue;
+    }
+    params.set(queryKey, String(value));
+  }
 }
 
 export function getLintersLatestReport(): Promise<LintersReportRecord | null> {

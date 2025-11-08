@@ -18,10 +18,8 @@ export function DocstringsSection({
           <strong>Symbol mode</strong>
           <span>Primary grouping for the explorer.</span>
         </div>
-        <div className="setting-controls">
-          <select value="tree" disabled>
-            <option value="tree">Folder → file → symbol</option>
-          </select>
+        <div className="setting-controls setting-controls--centered">
+          <span className="setting-display-value">Folder → file → symbol</span>
         </div>
       </div>
       <div className="toggle-row">
@@ -36,13 +34,9 @@ export function DocstringsSection({
           disabled={disabled}
         />
       </div>
-      <div className="toggle-row">
-        <div>
-          <strong>Dark theme</strong>
-          <span>Reflects the workspace's current palette.</span>
-        </div>
-        <input type="checkbox" checked readOnly />
-      </div>
+      <p className="settings-helper">
+        Dark theme is always on for now; a light palette will ship later.
+      </p>
     </section>
   );
 }

@@ -7,12 +7,18 @@ export const queryKeys = {
   preview: (path: string) => ["preview", path] as const,
   stageStatus: ["stage-status"] as const,
   ollamaInsights: (limit: number) => ["ollama", "insights", limit] as const,
-  classUml: (includeExternal: boolean, prefixes?: string[], edgeTypes?: string[]) =>
+  classUml: (
+    includeExternal: boolean,
+    prefixes?: string[],
+    edgeTypes?: string[],
+    graphvizSignature?: string,
+  ) =>
     [
       "class-uml",
       includeExternal,
       prefixes ? [...prefixes].sort().join(",") : "",
       edgeTypes ? [...edgeTypes].sort().join(",") : "",
+      graphvizSignature ?? "",
     ] as const,
   lintersLatest: ["linters", "latest"] as const,
   lintersReports: (limit: number, offset: number) =>
