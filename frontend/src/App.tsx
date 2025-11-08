@@ -9,6 +9,7 @@ import { OverviewDashboard } from "./components/OverviewDashboard";
 import { PromptLibraryView } from "./components/PromptLibraryView";
 import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
+import { CallTracerView } from "./components/CallTracerView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -67,6 +68,10 @@ export function App(): JSX.Element {
       <Route
         path="/linters"
         element={withLayout("Linters & Quality", <LintersView />)}
+          />
+          <Route
+            path="/call-tracer"
+            element={withLayout("Call Tracer", <CallTracerView />)}
           />
           <Route
             path="/settings"
