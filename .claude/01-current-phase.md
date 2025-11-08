@@ -422,8 +422,90 @@ New structure:
 
 ---
 
-**Last updated:** 2025-10-27
-**Next review:** Después de validation con proyectos reales
+## Session 4: Call Tracer Implementation (Stage 1 MVP) ✅
+
+**Fecha:** 2025-11-08
+
+### Objetivo
+Implementar sistema de trazabilidad de llamadas (call tracing) para visualizar cadenas de ejecución en código Python.
+
+### Implementado
+
+**Backend (Python + tree-sitter):**
+- ✅ [`code_map/call_tracer.py`](code_map/call_tracer.py) (~267 LOC)
+  - `CallGraphExtractor`: Extractor usando tree-sitter
+  - `analyze_file()`: Analiza archivo y retorna call graph completo
+  - `trace_chain()`: Sigue cadena desde función específica
+  - `get_all_chains()`: Todas las cadenas posibles del archivo
+
+- ✅ [`code_map/api/tracer.py`](code_map/api/tracer.py) (~258 LOC)
+  - `POST /tracer/analyze`: Analiza archivo y retorna call graph
+  - `POST /tracer/trace`: Traza cadena desde función
+  - `POST /tracer/chains`: Todas las cadenas del archivo
+
+- ✅ [`code_map/api/routes.py`](code_map/api/routes.py): Router registrado
+
+**Frontend (React/TypeScript):**
+- ✅ [`frontend/src/components/CallTracerView.tsx`](frontend/src/components/CallTracerView.tsx) (~300 LOC)
+  - Input para file path y función
+  - Botón "Analyze Call Graph": Muestra todas las funciones y llamadas
+  - Botón "Trace Chain": Sigue cadena desde función específica
+  - Control de profundidad máxima (1-20)
+  - Display limpio con formato monospace y colores
+
+- ✅ [`frontend/src/App.tsx`](frontend/src/App.tsx): Ruta `/call-tracer` registrada
+- ✅ [`frontend/src/components/HeaderBar.tsx`](frontend/src/components/HeaderBar.tsx): Link en navegación
+
+### Probado
+
+```bash
+# Ejemplo real funcionando:
+curl -X POST 'http://127.0.0.1:8000/tracer/analyze' \
+  -H 'Content-Type: application/json' \
+  -d '{"file_path": "code_map/server.py"}'
+
+# Retorna:
+{
+  "file_path": "code_map/server.py",
+  "call_graph": {
+    "create_app": ["load_settings", "ChangeScheduler", "AppState", ...],
+    "lifespan": ["startup", "shutdown"]
+  },
+  "total_functions": 2
+}
+```
+
+### Limitaciones Stage 1
+
+Como corresponde a Stage 1 MVP:
+- ✅ Solo analiza llamadas dentro del mismo archivo (no cross-file)
+- ✅ Detecta llamadas directas: `foo()`, `obj.method()`
+- ❌ NO maneja imports cross-file
+- ❌ NO maneja decorators complejos, lambdas, closures
+- ✅ Display textual simple (sin gráficos)
+
+### Commits
+
+- `b6be607` - Backend implementation (527+ insertions)
+- `bce54be` - Frontend UI component (325+ insertions)
+
+### Próximos Pasos (Solo si se necesita - YAGNI)
+
+**Stage 2 (si el análisis intra-file no es suficiente):**
+- Resolver imports y analizar cross-file
+- Mejor manejo de métodos de clase
+- Detectar decorators básicos
+
+**Stage 3 (si se usa intensivamente):**
+- Visualización gráfica interactiva
+- Cache de resultados
+- Análisis incremental
+- Export a formatos (SVG, DOT)
+
+---
+
+**Last updated:** 2025-11-08
+**Next review:** Uso real con proyectos del usuario
 
 ## 🎯 Detected Stage: Stage 3 (High Confidence)
 
