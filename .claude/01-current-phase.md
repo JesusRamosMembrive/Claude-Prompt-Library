@@ -489,23 +489,107 @@ Como corresponde a Stage 1 MVP:
 - `b6be607` - Backend implementation (527+ insertions)
 - `bce54be` - Frontend UI component (325+ insertions)
 
-### Próximos Pasos (Solo si se necesita - YAGNI)
+---
 
-**Stage 2 (si el análisis intra-file no es suficiente):**
-- Resolver imports y analizar cross-file
-- Mejor manejo de métodos de clase
-- Detectar decorators básicos
+## Session 5: Call Tracer Stage 2 - Cross-File Analysis ✅
+
+**Fecha:** 2025-11-09
+
+### Objetivo
+Implementar análisis cross-file completo con resolución de imports para trazar llamadas entre archivos diferentes.
+
+### Implementado
+
+**Backend (Import Resolution + Cross-File Analysis):**
+
+1. ✅ [`code_map/import_resolver.py`](code_map/import_resolver.py) (~200 LOC)
+   - `ImportResolver`: Resuelve imports de Python (absolutos y relativos)
+   - `extract_imports()`: Extrae todos los imports de un archivo
+   - `resolve_import()`: Resuelve import a archivo real
+   - `build_import_map()`: Mapa completo de imports del archivo
+   - **Soporta:**
+     - `import module`
+     - `from module import function`
+     - `from .relative import function` (dots relativos)
+     - `from ..parent import function`
+
+2. ✅ [`code_map/call_tracer_v2.py`](code_map/call_tracer_v2.py) (~350 LOC)
+   - `CrossFileCallGraphExtractor`: Análisis multi-archivo
+   - `analyze_file()`: Analiza archivo y sus dependencias recursivamente
+   - `trace_chain_cross_file()`: Traza cadena entre archivos
+   - `find_entry_points()`: Detecta funciones raíz (no llamadas por nadie)
+   - **Características:**
+     - Cache por archivo (MD5 hash)
+     - Prevención de ciclos
+     - Nombres cualificados: `file.py::function`
+     - Detección de métodos de clase: `file.py::ClassName.method`
+
+3. ✅ [`code_map/api/tracer.py`](code_map/api/tracer.py) (extended ~270 LOC)
+   - `POST /tracer/analyze-cross-file`: Análisis cross-file
+   - `POST /tracer/trace-cross-file`: Trace cross-file
+   - Nuevos modelos Pydantic para Stage 2
+
+### Probado
+
+```bash
+# Análisis cross-file de assess_stage.py
+curl -X POST 'http://127.0.0.1:8000/tracer/analyze-cross-file' \
+  -d '{"file_path":"assess_stage.py","recursive":true}'
+
+# Resultado:
+{
+  "total_functions": 15,          # vs 3 en Stage 1
+  "analyzed_files": 2,             # assess_stage.py + stage_config.py
+  "entry_points": ["assess_stage.py::assess_stage"],
+  "call_graph": {
+    "assess_stage.py::assess_stage": [
+      "stage_config.py::collect_metrics",  # ← llamada cross-file!
+      "stage_config.py::evaluate_stage"     # ← llamada cross-file!
+    ]
+  }
+}
+```
+
+### Comparación Stage 1 vs Stage 2
+
+| Métrica | Stage 1 | Stage 2 | Mejora |
+|---------|---------|---------|--------|
+| Funciones detectadas | 3 | 15 | **5x más** |
+| Archivos analizados | 1 | 2 | Cross-file ✅ |
+| Llamadas cross-file | 0 | 2 | **Detección completa** |
+| Cache | ❌ | ✅ MD5 hash | Performance |
+| Entry points | ❌ | ✅ | Análisis completo |
+
+### Capacidades Stage 2
+
+✅ **Cross-file analysis**: Sigue imports entre archivos
+✅ **Import resolution**: Resuelve imports absolutos y relativos
+✅ **Qualified names**: `path/file.py::function_name`
+✅ **Class methods**: `file.py::ClassName.method_name`
+✅ **Entry point detection**: Encuentra funciones raíz
+✅ **Caching**: MD5 hash por archivo
+✅ **Cycle prevention**: Evita loops infinitos
+✅ **Configurable limits**: `max_files` parameter
+
+### Commits
+
+- `3f8cdc6` - Stage 2 implementation (875+ insertions)
+  - import_resolver.py
+  - call_tracer_v2.py
+  - Extended api/tracer.py
+
+### Próximos Pasos (Solo si se necesita)
 
 **Stage 3 (si se usa intensivamente):**
-- Visualización gráfica interactiva
-- Cache de resultados
-- Análisis incremental
-- Export a formatos (SVG, DOT)
+- Visualización gráfica interactiva (D3.js, Cytoscape)
+- Export a formatos (DOT, Mermaid, SVG)
+- Análisis incremental optimizado
+- Integración con UI para exploración visual
 
 ---
 
-**Last updated:** 2025-11-08
-**Next review:** Uso real con proyectos del usuario
+**Last updated:** 2025-11-09
+**Next review:** Integración con frontend para visualización
 
 ## 🎯 Detected Stage: Stage 3 (High Confidence)
 
