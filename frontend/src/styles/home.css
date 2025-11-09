@@ -80,6 +80,32 @@
   gap: 20px;
 }
 
+.home-hero__logo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.home-hero__logo svg {
+  width: 100%;
+  height: auto;
+  max-width: 280px;
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
 .home-stage-pill {
   align-self: flex-start;
   padding: 6px 14px;
@@ -304,6 +330,10 @@
 
   .home-hero__panel {
     flex-direction: column;
+  }
+
+  .home-hero__logo {
+    display: none;
   }
 }
 

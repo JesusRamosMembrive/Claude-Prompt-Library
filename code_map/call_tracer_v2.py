@@ -77,6 +77,10 @@ class CrossFileCallGraphExtractor:
         # Set de archivos ya analizados (para evitar ciclos)
         self.analyzed_files: Set[Path] = set()
 
+        # Instance attribute types: {filepath: {class_name: {attr_name: type_name}}}
+        # e.g., {"endpoint.py": {"endpointClass": {"middleware": "middlewareAPI"}}}
+        self.instance_attrs: Dict[Path, Dict[str, Dict[str, str]]] = {}
+
     def _get_file_hash(self, filepath: Path) -> str:
         """Calcula hash MD5 del contenido del archivo para cache."""
         with open(filepath, 'rb') as f:
@@ -153,7 +157,40 @@ class CrossFileCallGraphExtractor:
             qualified_func = self._get_qualified_name(filepath, func_name)
 
             qualified_callees = []
-            for callee in callees:
+            for callee_data in callees:
+                # Desempaquetar tupla (callee, is_instance_method, instance_attr)
+                callee, is_instance_method, instance_attr = callee_data
+
+                # Caso especial: llamada a método de instancia (self.middleware.apiMethod)
+                if is_instance_method and instance_attr:
+                    # Obtener la clase actual del qualified_func
+                    # e.g., "endpointExampleClass.endpointMethod" -> "endpointExampleClass"
+                    if "." in func_name:
+                        class_name = func_name.split(".")[0]
+
+                        # Buscar el tipo del atributo de instancia
+                        if (filepath in self.instance_attrs and
+                            class_name in self.instance_attrs[filepath] and
+                            instance_attr in self.instance_attrs[filepath][class_name]):
+
+                            # e.g., self.middleware -> middlewareAPI
+                            type_name = self.instance_attrs[filepath][class_name][instance_attr]
+
+                            # Buscar en imports para encontrar el archivo
+                            if type_name in import_map:
+                                target_file, _ = import_map[type_name]
+                                # Cualificar: middlewareExample.py::middlewareAPI.apiDriveMethod
+                                qualified_callee = self._get_qualified_name(
+                                    target_file,
+                                    f"{type_name}.{callee}"
+                                )
+                                qualified_callees.append(qualified_callee)
+
+                                # Recursivamente analizar archivo importado
+                                if recursive and target_file not in self.analyzed_files:
+                                    self.analyze_file(target_file, recursive=True)
+                                continue
+
                 # Verificar si es un import
                 if callee in import_map:
                     target_file, symbol = import_map[callee]
@@ -212,6 +249,12 @@ class CrossFileCallGraphExtractor:
                 class_name = self._get_node_text(name_node, source)
                 current_class = class_name
 
+                # Inicializar estructura para atributos de esta clase
+                if filepath not in self.instance_attrs:
+                    self.instance_attrs[filepath] = {}
+                if class_name not in self.instance_attrs[filepath]:
+                    self.instance_attrs[filepath][class_name] = {}
+
         # Detectar función
         if node.type == "function_definition":
             name_node = node.child_by_field_name('name')
@@ -230,13 +273,44 @@ class CrossFileCallGraphExtractor:
                 if qualified_func_name not in local_graph:
                     local_graph[qualified_func_name] = []
 
+        # Detectar asignación de atributo de instancia en __init__
+        # e.g., self.middleware = middlewareAPI()
+        if (node.type == "assignment" and current_class and
+            current_func and current_func.endswith(".__init__")):
+            # Buscar patrón: self.attr = SomeClass()
+            left_node = node.child_by_field_name('left')
+            right_node = node.child_by_field_name('right')
+
+            if left_node and right_node:
+                # Verificar que left es self.something
+                if left_node.type == "attribute":
+                    obj_node = left_node.child_by_field_name('object')
+                    attr_node = left_node.child_by_field_name('attribute')
+
+                    if (obj_node and attr_node and
+                        self._get_node_text(obj_node, source) == "self"):
+                        attr_name = self._get_node_text(attr_node, source)
+
+                        # Verificar que right es una llamada: SomeClass()
+                        if right_node.type == "call":
+                            func_node = right_node.child_by_field_name('function')
+                            if func_node and func_node.type == "identifier":
+                                type_name = self._get_node_text(func_node, source)
+                                # Guardar: self.middleware -> middlewareAPI
+                                self.instance_attrs[filepath][current_class][attr_name] = type_name
+
         # Detectar llamada
         if node.type == "call" and current_func:
             function_node = node.child_by_field_name('function')
             if function_node:
-                callee = self._extract_callee_name(function_node, source)
-                if callee and callee not in local_graph[current_func]:
-                    local_graph[current_func].append(callee)
+                callee_info = self._extract_callee_name(function_node, source, current_class, filepath)
+                if callee_info:
+                    callee, is_instance_method, instance_attr = callee_info
+                    # Verificar si ya existe (comparar solo el nombre de la función)
+                    already_exists = any(c[0] == callee for c in local_graph[current_func])
+                    if callee and not already_exists:
+                        # Guardar con metadata adicional si es necesario
+                        local_graph[current_func].append((callee, is_instance_method, instance_attr))
 
         # Recursión
         for child in node.children:
@@ -249,32 +323,68 @@ class CrossFileCallGraphExtractor:
                 current_class
             )
 
-    def _extract_callee_name(self, node: Node, source: bytes) -> Optional[str]:
+    def _extract_callee_name(
+        self,
+        node: Node,
+        source: bytes,
+        current_class: Optional[str],
+        filepath: Path
+    ) -> Optional[Tuple[str, bool, Optional[str]]]:
         """
         Extrae nombre de función llamada.
 
         Maneja:
-        - foo() → "foo"
-        - obj.method() → "method"
-        - self.helper() → "helper"
-        - module.func() → "module" (import)
+        - foo() → ("foo", False, None)
+        - obj.method() → ("method", False, None)
+        - self.helper() → ("helper", False, None)
+        - module.func() → ("module", False, None) para imports
+        - self.middleware.apiMethod() → ("apiMethod", True, "middleware")
+
+        Returns:
+            Tuple of (callee_name, is_instance_method, instance_attr_name)
         """
         if node.type == "identifier":
-            return self._get_node_text(node, source)
+            return (self._get_node_text(node, source), False, None)
 
         if node.type == "attribute":
-            # obj.method() → extraer "method"
+            # Extraer el método
             attr_node = node.child_by_field_name('attribute')
-            if attr_node:
-                return self._get_node_text(attr_node, source)
+            if not attr_node:
+                return None
 
-            # También extraer el objeto para detectar imports
+            method_name = self._get_node_text(attr_node, source)
+
+            # Extraer el objeto
             obj_node = node.child_by_field_name('object')
-            if obj_node and obj_node.type == "identifier":
-                # module.func() → retornar "module"
-                return self._get_node_text(obj_node, source)
+            if not obj_node:
+                return (method_name, False, None)
 
-        return self._get_node_text(node, source)
+            # Caso 1: Simple identifier - module.func() o self.method()
+            if obj_node.type == "identifier":
+                obj_name = self._get_node_text(obj_node, source)
+                # Si es self.method(), retornar el método
+                if obj_name == "self":
+                    return (method_name, False, None)
+                # Si es module.func(), retornar el módulo (para resolución de import)
+                return (obj_name, False, None)
+
+            # Caso 2: Nested attribute - self.middleware.apiMethod()
+            if obj_node.type == "attribute":
+                # Extraer self.middleware
+                nested_obj = obj_node.child_by_field_name('object')
+                nested_attr = obj_node.child_by_field_name('attribute')
+
+                if (nested_obj and nested_attr and
+                    nested_obj.type == "identifier" and
+                    self._get_node_text(nested_obj, source) == "self"):
+                    # Es self.X.method() - X es un atributo de instancia
+                    instance_attr = self._get_node_text(nested_attr, source)
+                    return (method_name, True, instance_attr)
+
+            return (method_name, False, None)
+
+        text = self._get_node_text(node, source)
+        return (text, False, None) if text else None
 
     def _get_node_text(self, node: Node, source: bytes) -> str:
         """Extrae texto de un nodo."""

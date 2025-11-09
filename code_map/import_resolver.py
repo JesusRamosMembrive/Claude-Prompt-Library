@@ -119,7 +119,7 @@ class ImportResolver:
 
         # Imports absolutos (sin dots)
         if not module.startswith('.'):
-            return self._resolve_absolute(module, name)
+            return self._resolve_absolute(module, name, source_dir)
 
         # Imports relativos (con dots)
         return self._resolve_relative(module, name, source_dir)
@@ -127,7 +127,8 @@ class ImportResolver:
     def _resolve_absolute(
         self,
         module: str,
-        name: Optional[str]
+        name: Optional[str],
+        source_dir: Optional[Path] = None
     ) -> Optional[Tuple[Path, Optional[str]]]:
         """
         Resuelve import absoluto.
@@ -141,7 +142,18 @@ class ImportResolver:
         # utils.helpers → utils/helpers.py
         module_path = Path(module.replace('.', '/'))
 
-        # Intentar como archivo
+        # Primero, intentar relativo al directorio del archivo fuente
+        # Esto maneja imports entre archivos del mismo directorio sin ser relativos
+        if source_dir:
+            candidate_file = source_dir / f"{module_path}.py"
+            if candidate_file.exists():
+                return (candidate_file, name)
+
+            candidate_package = source_dir / module_path / "__init__.py"
+            if candidate_package.exists():
+                return (candidate_package, name)
+
+        # Luego, intentar desde la raíz del proyecto
         candidate_file = self.project_root / f"{module_path}.py"
         if candidate_file.exists():
             return (candidate_file, name)

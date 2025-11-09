@@ -60,9 +60,67 @@ export function HomeView({
           </span>
           <h2>Build with AI without losing control.</h2>
           <p>
-            Keep agents aligned with project rules using the Stage Toolkit or explore code with the
-            enriched Code Map.
+            Define shared standards, break down work into milestones, monitor the details of each task, run integrated linters, and rely on local AI for contextual tips.
           </p>
+        </div>
+        <div className="home-hero__logo">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* Círculo exterior con gradiente */}
+            <defs>
+              <linearGradient id="logoGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: "#3b82f6", stopOpacity: 0.4 }} />
+                <stop offset="100%" style={{ stopColor: "#2dd4bf", stopOpacity: 0.9 }} />
+              </linearGradient>
+              <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: "#60a5fa", stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: "#34d399", stopOpacity: 1 }} />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Círculo de fondo */}
+            <circle cx="100" cy="100" r="85" fill="url(#logoGradient1)" opacity="0.2" />
+
+            {/* Anillos concéntricos */}
+            <circle cx="100" cy="100" r="70" fill="none" stroke="url(#logoGradient2)" strokeWidth="2" opacity="0.4" />
+            <circle cx="100" cy="100" r="55" fill="none" stroke="url(#logoGradient2)" strokeWidth="2" opacity="0.6" />
+
+            {/* Símbolo central - diseño de código/árbol de decisiones */}
+            <g filter="url(#glow)">
+              {/* Nodo central */}
+              <circle cx="100" cy="100" r="8" fill="#60a5fa" />
+
+              {/* Ramas superiores */}
+              <line x1="100" y1="100" x2="70" y2="70" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <line x1="100" y1="100" x2="130" y2="70" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="70" cy="70" r="6" fill="#34d399" />
+              <circle cx="130" cy="70" r="6" fill="#34d399" />
+
+              {/* Ramas inferiores */}
+              <line x1="100" y1="100" x2="70" y2="130" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <line x1="100" y1="100" x2="130" y2="130" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="70" cy="130" r="6" fill="#2dd4bf" />
+              <circle cx="130" cy="130" r="6" fill="#2dd4bf" />
+
+              {/* Subramas */}
+              <line x1="70" y1="70" x2="50" y2="50" stroke="#34d399" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+              <line x1="130" y1="70" x2="150" y2="50" stroke="#34d399" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+              <circle cx="50" cy="50" r="4" fill="#5eead4" />
+              <circle cx="150" cy="50" r="4" fill="#5eead4" />
+            </g>
+
+            {/* Partículas decorativas */}
+            <circle cx="40" cy="100" r="2" fill="#60a5fa" opacity="0.6" />
+            <circle cx="160" cy="100" r="2" fill="#2dd4bf" opacity="0.6" />
+            <circle cx="100" cy="40" r="2" fill="#34d399" opacity="0.5" />
+            <circle cx="100" cy="160" r="2" fill="#5eead4" opacity="0.5" />
+          </svg>
         </div>
       </section>
 

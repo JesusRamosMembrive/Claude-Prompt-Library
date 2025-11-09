@@ -11,8 +11,7 @@ from typing import Dict, List, Tuple
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from ..call_tracer import CallGraphExtractor, TREE_SITTER_AVAILABLE
-from ..call_tracer_v2 import CrossFileCallGraphExtractor
+from ..call_tracer_v2 import CrossFileCallGraphExtractor, TREE_SITTER_AVAILABLE
 from ..state import AppState
 from .deps import get_app_state
 
@@ -124,10 +123,36 @@ async def analyze_file(
             detail=f"Solo se soportan archivos Python (.py). Recibido: {target_path.suffix}",
         )
 
-    # Analizar archivo
+    # Analizar archivo usando v2 con recursive=False para compatibilidad con v1
     try:
-        extractor = CallGraphExtractor()
-        call_graph = extractor.analyze_file(target_path)
+        extractor = CrossFileCallGraphExtractor(
+            project_root=state.settings.root_path,
+            use_cache=True
+        )
+        extractor.analyze_file(target_path, recursive=False)
+
+        # Convertir nombres cualificados a nombres simples para compatibilidad v1
+        # v2 usa: "path/file.py::function"
+        # v1 esperaba: "function"
+        simple_call_graph = {}
+        for qualified_name, qualified_callees in extractor.call_graph.items():
+            # Extraer solo el nombre de función del formato "file.py::function"
+            if "::" in qualified_name:
+                simple_name = qualified_name.split("::")[-1]
+            else:
+                simple_name = qualified_name
+
+            # Convertir callees también
+            simple_callees = []
+            for callee in qualified_callees:
+                if "::" in callee:
+                    simple_callees.append(callee.split("::")[-1])
+                else:
+                    simple_callees.append(callee)
+
+            simple_call_graph[simple_name] = simple_callees
+
+        call_graph = simple_call_graph
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
@@ -169,29 +194,44 @@ async def trace_chain(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    # Analizar y trazar
+    # Analizar y trazar usando v2
     try:
-        extractor = CallGraphExtractor()
-        extractor.analyze_file(target_path)
+        extractor = CrossFileCallGraphExtractor(
+            project_root=state.settings.root_path,
+            use_cache=True
+        )
+        extractor.analyze_file(target_path, recursive=False)
 
-        # Verificar que la función existe
-        if request.start_function not in extractor.call_graph:
-            available = ", ".join(extractor.call_graph.keys())
+        # Convertir nombre simple a cualificado para buscar en v2
+        # Buscar la función en el call_graph (puede tener prefijo de archivo)
+        qualified_func = None
+        for qname in extractor.call_graph.keys():
+            if qname.endswith(f"::{request.start_function}"):
+                qualified_func = qname
+                break
+
+        if not qualified_func:
+            # Intentar buscar sin cualificación completa
+            available_simple = [name.split("::")[-1] for name in extractor.call_graph.keys()]
             raise HTTPException(
                 status_code=404,
                 detail=f"Función '{request.start_function}' no encontrada. "
-                f"Funciones disponibles: {available}",
+                f"Funciones disponibles: {', '.join(set(available_simple))}",
             )
 
-        chain_data = extractor.trace_chain(
-            request.start_function, max_depth=request.max_depth
+        chain_data = extractor.trace_chain_cross_file(
+            qualified_func, max_depth=request.max_depth
         )
 
-        # Convertir a modelo Pydantic
-        chain = [
-            CallChain(depth=depth, function=func, callees=callees)
-            for depth, func, callees in chain_data
-        ]
+        # Convertir a modelo Pydantic, simplificando los nombres
+        chain = []
+        for depth, qualified_name, qualified_callees in chain_data:
+            simple_func = qualified_name.split("::")[-1] if "::" in qualified_name else qualified_name
+            simple_callees = [
+                c.split("::")[-1] if "::" in c else c
+                for c in qualified_callees
+            ]
+            chain.append(CallChain(depth=depth, function=simple_func, callees=simple_callees))
 
         # Detectar si se alcanzó max_depth
         max_depth_reached = any(item.depth >= request.max_depth for item in chain)
@@ -240,11 +280,54 @@ async def get_all_chains(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    # Analizar
+    # Analizar usando v2
     try:
-        extractor = CallGraphExtractor()
-        extractor.analyze_file(target_path)
-        chains = extractor.get_all_chains()
+        extractor = CrossFileCallGraphExtractor(
+            project_root=state.settings.root_path,
+            use_cache=True
+        )
+        extractor.analyze_file(target_path, recursive=False)
+
+        # v2 no tiene get_all_chains(), pero podemos implementar la misma lógica
+        # Encontrar entry points (funciones no llamadas por nadie)
+        all_callees = set()
+        for callees in extractor.call_graph.values():
+            all_callees.update(callees)
+
+        entry_points = set(extractor.call_graph.keys()) - all_callees
+
+        # Para cada entry point, generar su cadena completa
+        chains = []
+        visited_global = set()
+
+        def build_chain(func: str, visited: set) -> list:
+            """Construye cadena desde una función."""
+            if func in visited:
+                return [func.split("::")[-1] if "::" in func else func]
+
+            visited.add(func)
+            simple_func = func.split("::")[-1] if "::" in func else func
+            callees = extractor.call_graph.get(func, [])
+
+            if not callees:
+                return [simple_func]
+
+            # Para cada callee, construir su subcadena
+            chain = [simple_func]
+            for callee in callees:
+                if callee not in visited:
+                    subchain = build_chain(callee, visited.copy())
+                    # Extender la cadena principal
+                    if len(subchain) > 1:
+                        chain.extend(subchain[1:])
+            return chain
+
+        for entry_point in entry_points:
+            if entry_point not in visited_global:
+                chain = build_chain(entry_point, visited_global.copy())
+                chains.append(chain)
+                visited_global.add(entry_point)
+
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
