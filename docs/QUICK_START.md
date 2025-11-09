@@ -50,7 +50,7 @@ NO implementes aún. Espera mi aprobación.
 Aprobado. Procede con la implementación.
 
 PERO: implementa UN archivo a la vez.
-Empieza por init_project.py.
+Empieza por init_project.py (puedes ensayar con `--dry-run` para ver qué copiará).
 Espera mi OK antes de cualquier otro archivo.
 ```
 
@@ -74,7 +74,7 @@ Ahora crea tests/test_full_flow.sh
 
 Debe:
 1. Sección "PHASE 1: Template Copier"
-2. Ejecutar init_project.py con proyecto de prueba
+2. Ejecutar init_project.py con proyecto de prueba (`--dry-run` primero si quieres revisar)
 3. Verificar que archivos existen
 4. Verificar que placeholders están reemplazados
 5. Usar `set -e` (falla al primer error)

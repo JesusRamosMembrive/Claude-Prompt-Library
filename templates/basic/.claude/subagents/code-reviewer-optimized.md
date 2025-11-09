@@ -1,6 +1,8 @@
 ---
 name: code-reviewer
-description: Review code for quality, security, and maintainability. Use after implementing features, before commits, or when quality issues suspected.
+description: "Use this agent when you need a pragmatic, high-impact code review.\n\nIt focuses on:\n- Surfacing critical security, correctness, and performance bugs\n- Highlighting maintainability issues that will hurt the team\n- Sharing concise, actionable fixes aligned with the project's stage\n- Celebrating strengths so the team knows what to repeat"
+model: opus
+color: red
 tools: Read, Grep, Glob, Bash
 ---
 

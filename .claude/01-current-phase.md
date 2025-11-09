@@ -422,23 +422,340 @@ New structure:
 
 ---
 
-**Last updated:** 2025-10-27
-**Next review:** Después de validation con proyectos reales
+## Session 4: Call Tracer Implementation (Stage 1 MVP) ✅
+
+**Fecha:** 2025-11-08
+
+### Objetivo
+Implementar sistema de trazabilidad de llamadas (call tracing) para visualizar cadenas de ejecución en código Python.
+
+### Implementado
+
+**Backend (Python + tree-sitter):**
+- ✅ [`code_map/call_tracer.py`](code_map/call_tracer.py) (~267 LOC)
+  - `CallGraphExtractor`: Extractor usando tree-sitter
+  - `analyze_file()`: Analiza archivo y retorna call graph completo
+  - `trace_chain()`: Sigue cadena desde función específica
+  - `get_all_chains()`: Todas las cadenas posibles del archivo
+
+- ✅ [`code_map/api/tracer.py`](code_map/api/tracer.py) (~258 LOC)
+  - `POST /tracer/analyze`: Analiza archivo y retorna call graph
+  - `POST /tracer/trace`: Traza cadena desde función
+  - `POST /tracer/chains`: Todas las cadenas del archivo
+
+- ✅ [`code_map/api/routes.py`](code_map/api/routes.py): Router registrado
+
+**Frontend (React/TypeScript):**
+- ✅ [`frontend/src/components/CallTracerView.tsx`](frontend/src/components/CallTracerView.tsx) (~300 LOC)
+  - Input para file path y función
+  - Botón "Analyze Call Graph": Muestra todas las funciones y llamadas
+  - Botón "Trace Chain": Sigue cadena desde función específica
+  - Control de profundidad máxima (1-20)
+  - Display limpio con formato monospace y colores
+
+- ✅ [`frontend/src/App.tsx`](frontend/src/App.tsx): Ruta `/call-tracer` registrada
+- ✅ [`frontend/src/components/HeaderBar.tsx`](frontend/src/components/HeaderBar.tsx): Link en navegación
+
+### Probado
+
+```bash
+# Ejemplo real funcionando:
+curl -X POST 'http://127.0.0.1:8000/tracer/analyze' \
+  -H 'Content-Type: application/json' \
+  -d '{"file_path": "code_map/server.py"}'
+
+# Retorna:
+{
+  "file_path": "code_map/server.py",
+  "call_graph": {
+    "create_app": ["load_settings", "ChangeScheduler", "AppState", ...],
+    "lifespan": ["startup", "shutdown"]
+  },
+  "total_functions": 2
+}
+```
+
+### Limitaciones Stage 1
+
+Como corresponde a Stage 1 MVP:
+- ✅ Solo analiza llamadas dentro del mismo archivo (no cross-file)
+- ✅ Detecta llamadas directas: `foo()`, `obj.method()`
+- ❌ NO maneja imports cross-file
+- ❌ NO maneja decorators complejos, lambdas, closures
+- ✅ Display textual simple (sin gráficos)
+
+### Commits
+
+- `b6be607` - Backend implementation (527+ insertions)
+- `bce54be` - Frontend UI component (325+ insertions)
+
+---
+
+## Session 5: Call Tracer Stage 2 - Cross-File Analysis ✅
+
+**Fecha:** 2025-11-09
+
+### Objetivo
+Implementar análisis cross-file completo con resolución de imports para trazar llamadas entre archivos diferentes.
+
+### Implementado
+
+**Backend (Import Resolution + Cross-File Analysis):**
+
+1. ✅ [`code_map/import_resolver.py`](code_map/import_resolver.py) (~200 LOC)
+   - `ImportResolver`: Resuelve imports de Python (absolutos y relativos)
+   - `extract_imports()`: Extrae todos los imports de un archivo
+   - `resolve_import()`: Resuelve import a archivo real
+   - `build_import_map()`: Mapa completo de imports del archivo
+   - **Soporta:**
+     - `import module`
+     - `from module import function`
+     - `from .relative import function` (dots relativos)
+     - `from ..parent import function`
+
+2. ✅ [`code_map/call_tracer_v2.py`](code_map/call_tracer_v2.py) (~350 LOC)
+   - `CrossFileCallGraphExtractor`: Análisis multi-archivo
+   - `analyze_file()`: Analiza archivo y sus dependencias recursivamente
+   - `trace_chain_cross_file()`: Traza cadena entre archivos
+   - `find_entry_points()`: Detecta funciones raíz (no llamadas por nadie)
+   - **Características:**
+     - Cache por archivo (MD5 hash)
+     - Prevención de ciclos
+     - Nombres cualificados: `file.py::function`
+     - Detección de métodos de clase: `file.py::ClassName.method`
+
+3. ✅ [`code_map/api/tracer.py`](code_map/api/tracer.py) (extended ~270 LOC)
+   - `POST /tracer/analyze-cross-file`: Análisis cross-file
+   - `POST /tracer/trace-cross-file`: Trace cross-file
+   - Nuevos modelos Pydantic para Stage 2
+
+### Probado
+
+```bash
+# Análisis cross-file de assess_stage.py
+curl -X POST 'http://127.0.0.1:8000/tracer/analyze-cross-file' \
+  -d '{"file_path":"assess_stage.py","recursive":true}'
+
+# Resultado:
+{
+  "total_functions": 15,          # vs 3 en Stage 1
+  "analyzed_files": 2,             # assess_stage.py + stage_config.py
+  "entry_points": ["assess_stage.py::assess_stage"],
+  "call_graph": {
+    "assess_stage.py::assess_stage": [
+      "stage_config.py::collect_metrics",  # ← llamada cross-file!
+      "stage_config.py::evaluate_stage"     # ← llamada cross-file!
+    ]
+  }
+}
+```
+
+### Comparación Stage 1 vs Stage 2
+
+| Métrica | Stage 1 | Stage 2 | Mejora |
+|---------|---------|---------|--------|
+| Funciones detectadas | 3 | 15 | **5x más** |
+| Archivos analizados | 1 | 2 | Cross-file ✅ |
+| Llamadas cross-file | 0 | 2 | **Detección completa** |
+| Cache | ❌ | ✅ MD5 hash | Performance |
+| Entry points | ❌ | ✅ | Análisis completo |
+
+### Capacidades Stage 2
+
+✅ **Cross-file analysis**: Sigue imports entre archivos
+✅ **Import resolution**: Resuelve imports absolutos y relativos
+✅ **Qualified names**: `path/file.py::function_name`
+✅ **Class methods**: `file.py::ClassName.method_name`
+✅ **Entry point detection**: Encuentra funciones raíz
+✅ **Caching**: MD5 hash por archivo
+✅ **Cycle prevention**: Evita loops infinitos
+✅ **Configurable limits**: `max_files` parameter
+
+### Commits
+
+- `3f8cdc6` - Stage 2 implementation (875+ insertions)
+  - import_resolver.py
+  - call_tracer_v2.py
+  - Extended api/tracer.py
+
+### Próximos Pasos (Solo si se necesita)
+
+**Stage 3 (si se usa intensivamente):**
+- Visualización gráfica interactiva (D3.js, Cytoscape)
+- Export a formatos (DOT, Mermaid, SVG)
+- Análisis incremental optimizado
+- Integración con UI para exploración visual
+
+---
+
+## Session 6: Stage 2 Frontend Implementation ✅
+
+**Fecha:** 2025-11-09
+
+### Objetivo
+
+Extender la UI del Call Tracer para soportar ambos modos: Stage 1 (single-file) y Stage 2 (cross-file), con toggle para cambiar entre ellos.
+
+### Implementado
+
+1. ✅ **Mode Toggle UI**
+   - Botones para cambiar entre "Stage 1: Single-File" y "Stage 2: Cross-File"
+   - Stage 2 configuración:
+     - Checkbox "Recursive (follow imports)"
+     - Input "Max files" (1-200)
+   - Estado por defecto: Stage 2 (cross-file)
+
+2. ✅ **Stage 2 API Integration**
+   - `CrossFileCallGraphResponse` interface
+   - `TraceCrossFileResponse` interface
+   - Query hooks para `/tracer/analyze-cross-file`
+   - Query hooks para `/tracer/trace-cross-file`
+   - Manejo de errores y loading states
+
+3. ✅ **Enhanced Results Display**
+   - **Analyze Tab (Stage 2):**
+     - Métricas: total functions, files analyzed, entry points
+     - Entry Points section destacada (amarillo)
+     - Call graph con nombres cualificados (`file.py::function`)
+     - Analyzed files list (collapsible)
+   - **Trace Tab (Stage 2):**
+     - Total depth y functions traced
+     - File path indicator por función (📁 icon)
+     - Qualified names format
+     - Truncated callees list (primeros 5 + count)
+
+4. ✅ **Dynamic Placeholders & Help**
+   - Placeholder para función cambia según modo:
+     - Stage 1: "Function name (e.g., create_app)"
+     - Stage 2: "Qualified name (e.g., code_map/server.py::create_app)"
+   - Sección de limitations/capabilities actualizada dinámicamente:
+     - Stage 1: Lista de limitaciones
+     - Stage 2: Lista de capacidades ✅ + limitaciones conocidas
+
+### Código Actualizado
+
+**[frontend/src/components/CallTracerView.tsx](frontend/src/components/CallTracerView.tsx):**
+- +441 líneas, -97 líneas modificadas
+- **New state:**
+  - `analysisMode`: "single-file" | "cross-file"
+  - `recursive`: boolean (default true)
+  - `maxFiles`: number (default 50)
+- **New interfaces:**
+  - `CrossFileCallGraphResponse`
+  - `CrossFileCallChain`
+  - `TraceCrossFileResponse`
+- **New queries:**
+  - `crossFileGraphData` (analyze-cross-file)
+  - `crossFileTraceData` (trace-cross-file)
+- **Enhanced handlers:**
+  - `handleAnalyze()` - Redirige según modo
+  - `handleTrace()` - Redirige según modo
+- **Conditional rendering:**
+  - Analyze tab: Stage 1 vs Stage 2 display
+  - Trace tab: Stage 1 vs Stage 2 display
+  - Footer: Limitations vs Capabilities
+
+### Arquitectura UI
+
+```
+CallTracerView
+├── Mode Toggle Section (Stage 1/2 buttons + Stage 2 config)
+├── Input Section (file path, function, max depth)
+│   └── Dynamic placeholder based on analysisMode
+├── Results Section
+│   ├── Analyze Tab
+│   │   ├── Stage 1: Simple call graph
+│   │   └── Stage 2: Entry points + Cross-file graph + Files list
+│   └── Trace Tab
+│       ├── Stage 1: Call chain with depth
+│       └── Stage 2: Cross-file chain with file paths
+└── Footer
+    ├── Stage 1: Limitations list
+    └── Stage 2: Capabilities ✅ + Known limitations
+```
+
+### Testing
+
+Backend está ejecutando correctamente:
+```bash
+$ curl -X POST http://127.0.0.1:8000/tracer/analyze-cross-file \
+  -H "Content-Type: application/json" \
+  -d '{"file_path":"assess_stage.py","recursive":true,"max_files":50}'
+
+✅ Response: 200 OK
+{
+  "call_graph": {...},
+  "entry_points": [...],
+  "total_functions": 15,
+  "analyzed_files": ["assess_stage.py", "stage_config.py"]
+}
+```
+
+Frontend updates son hot-reloaded (Vite dev mode). UI ahora permite:
+- Toggle entre Stage 1 y Stage 2
+- Analizar con cross-file resolution
+- Ver entry points detectados
+- Trace con qualified names
+- Ver file paths en cada función
+
+### Comparación Visual
+
+**Stage 1 UI:**
+```
+create_app()
+  → configure_routes()
+  → include_router()
+```
+
+**Stage 2 UI:**
+```
+Entry Points:
+  • code_map/server.py::create_app
+
+code_map/server.py::create_app
+  → code_map/settings.py::load_settings
+    📁 code_map/settings.py
+  → code_map/state.py::AppState
+    📁 code_map/state.py
+```
+
+### Commits
+
+- `2dfb370` - "feat: Add Stage 2 cross-file UI support to Call Tracer"
+  - +441 insertions, -97 deletions
+  - Full Stage 1/2 toggle support
+  - Entry points display
+  - Cross-file visualization
+  - Dynamic help text
+
+### Próximos Pasos Potenciales
+
+**Solo si el usuario lo solicita:**
+- Stage 3 visual graph rendering (D3.js, ReactFlow)
+- Export functionality (DOT, Mermaid, JSON)
+- Click-to-navigate en qualified names
+- Minimap para proyectos grandes
+- Performance optimizations para proyectos >500 archivos
+
+---
+
+**Last updated:** 2025-11-09
+**Next review:** Testing completo de UI en browser, feedback del usuario
 
 ## 🎯 Detected Stage: Stage 3 (High Confidence)
 
-**Auto-detected on:** 2025-10-30 20:21
+**Auto-detected on:** 2025-11-06 17:18
 
 **Detection reasoning:**
-- Large codebase (68 files, ~7943 LOC)
-- Multiple patterns: Repository
+- Large or complex codebase (115 files, ~20113 LOC)
+- Multiple patterns detected: Repository, Service Layer
 
 **Metrics:**
-- Files: 68
-- LOC: ~7943
-- Patterns: Repository
+- Files: 115
+- LOC: ~20113
+- Patterns: Repository, Service Layer
 
 **Recommended actions:**
-- Follow rules in `.claude/02-stage3-rules.md` (and `.codex/stage3-rules.md` if using Codex)
+- Follow rules in `.claude/02-stage3-rules.md`
 - Use stage-aware subagents for guidance
 - Re-assess stage after significant changes

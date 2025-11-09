@@ -14,6 +14,7 @@ Hoy avanzamos tanto en la arquitectura backend como en la definición visual del
 - **FastAPI**: Rutas `/health`, `/tree`, `/files/{path}`, `/search`, `/events` (SSE) y `/rescan`; app creada con `create_app` y `AppState`.
 - **Tests**: Suite de Pytest verificando extracción de símbolos, persistencia, scheduler y endpoints (con TestClient y lifespan).
 - **Dependencias**: Instalado `fastapi` y ajustado `pytest` con `.venv/bin/python -m pytest`.
+- **Insights Ollama**: Configuración persistente para activar/desactivar, elegir modelo, frecuencia y foco de análisis (general, refactors, issues, duplicación, testing).
 
 ### Pendiente
 - Empaquetar comando de arranque (uvicorn) + scripts (p.ej. `make dev`).
@@ -40,7 +41,7 @@ Hoy avanzamos tanto en la arquitectura backend como en la definición visual del
 
 ## Próximos pasos sugeridos
 1. Preparar scripts de arranque del backend (`uvicorn code_map.server:app --reload`), revisar logs del watcher y asegurar persistencia en `.code-map`.
-2. Documentar la API y configuración en README o /docs (cómo setear `CODE_MAP_ROOT`, cambiar docstrings, etc.).
+2. Documentar la API y configuración en README o /docs (cómo cambiar la raíz con el CLI, ajustar docstrings, etc.).
 3. Iniciar implementación de frontend real (setup Vite, componentes base, integrar árbol con `/tree`).
 4. Plan para almacenar Settings (archivo YAML o endpoint en backend).
 

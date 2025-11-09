@@ -8,9 +8,21 @@ import type {
   StageStatusPayload,
   StageInitPayload,
   StageInitResponse,
-  ClassGraphResponse,
   BrowseDirectoryResponse,
   UMLDiagramResponse,
+  LintersReportRecord,
+  LintersReportListItem,
+  LintersNotificationEntry,
+  OllamaStatusPayload,
+  OllamaStartPayload,
+  OllamaStartResponse,
+  OllamaTestPayload,
+  OllamaTestResponse,
+  OllamaTestErrorDetail,
+  OllamaInsightEntry,
+  OllamaInsightsResponse,
+  OllamaInsightsClearResponse,
+  GraphvizOptionsPayload,
 } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -75,6 +87,47 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+async function fetchJsonNullable<T>(
+  path: string,
+  init?: RequestInit
+): Promise<T | null> {
+  const response = await fetch(buildUrl(path), {
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    ...init,
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `API request failed (${response.status}): ${detail || "Unknown error"}`
+    );
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  return (await response.json()) as T;
+}
+
+export class OllamaTestError extends Error {
+  status: number;
+  detail?: OllamaTestErrorDetail;
+
+  constructor(message: string, status: number, detail?: OllamaTestErrorDetail) {
+    super(message);
+    this.status = status;
+    this.detail = detail;
+  }
 }
 
 /**
@@ -221,6 +274,129 @@ export function getStageStatus(): Promise<StageStatusPayload> {
 }
 
 /**
+ * Obtiene el estado del servidor Ollama (instalación, servicio y modelos).
+ */
+export function getOllamaStatus(): Promise<OllamaStatusPayload> {
+  return fetchJson<OllamaStatusPayload>("/integrations/ollama/status");
+}
+
+/**
+ * Requests the backend to start the Ollama server.
+ */
+export async function startOllama(payload: OllamaStartPayload): Promise<OllamaStartResponse> {
+  const response = await fetch(buildUrl("/integrations/ollama/start"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let detailMessage = `Could not start Ollama (${response.status})`;
+    const body = await response.text().catch(() => "");
+    if (body) {
+      try {
+        const parsed = JSON.parse(body);
+        const candidate = (parsed && parsed.detail) ?? parsed;
+        if (candidate && typeof candidate === "object" && candidate.message) {
+          detailMessage = String(candidate.message);
+        }
+      } catch {
+        // No-op, keep the generic message.
+      }
+    }
+    throw new Error(detailMessage);
+  }
+
+  return (await response.json()) as OllamaStartResponse;
+}
+
+/**
+ * Runs a simple chat request against Ollama to verify connectivity.
+ */
+export async function testOllamaChat(payload: OllamaTestPayload): Promise<OllamaTestResponse> {
+  const response = await fetch(buildUrl("/integrations/ollama/test"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const bodyText = await response.text().catch(() => "");
+
+  if (!response.ok) {
+    let detail: OllamaTestErrorDetail | undefined;
+    if (bodyText) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        const candidate = (parsed && parsed.detail) ?? parsed;
+        if (candidate && typeof candidate === "object") {
+          detail = candidate as OllamaTestErrorDetail;
+        }
+      } catch {
+        // Ignore parse errors, fall back to generic message.
+      }
+    }
+
+    const message =
+      detail?.message ?? `Ollama test request failed (${response.status})`;
+    throw new OllamaTestError(message, response.status, detail);
+  }
+
+  if (!bodyText) {
+    throw new OllamaTestError("Empty response from Ollama.", response.status);
+  }
+
+  try {
+    return JSON.parse(bodyText) as OllamaTestResponse;
+  } catch {
+    throw new OllamaTestError(
+      "Invalid server response while parsing JSON.",
+      response.status
+    );
+  }
+}
+
+/**
+ * Recupera el historial reciente de insights generados con Ollama.
+ */
+export function getOllamaInsights(limit = 20): Promise<OllamaInsightEntry[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return fetchJson(`/integrations/ollama/insights?${params.toString()}`);
+}
+
+export function triggerOllamaInsights(payload?: {
+  model?: string;
+  timeout_seconds?: number;
+  focus?: string;
+}): Promise<OllamaInsightsResponse> {
+  const bodyPayload = payload
+    ? {
+        ...payload,
+        focus:
+          payload.focus && payload.focus.trim()
+            ? payload.focus.trim().toLowerCase()
+            : undefined,
+      }
+    : {};
+  return fetchJson("/integrations/ollama/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(bodyPayload),
+  });
+}
+
+export function clearOllamaInsights(): Promise<OllamaInsightsClearResponse> {
+  return fetchJson("/integrations/ollama/insights", {
+    method: "DELETE",
+  });
+}
+
+/**
  * Ejecuta init_project.py sobre el proyecto actual con los agentes seleccionados.
  */
 export function initializeStageToolkit(payload: StageInitPayload): Promise<StageInitResponse> {
@@ -230,36 +406,11 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
   });
 }
 
-/**
- * Obtiene el grafo de clases del workspace.
- */
-export function getClassGraph(options?: {
-  includeExternal?: boolean;
-  edgeTypes?: string[];
-  modulePrefixes?: string[];
-}): Promise<ClassGraphResponse> {
-  const params = new URLSearchParams();
-  if (options?.includeExternal === false) {
-    params.set("include_external", "false");
-  }
-  if (options?.edgeTypes && options.edgeTypes.length > 0) {
-    options.edgeTypes.forEach((edge) => params.append("edge_types", edge));
-  }
-  if (options?.modulePrefixes && options.modulePrefixes.length > 0) {
-    options.modulePrefixes.forEach((prefix) => {
-      if (prefix.trim()) {
-        params.append("module_prefix", prefix.trim());
-      }
-    });
-  }
-  const query = params.toString();
-  const path = `/graph/classes${query ? `?${query}` : ""}`;
-  return fetchJson<ClassGraphResponse>(path);
-}
-
 export function getClassUml(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
+  edgeTypes?: string[];
+  graphvizOptions?: GraphvizOptionsPayload;
 }): Promise<UMLDiagramResponse> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -272,6 +423,12 @@ export function getClassUml(options?: {
       }
     });
   }
+  if (options?.edgeTypes) {
+    options.edgeTypes.forEach((type) => {
+      params.append("edge_types", type);
+    });
+  }
+  appendGraphvizParams(params, options?.graphvizOptions);
   const query = params.toString();
   return fetchJson(`/graph/uml${query ? `?${query}` : ""}`);
 }
@@ -279,6 +436,8 @@ export function getClassUml(options?: {
 export async function getClassUmlSvg(options?: {
   includeExternal?: boolean;
   modulePrefixes?: string[];
+  edgeTypes?: string[];
+  graphvizOptions?: GraphvizOptionsPayload;
 }): Promise<string> {
   const params = new URLSearchParams();
   if (options?.includeExternal) {
@@ -292,6 +451,12 @@ export async function getClassUmlSvg(options?: {
       }
     });
   }
+  if (options?.edgeTypes) {
+    options.edgeTypes.forEach((type) => {
+      params.append("edge_types", type);
+    });
+  }
+  appendGraphvizParams(params, options?.graphvizOptions);
   const query = params.toString();
   const response = await fetch(buildUrl(`/graph/uml/svg${query ? `?${query}` : ""}`));
   if (!response.ok) {
@@ -325,4 +490,99 @@ export async function getPreview(path: string): Promise<{ content: string; conte
   const content = await response.text();
   const contentType = response.headers.get("Content-Type") ?? "text/plain";
   return { content, contentType };
+}
+
+const GRAPHVIZ_PARAM_ENTRIES: Array<[keyof GraphvizOptionsPayload, string]> = [
+  ["layoutEngine", "layout_engine"],
+  ["rankdir", "rankdir"],
+  ["splines", "splines"],
+  ["nodesep", "nodesep"],
+  ["ranksep", "ranksep"],
+  ["pad", "pad"],
+  ["margin", "margin"],
+  ["bgcolor", "bgcolor"],
+  ["graphFontname", "graph_fontname"],
+  ["graphFontsize", "graph_fontsize"],
+  ["nodeShape", "node_shape"],
+  ["nodeStyle", "node_style"],
+  ["nodeFillcolor", "node_fillcolor"],
+  ["nodeColor", "node_color"],
+  ["nodeFontcolor", "node_fontcolor"],
+  ["nodeFontname", "node_fontname"],
+  ["nodeFontsize", "node_fontsize"],
+  ["nodeWidth", "node_width"],
+  ["nodeHeight", "node_height"],
+  ["nodeMarginX", "node_margin_x"],
+  ["nodeMarginY", "node_margin_y"],
+  ["edgeColor", "edge_color"],
+  ["edgeFontname", "edge_fontname"],
+  ["edgeFontsize", "edge_fontsize"],
+  ["edgePenwidth", "edge_penwidth"],
+  ["inheritanceStyle", "inheritance_style"],
+  ["inheritanceColor", "inheritance_color"],
+  ["associationColor", "association_color"],
+  ["instantiationColor", "instantiation_color"],
+  ["referenceColor", "reference_color"],
+  ["inheritanceArrowhead", "inheritance_arrowhead"],
+  ["associationArrowhead", "association_arrowhead"],
+  ["instantiationArrowhead", "instantiation_arrowhead"],
+  ["referenceArrowhead", "reference_arrowhead"],
+  ["associationStyle", "association_style"],
+  ["instantiationStyle", "instantiation_style"],
+  ["referenceStyle", "reference_style"],
+];
+
+function appendGraphvizParams(
+  params: URLSearchParams,
+  options?: GraphvizOptionsPayload,
+): void {
+  if (!options) {
+    return;
+  }
+  for (const [key, queryKey] of GRAPHVIZ_PARAM_ENTRIES) {
+    const value = options[key];
+    if (value === undefined || value === null) {
+      continue;
+    }
+    params.set(queryKey, String(value));
+  }
+}
+
+export function getLintersLatestReport(): Promise<LintersReportRecord | null> {
+  return fetchJsonNullable<LintersReportRecord>("/linters/reports/latest");
+}
+
+export function getLintersReports(
+  limit = 20,
+  offset = 0
+): Promise<LintersReportListItem[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  return fetchJson<LintersReportListItem[]>(`/linters/reports?${params.toString()}`);
+}
+
+export function getLintersNotifications(
+  limit = 50,
+  unreadOnly = false
+): Promise<LintersNotificationEntry[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    unread_only: unreadOnly ? "true" : "false",
+  });
+  return fetchJson<LintersNotificationEntry[]>(
+    `/linters/notifications?${params.toString()}`
+  );
+}
+
+export async function markNotificationAsRead(
+  notificationId: number,
+  read = true
+): Promise<void> {
+  const query = read ? "" : "?read=false";
+  await fetchJsonNullable<void>(
+    `/linters/notifications/${notificationId}/read${query}`,
+    { method: "POST" }
+  );
 }

@@ -8,7 +8,6 @@ Uso:
   python run_all_checks.py --fix   # aplica formateo automático si procede
 """
 import argparse
-import os
 import sys
 import shlex
 import shutil
@@ -18,11 +17,14 @@ import importlib.util as _iu
 
 ROOT = Path.cwd()
 
+
 def module_available(name: str) -> bool:
     return _iu.find_spec(name) is not None
 
+
 def exe_available(name: str) -> bool:
     return shutil.which(name) is not None
+
 
 def run(cmd: list[str], *, cwd: Path | None = None) -> int:
     print("$", " ".join(shlex.quote(x) for x in cmd), flush=True)
@@ -33,10 +35,14 @@ def run(cmd: list[str], *, cwd: Path | None = None) -> int:
         # Ejecutable no encontrado: tratamos como paso omitido
         return 127
 
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--fix", action="store_true",
-                    help="Aplica formateo automático (Black/isort/Ruff --fix) antes de los tests")
+    ap.add_argument(
+        "--fix",
+        action="store_true",
+        help="Aplica formateo automático (Black/isort/Ruff --fix) antes de los tests",
+    )
     args = ap.parse_args()
 
     steps: list[tuple[str, list[str]]] = []
@@ -54,15 +60,37 @@ def main() -> int:
         steps.append(("Black", cmd if args.fix else ["black", "--check", "."]))
 
     if exe_available("isort") or module_available("isort"):
-        steps.append(("isort", ["isort", "." if args.fix else "--check-only", "."] if args.fix
-                     else ["isort", "--check-only", "."]))
+        steps.append(
+            (
+                "isort",
+                (
+                    ["isort", "." if args.fix else "--check-only", "."]
+                    if args.fix
+                    else ["isort", "--check-only", "."]
+                ),
+            )
+        )
 
     if exe_available("mypy") or module_available("mypy"):
         steps.append(("mypy", ["mypy", "--pretty"]))
 
     if exe_available("xenon") or module_available("xenon"):
         # Umbrales razonables; ajusta según tu política
-        steps.append(("xenon", ["xenon", "--max-absolute", "B", "--max-modules", "A", "--max-average", "A", "."]))
+        steps.append(
+            (
+                "xenon",
+                [
+                    "xenon",
+                    "--max-absolute",
+                    "B",
+                    "--max-modules",
+                    "A",
+                    "--max-average",
+                    "A",
+                    ".",
+                ],
+            )
+        )
     elif exe_available("radon") or module_available("radon"):
         # Complejidad ciclomática: peor que B falla
         steps.append(("radon-cc", ["radon", "cc", "-s", "-n", "B", "."]))
@@ -79,7 +107,12 @@ def main() -> int:
     elif module_available("pytest") or exe_available("pytest"):
         cmd = ["pytest", "-q"]
         if module_available("pytest_cov"):
-            cmd += ["--maxfail=1", "--disable-warnings", "--cov=.", "--cov-report=term-missing"]
+            cmd += [
+                "--maxfail=1",
+                "--disable-warnings",
+                "--cov=.",
+                "--cov-report=term-missing",
+            ]
         steps.append(("pytest", cmd))
     else:
         # Fallback estándar de la librería
@@ -108,6 +141,7 @@ def main() -> int:
         return 1
     print("  OK: todos los pasos ejecutados pasaron")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

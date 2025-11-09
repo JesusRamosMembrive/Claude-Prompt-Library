@@ -56,7 +56,7 @@ describe("PreviewPane", () => {
 
     render(<PreviewPane path="binary.bin" />, { wrapper: createWrapper() });
 
-    const fallback = await screen.findByText(/no hay previsualización/i);
+    const fallback = await screen.findByText(/no preview available/i);
     expect(fallback).toBeInTheDocument();
   });
 });

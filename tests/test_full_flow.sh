@@ -29,14 +29,14 @@ test -f test-project-temp/.claude/01-current-phase.md || { echo "  ✗ current-p
 test -f test-project-temp/.claude/02-stage1-rules.md || { echo "  ✗ stage1-rules.md not found"; exit 1; }
 echo "  ✓ Template files copied"
 
-# Test 3: Verify subagents copied
-echo "  Test 3: Check subagents..."
-test -d test-project-temp/.claude/subagents || { echo "  ✗ subagents/ directory not created"; exit 1; }
-test -f test-project-temp/.claude/subagents/architect-generic.md || { echo "  ✗ architect subagent not found"; exit 1; }
-test -f test-project-temp/.claude/subagents/implementer.md || { echo "  ✗ implementer subagent not found"; exit 1; }
-test -f test-project-temp/.claude/subagents/code-reviewer-optimized.md || { echo "  ✗ code-reviewer subagent not found"; exit 1; }
-test -f test-project-temp/.claude/subagents/stage-keeper-architecture.md || { echo "  ✗ stage-keeper subagent not found"; exit 1; }
-echo "  ✓ Subagents copied (4 subagents)"
+# Test 3: Verify agents copied
+echo "  Test 3: Check agents..."
+test -d test-project-temp/.claude/agents || { echo "  ✗ agents/ directory not created"; exit 1; }
+test -f test-project-temp/.claude/agents/architect-generic.md || { echo "  ✗ architect agent not found"; exit 1; }
+test -f test-project-temp/.claude/agents/implementer.md || { echo "  ✗ implementer agent not found"; exit 1; }
+test -f test-project-temp/.claude/agents/code-reviewer-optimized.md || { echo "  ✗ code-reviewer agent not found"; exit 1; }
+test -f test-project-temp/.claude/agents/stage-keeper-architecture.md || { echo "  ✗ stage-keeper agent not found"; exit 1; }
+echo "  ✓ Agents copied (4 agents)"
 
 # Test 4: Verify reference docs copied
 echo "  Test 4: Check reference docs..."
@@ -71,4 +71,4 @@ echo ""
 echo "Next steps:"
 echo "  - Run: python init_project.py <your-project-name>"
 echo "  - Use assess_stage.py to detect project stage"
-echo "  - Leverage stage-aware subagents in .claude/subagents/"
+echo "  - Leverage stage-aware agents in .claude/agents/"

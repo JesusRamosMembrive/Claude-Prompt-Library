@@ -7,6 +7,19 @@
   gap: 28px;
 }
 
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  flex: 1;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 .main-grid {
   display: grid;
   width: 100%;

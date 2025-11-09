@@ -6,13 +6,13 @@ import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 
 function detectionBadgeLabel(detection?: StageDetectionStatus): string {
   if (!detection) {
-    return "Cargando detección…";
+    return "Loading detection…";
   }
   if (!detection.available) {
-    return detection.error ?? "Detección no disponible";
+    return detection.error ?? "Detection unavailable";
   }
   const stage = detection.recommended_stage ?? "?";
-  const confidence = detection.confidence ? detection.confidence.toUpperCase() : "SIN CONF.";
+  const confidence = detection.confidence ? detection.confidence.toUpperCase() : "NO CONF.";
   return `Stage ${stage} · ${confidence}`;
 }
 
@@ -23,100 +23,104 @@ export function HomeView({
 }): JSX.Element {
   const stageStatusQuery = useStageStatusQuery();
 
-  const rootPath = statusQuery.data?.absolute_root ?? statusQuery.data?.root_path ?? "—";
-  const filesIndexed = statusQuery.data?.files_indexed ?? 0;
   const detection = stageStatusQuery.data?.detection;
-  const reasons = detection?.reasons ?? [];
   const detectionAvailable = detection?.available ?? false;
 
   const detectionTone = detectionAvailable ? "success" : "warn";
   const detectionLabel = detectionBadgeLabel(detection);
-
-  const lastScan = statusQuery.data?.last_full_scan
-    ? new Date(statusQuery.data.last_full_scan).toLocaleString()
-    : "Sin escaneos todavía";
-
-  const formattedRoot =
-    rootPath.length > 60 ? `…${rootPath.slice(rootPath.length - 57)}` : rootPath;
+  const backendOffline =
+    statusQuery.isError || (!statusQuery.isFetching && !statusQuery.data && !statusQuery.isLoading);
+  const executableUrl = "https://github.com/jesusramos/Claude-Prompt-Library/releases/latest";
 
   return (
     <div className="home-view">
+      {backendOffline && (
+        <div className="home-alert home-alert--error" role="alert">
+          <div className="home-alert__text">
+            <strong>Backend desconectado.</strong>
+            <span>
+              Inicia el servidor local o descarga el ejecutable empaquetado para Code Map.
+            </span>
+          </div>
+          <a
+            className="home-alert__cta"
+            href={executableUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Descargar ejecutable →
+          </a>
+        </div>
+      )}
       <section className="home-hero">
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">
           <span className={`home-stage-pill ${detectionTone}`}>
-            {stageStatusQuery.isLoading ? "Calculando…" : detectionLabel}
+            {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
           </span>
-          <h2>Build con IA, sin perder el control.</h2>
+          <h2>Build with AI without losing control.</h2>
           <p>
-            Asegura que los agentes sigan las reglas del proyecto con el Stage Toolkit o explora el
-            código con el Code Map enriquecido.
+            Define shared standards, break down work into milestones, monitor the details of each task, run integrated linters, and rely on local AI for contextual tips.
           </p>
-          <div className="home-hero__cta">
-            <Link to="/stage-toolkit" className="primary-btn hero-cta">
-              Abrir Stage Toolkit
-            </Link>
-            <Link to="/code-map" className="secondary-btn hero-cta">
-              Entrar a Code Map
-            </Link>
-          </div>
-          <dl className="home-summary">
-            <div>
-              <dt>Root configurado</dt>
-              <dd title={rootPath}>{formattedRoot}</dd>
-            </div>
-            <div>
-              <dt>Archivos indexados</dt>
-              <dd>{filesIndexed.toLocaleString("es-ES")}</dd>
-            </div>
-            <div>
-              <dt>Último escaneo</dt>
-              <dd>{lastScan}</dd>
-            </div>
-          </dl>
         </div>
+        <div className="home-hero__logo">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* Círculo exterior con gradiente */}
+            <defs>
+              <linearGradient id="logoGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: "#3b82f6", stopOpacity: 0.4 }} />
+                <stop offset="100%" style={{ stopColor: "#2dd4bf", stopOpacity: 0.9 }} />
+              </linearGradient>
+              <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: "#60a5fa", stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: "#34d399", stopOpacity: 1 }} />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-        <div className="home-hero__panel">
-          <h3>Claves de la detección</h3>
-          {stageStatusQuery.isLoading ? (
-            <p className="home-hero__panel-loading">Analizando repositorio…</p>
-          ) : detectionAvailable && reasons.length > 0 ? (
-            <ul>
-              {reasons.slice(0, 4).map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="home-hero__panel-empty">
-              {detection?.error ?? "Aún no hay información suficiente para reportar."}
-            </p>
-          )}
+            {/* Círculo de fondo */}
+            <circle cx="100" cy="100" r="85" fill="url(#logoGradient1)" opacity="0.2" />
 
-          {detection?.metrics ? (
-            <div className="home-hero__metrics">
-              <div>
-                <span className="metric-label">Archivos</span>
-                <span className="metric-value">
-                  {Number(detection.metrics.file_count ?? 0).toLocaleString("es-ES")}
-                </span>
-              </div>
-              <div>
-                <span className="metric-label">LOC aprox.</span>
-                <span className="metric-value">
-                  {Number(detection.metrics.lines_of_code ?? 0).toLocaleString("es-ES")}
-                </span>
-              </div>
-              <div>
-                <span className="metric-label">Patrones</span>
-                <span className="metric-value">
-                  {Array.isArray(detection.metrics.patterns_found) &&
-                  detection.metrics.patterns_found.length > 0
-                    ? detection.metrics.patterns_found.slice(0, 3).join(", ")
-                    : "—"}
-                </span>
-              </div>
-            </div>
-          ) : null}
+            {/* Anillos concéntricos */}
+            <circle cx="100" cy="100" r="70" fill="none" stroke="url(#logoGradient2)" strokeWidth="2" opacity="0.4" />
+            <circle cx="100" cy="100" r="55" fill="none" stroke="url(#logoGradient2)" strokeWidth="2" opacity="0.6" />
+
+            {/* Símbolo central - diseño de código/árbol de decisiones */}
+            <g filter="url(#glow)">
+              {/* Nodo central */}
+              <circle cx="100" cy="100" r="8" fill="#60a5fa" />
+
+              {/* Ramas superiores */}
+              <line x1="100" y1="100" x2="70" y2="70" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <line x1="100" y1="100" x2="130" y2="70" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="70" cy="70" r="6" fill="#34d399" />
+              <circle cx="130" cy="70" r="6" fill="#34d399" />
+
+              {/* Ramas inferiores */}
+              <line x1="100" y1="100" x2="70" y2="130" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <line x1="100" y1="100" x2="130" y2="130" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="70" cy="130" r="6" fill="#2dd4bf" />
+              <circle cx="130" cy="130" r="6" fill="#2dd4bf" />
+
+              {/* Subramas */}
+              <line x1="70" y1="70" x2="50" y2="50" stroke="#34d399" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+              <line x1="130" y1="70" x2="150" y2="50" stroke="#34d399" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+              <circle cx="50" cy="50" r="4" fill="#5eead4" />
+              <circle cx="150" cy="50" r="4" fill="#5eead4" />
+            </g>
+
+            {/* Partículas decorativas */}
+            <circle cx="40" cy="100" r="2" fill="#60a5fa" opacity="0.6" />
+            <circle cx="160" cy="100" r="2" fill="#2dd4bf" opacity="0.6" />
+            <circle cx="100" cy="40" r="2" fill="#34d399" opacity="0.5" />
+            <circle cx="100" cy="160" r="2" fill="#5eead4" opacity="0.5" />
+          </svg>
         </div>
       </section>
 
@@ -125,67 +129,84 @@ export function HomeView({
           <div className="home-card-body">
             <h3>Project Stage Toolkit</h3>
             <p>
-              Ejecuta <code>init_project.py</code>, valida archivos requeridos para Claude Code y
-              Codex CLI, y consulta la etapa detectada del proyecto.
+              Run <code>init_project.py</code>, validate the files required by Claude Code and Codex
+              CLI, and review the detected project stage.
             </p>
           </div>
-          <span className="home-card-cta">Abrir toolkit →</span>
+          <span className="home-card-cta">Open toolkit →</span>
+        </Link>
+
+        <Link to="/overview" className="home-card">
+          <div className="home-card-body">
+            <h3>Overview</h3>
+            <p>
+              Review detections, alerts, and recent activity from a single dashboard before diving
+              deeper.
+            </p>
+          </div>
+          <span className="home-card-cta">Open overview →</span>
         </Link>
 
         <Link to="/code-map" className="home-card">
           <div className="home-card-body">
             <h3>Code Map</h3>
             <p>
-              Navega símbolos, búsqueda semántica y actividad reciente del repositorio. Ideal para
-              explorar el código con contexto.
+              Browse symbols, semantic search, and recent repository activity—ideal for exploring
+              the code with context.
             </p>
           </div>
-          <span className="home-card-cta">Abrir Code Map →</span>
-        </Link>
-
-        <article className="home-card home-card--neutral">
-          <div className="home-card-body">
-            <h3>Estado del workspace</h3>
-            <p>
-              {stageStatusQuery.isLoading
-                ? "Evaluando estado del proyecto…"
-                : detectionAvailable
-                  ? `El proyecto se recomienda como Stage ${detection?.recommended_stage} con ${detection?.confidence ?? "confianza media"}.`
-                  : "Aún no se ha podido determinar la etapa del proyecto."}
-            </p>
-            <ul className="home-card-list">
-              <li>
-                {statusQuery.data?.watcher_active
-                  ? "Watcher activo para notificar cambios."
-                  : "Watcher inactivo: ejecuta un escaneo manual cuando lo necesites."}
-              </li>
-              <li>Archivos indexados: {filesIndexed.toLocaleString("es-ES")}.</li>
-              <li>Workspace actual: {rootPath}</li>
-            </ul>
-          </div>
-        </article>
-
-        <Link to="/class-graph" className="home-card">
-          <div className="home-card-body">
-            <h3>Class Graph</h3>
-            <p>
-              Visualiza cómo los módulos del proyecto se relacionan entre sí: herencias,
-              composiciones e instancias internas. Ajusta filtros para explorar distintos niveles de
-              complejidad.
-            </p>
-          </div>
-          <span className="home-card-cta">Ir al grafo →</span>
+          <span className="home-card-cta">Open Code Map →</span>
         </Link>
 
         <Link to="/class-uml" className="home-card">
           <div className="home-card-body">
             <h3>Class UML</h3>
             <p>
-              Diagramas UML con atributos y métodos por clase. Perfecto para entender la estructura
-              interna sin ruido externo.
+              UML diagrams with class attributes and methods—perfect for understanding internals
+              without extra noise.
             </p>
           </div>
-          <span className="home-card-cta">Ver UML →</span>
+          <span className="home-card-cta">View UML →</span>
+        </Link>
+
+        <Link to="/linters" className="home-card">
+          <div className="home-card-body">
+            <h3>Linters</h3>
+            <p>
+              Check configured linter status, latest results, and logs to maintain code quality.
+            </p>
+          </div>
+          <span className="home-card-cta">View linters →</span>
+        </Link>
+
+        <Link to="/ollama" className="home-card">
+          <div className="home-card-body">
+            <h3>Ollama Insights</h3>
+            <p>
+              Configure models, generate insights, and monitor scheduled runs for automated guidance.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Ollama →</span>
+        </Link>
+
+        <Link to="/prompts" className="home-card">
+          <div className="home-card-body">
+            <h3>Prompts</h3>
+            <p>
+              Explore reusable prompt templates to guide agents and capture team best practices.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Prompts →</span>
+        </Link>
+
+        <Link to="/settings" className="home-card">
+          <div className="home-card-body">
+            <h3>Settings</h3>
+            <p>
+              Configure project paths, automation toggles, and integrations to match your workflow.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Settings →</span>
         </Link>
       </section>
     </div>

@@ -5,7 +5,6 @@ Rutas para gestionar la inicialización y verificación Stage-Aware.
 
 from __future__ import annotations
 
-from typing import Literal
 
 from fastapi import APIRouter, Depends
 
@@ -18,10 +17,12 @@ router = APIRouter(prefix="/stage", tags=["stage"])
 
 
 @router.get("/status", response_model=StageStatusResponse)
-async def get_stage_status(state: AppState = Depends(get_app_state)) -> StageStatusResponse:
+async def get_stage_status(
+    state: AppState = Depends(get_app_state),
+) -> StageStatusResponse:
     """Devuelve el estado actual de los archivos Stage-Aware del proyecto."""
-    payload = await stage_status(state.settings.root_path)
-    return StageStatusResponse(**payload)
+    payload = await stage_status(state.settings.root_path, index=state.index)
+    return StageStatusResponse.model_validate(payload)
 
 
 @router.post("/init", response_model=StageInitResponse)
@@ -32,4 +33,4 @@ async def initialize_stage_assets(
     """Ejecuta init_project.py sobre el root actual para instalar instrucciones."""
     agents: AgentSelection = request.agents  # type: ignore[assignment]
     result = await run_initializer(state.settings.root_path, agents)
-    return StageInitResponse(**result)
+    return StageInitResponse.model_validate(result)

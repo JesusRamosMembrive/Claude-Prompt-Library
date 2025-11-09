@@ -35,13 +35,13 @@ export function ExcludeDirsSection({
 
     const trimmed = inputValue.trim();
     if (!trimmed) {
-      setFeedback("Escribe un nombre de directorio válido.");
+      setFeedback("Enter a valid directory name.");
       return;
     }
 
     const result = onAdd(trimmed);
     if (!result.ok) {
-      setFeedback(result.error ?? "No se pudo añadir el directorio.");
+      setFeedback(result.error ?? "Could not add the directory.");
       return;
     }
 
@@ -51,8 +51,8 @@ export function ExcludeDirsSection({
 
   return (
     <section className="settings-card">
-      <h2>Exclusiones</h2>
-      <p>Personaliza los directorios que se ignoran durante los escaneos.</p>
+      <h2>Exclusions</h2>
+      <p>Customize the directories ignored during scans.</p>
 
       <div className="settings-tags" title={defaultLabel}>
         {defaultDirs.map((dir) => (
@@ -71,7 +71,7 @@ export function ExcludeDirsSection({
                 type="button"
                 className="settings-tag__remove"
                 onClick={() => onRemove(dir)}
-                aria-label={`Quitar ${dir} de exclusiones`}
+                aria-label={`Remove ${dir} from exclusions`}
                 disabled={disabled}
               >
                 ×
@@ -80,9 +80,7 @@ export function ExcludeDirsSection({
           ))}
         </div>
       ) : (
-        <p className="settings-helper">
-          Aún no has añadido exclusiones propias.
-        </p>
+        <p className="settings-helper">You haven't added any custom exclusions yet.</p>
       )}
 
       <form className="exclude-form" onSubmit={handleSubmit}>
@@ -90,18 +88,18 @@ export function ExcludeDirsSection({
           type="text"
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
-          placeholder="ej. build, coverage, tmp"
+          placeholder="e.g. build, coverage, tmp"
           disabled={disabled}
         />
         <button type="submit" className="primary-btn" disabled={disabled}>
-          Añadir
+          Add
         </button>
       </form>
 
       {feedback && <p className="settings-helper settings-helper--error">{feedback}</p>}
       <p className="settings-helper">
-        Solo escribe el nombre del directorio (sin rutas absolutas). Los valores
-        se almacenan junto a las exclusiones por defecto del proyecto.
+        Only provide a directory name (no absolute paths). Values are stored alongside the project's
+        default exclusions.
       </p>
     </section>
   );

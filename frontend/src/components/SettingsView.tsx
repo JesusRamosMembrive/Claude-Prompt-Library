@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
 import { browseForRoot, updateSettings } from "../api/client";
 import type { SettingsPayload, SettingsUpdatePayload } from "../api/types";
@@ -12,7 +11,6 @@ import { useSelectionStore } from "../state/useSelectionStore";
 import { DocstringsSection } from "./settings/DocstringsSection";
 import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
 import { RootPathSection } from "./settings/RootPathSection";
-import { WatcherSection } from "./settings/WatcherSection";
 
 interface SettingsViewProps {
   settingsQuery: UseQueryResult<SettingsPayload>;
@@ -34,7 +32,6 @@ function sortExcludes(list: string[]): string[] {
 export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element {
   const activityClear = useActivityStore((state) => state.clear);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const settings = settingsQuery.data;
   const originalRoot = settings?.root_path ?? "";
@@ -71,13 +68,13 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
       setCustomExcludes(sortExcludes(extractCustomExcludes(result.settings.exclude_dirs)));
       setStatusMessage(
         result.updated.length > 0
-          ? `Cambios aplicados: ${result.updated.join(", ")}`
-          : "No había cambios que guardar.",
+          ? `Applied changes: ${result.updated.join(", ")}`
+          : "No changes needed saving.",
       );
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Error desconocido";
-      setStatusMessage(`Error al guardar: ${message}`);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatusMessage(`Error while saving: ${message}`);
     },
   });
 
@@ -125,7 +122,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     }
 
     if (Object.keys(payload).length === 0) {
-      setStatusMessage("No hay cambios para guardar.");
+      setStatusMessage("There are no changes to save.");
       return;
     }
 
@@ -136,20 +133,20 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
   const handleAddExclude = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
-      return { ok: false, error: "Escribe un nombre de directorio válido." };
+      return { ok: false, error: "Enter a valid directory name." };
     }
 
     if (/[\\/]/.test(trimmed)) {
-      return { ok: false, error: "Usa solo nombres de directorio, sin rutas ni separadores." };
+      return { ok: false, error: "Use directory names only (no paths or separators)." };
     }
 
     const lowered = trimmed.toLowerCase();
     if (DEFAULT_EXCLUDES_LOWER.has(lowered)) {
-      return { ok: false, error: "Ese directorio ya se excluye por defecto." };
+      return { ok: false, error: "That directory is already excluded by default." };
     }
 
     if (customExcludes.some((dir) => dir.toLowerCase() === lowered)) {
-      return { ok: false, error: "Ese directorio ya está en tus exclusiones." };
+      return { ok: false, error: "That directory is already in your exclusions." };
     }
 
     setCustomExcludes((prev) => sortExcludes([...prev, trimmed]));
@@ -167,27 +164,53 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     mutationFn: browseForRoot,
     onSuccess: (response) => {
       setFormRoot(response.path);
-      setStatusMessage(`Directorio seleccionado: ${response.path}`);
+      setStatusMessage(`Selected directory: ${response.path}`);
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "No se pudo abrir el diálogo";
-      setStatusMessage(`Error al seleccionar directorio: ${message}`);
+      const message = error instanceof Error ? error.message : "Could not open the dialog";
+      setStatusMessage(`Error selecting directory: ${message}`);
     },
   });
 
   return (
     <div className="settings-view">
-      <header className="header-bar">
-        <div className="header-left">
-          <div className="brand-logo">⚙</div>
-          <div className="brand-copy">
-            <h1>Settings</h1>
-            <p>Configura el workspace y preferencias de visualización.</p>
-          </div>
+      <section className="settings-status-banner" aria-live="polite">
+        <div className="settings-status-body">
+          {settingsQuery.isLoading ? (
+            <>
+              <span
+                className="settings-status-dot settings-status-dot--loading"
+                aria-hidden="true"
+              />
+              <span className="settings-status-text settings-status-text--muted">
+                Loading settings…
+              </span>
+            </>
+          ) : settingsQuery.isError ? (
+            <div className="error-banner">
+              Could not load settings. {String(settingsQuery.error)}
+            </div>
+          ) : (
+            <>
+              <span
+                className={`settings-status-dot ${
+                  statusTone === "error" ? "settings-status-dot--error" : "settings-status-dot--info"
+                }`}
+                aria-hidden="true"
+              />
+              <span
+                className={`settings-status-text${
+                  statusTone === "error" ? " settings-status-text--error" : ""
+                }`}
+              >
+                {statusMessage ?? "Changes are applied and persisted in the backend."}
+              </span>
+            </>
+          )}
         </div>
-        <div className="header-actions">
-          <button className="secondary-btn" type="button" onClick={() => navigate("/")}>
-            Volver al overview
+        <div className="settings-status-actions">
+          <button className="ghost-btn" type="button" onClick={activityClear}>
+            Clear activity
           </button>
           <button
             className="primary-btn"
@@ -195,33 +218,10 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
             onClick={handleSave}
             disabled={!isDirty || isMutating || isLoading}
           >
-            {isMutating ? "Guardando…" : "Guardar cambios"}
+            {isMutating ? "Saving…" : "Save changes"}
           </button>
         </div>
-      </header>
-
-      <div className="panel" style={{ gap: 12 }}>
-        {settingsQuery.isLoading ? (
-          <span style={{ color: "#7f869d" }}>Cargando configuración…</span>
-        ) : settingsQuery.isError ? (
-          <div className="error-banner">
-            No se pudo cargar la configuración. {String(settingsQuery.error)}
-          </div>
-        ) : statusMessage ? (
-          <span
-            style={{
-              color: statusTone === "error" ? "#f97316" : "#7dd3fc",
-            }}
-          >
-            {statusMessage}
-          </span>
-        ) : (
-          <span>Los cambios se aplican y persisten en el backend.</span>
-        )}
-        <button type="button" onClick={activityClear}>
-          Limpiar actividad
-        </button>
-      </div>
+      </section>
 
       <div className="settings-grid">
         <RootPathSection
@@ -241,7 +241,22 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
           onRemove={handleRemoveExclude}
         />
 
-        <WatcherSection watcherActive={settings?.watcher_active} />
+        <section className="settings-card watcher-info-card">
+          <h2>Watcher and sync</h2>
+          <p>Realtime updates are always enabled to keep your workspace in sync.</p>
+          <div className="settings-status-body watcher-info-body">
+            <span className="settings-status-dot settings-status-dot--info" aria-hidden="true" />
+            <div className="watcher-info-copy">
+              <span className="settings-status-text">
+                Watcher is active and continuously listens for file system events.
+              </span>
+              <span className="settings-status-text">
+                Significant changes trigger automatic rescans and snapshots persist to{" "}
+                <code>.code-map</code> for faster startup.
+              </span>
+            </div>
+          </div>
+        </section>
 
         <DocstringsSection
           includeDocstrings={formDocstrings}
@@ -250,24 +265,24 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
         />
 
         <section className="settings-card">
-          <h2>Próximamente</h2>
-          <p>Funcionalidades en el roadmap para iteraciones futuras.</p>
+          <h2>Coming soon</h2>
+          <p>Features on the roadmap for future iterations.</p>
           <div className="settings-tags">
-            <span className="settings-tag">Integraciones</span>
-            <span className="settings-tag">Perfiles</span>
-            <span className="settings-tag">Alertas</span>
-            <span className="settings-tag">Permisos</span>
+            <span className="settings-tag">Integrations</span>
+            <span className="settings-tag">Profiles</span>
+            <span className="settings-tag">Alerts</span>
+            <span className="settings-tag">Permissions</span>
           </div>
           <p>
-            Añadiremos soporte para múltiples workspaces, reglas de exclusión por lenguaje
-            y alertas configurables para eventos críticos.
+            We plan to add support for multiple workspaces, language-specific exclusion rules, and
+            configurable alerts for critical events.
           </p>
         </section>
       </div>
 
       <footer className="settings-footer">
-        <span>Settings sincronizados con el backend</span>
-        <span>Última actualización: {new Date().toLocaleString()}</span>
+        <span>Settings synchronized with the backend</span>
+        <span>Last updated: {new Date().toLocaleString()}</span>
       </footer>
     </div>
   );

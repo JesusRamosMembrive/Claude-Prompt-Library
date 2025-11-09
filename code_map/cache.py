@@ -63,7 +63,9 @@ class SnapshotStore:
         return {
             "path": relative_path,
             "relative": is_relative,
-            "modified_at": summary.modified_at.isoformat() if summary.modified_at else None,
+            "modified_at": (
+                summary.modified_at.isoformat() if summary.modified_at else None
+            ),
             "symbols": [self._serialize_symbol(symbol) for symbol in summary.symbols],
             "errors": [self._serialize_error(error) for error in summary.errors],
         }
@@ -98,18 +100,13 @@ class SnapshotStore:
             file_path = Path(raw_path).expanduser().resolve()
 
         modified_raw = entry.get("modified_at")
-        modified_at = (
-            datetime.fromisoformat(modified_raw) if modified_raw else None
-        )
+        modified_at = datetime.fromisoformat(modified_raw) if modified_raw else None
 
         symbols = [
             self._deserialize_symbol(item, file_path)
             for item in entry.get("symbols", [])
         ]
-        errors = [
-            self._deserialize_error(item)
-            for item in entry.get("errors", [])
-        ]
+        errors = [self._deserialize_error(item) for item in entry.get("errors", [])]
 
         return FileSummary(
             path=file_path,

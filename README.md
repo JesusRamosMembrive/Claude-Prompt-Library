@@ -39,6 +39,9 @@ python init_project.py my-new-project --agent=claude
 # Codex únicamente
 python init_project.py my-new-project --agent=codex
 
+# Ensayar sin modificar nada
+python init_project.py my-new-project --dry-run
+
 cd my-new-project
 ```
 
@@ -184,7 +187,19 @@ python init_project.py --existing /path/to/project
 
 # Detect only
 python init_project.py --detect-only /path/to/project
+
+# Preview actions without writing
+python init_project.py my-app --dry-run
+
+# Increase logging verbosity
+python init_project.py --existing /path/to/project --log-level DEBUG
 ```
+
+**Key options**
+
+- `--agent {claude|codex|both}` to pick which assistants to configure.
+- `--dry-run` prints what would change without touching the filesystem.
+- `--log-level LEVEL` (`INFO` by default) surfaces detailed progress when troubleshooting.
 
 ### assess_stage.py
 
@@ -210,6 +225,16 @@ python claude_assess.py /path/to/project
 - **[docs/QUICK_START.md](./docs/QUICK_START.md)** - Quick workflow guide
 - **[docs/STAGE_CRITERIA.md](./docs/STAGE_CRITERIA.md)** - Detailed stage criteria
 - **[docs/STAGES_COMPARISON.md](./docs/STAGES_COMPARISON.md)** - Side-by-side comparison
+
+### ⚙️ Linter Pipeline Controls
+
+Configure automated lint runs via environment variables before starting the API or CLI:
+
+- `CODE_MAP_DISABLE_LINTERS=1` — Skip the pipeline entirely.
+- `CODE_MAP_LINTERS_TOOLS=ruff,pytest` — Limit execution to a subset of tools.
+- `CODE_MAP_LINTERS_MAX_PROJECT_FILES=2000` — Skip the run when the project exceeds this file count.
+- `CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB=200` — Skip when the workspace is larger than the threshold.
+- `CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS=300` — Minimum seconds between automatic runs (default 180).
 
 ---
 

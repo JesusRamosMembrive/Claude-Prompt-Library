@@ -53,9 +53,7 @@ class SymbolIndex:
             return []
         lowered = term.lower()
         return [
-            symbol
-            for symbol in self.iter_symbols()
-            if lowered in symbol.name.lower()
+            symbol for symbol in self.iter_symbols() if lowered in symbol.name.lower()
         ]
 
     def get_tree(self) -> ProjectTreeNode:

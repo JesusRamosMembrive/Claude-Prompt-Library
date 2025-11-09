@@ -19,7 +19,9 @@ class HtmlAnalyzer:
     def __init__(self) -> None:
         """Inicializa BeautifulSoup si la dependencia opcional está disponible."""
         module = optional_dependencies.require("beautifulsoup4", module="bs4")
-        self._beautiful_soup = getattr(module, "BeautifulSoup", None) if module else None
+        self._beautiful_soup = (
+            getattr(module, "BeautifulSoup", None) if module else None
+        )
         status = optional_dependencies.status("beautifulsoup4")[0]
         self.available = bool(status.available and self._beautiful_soup)
 

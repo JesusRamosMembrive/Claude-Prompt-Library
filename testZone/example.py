@@ -10,6 +10,7 @@ def sum(a, b):
     """
     return a + b
 
+
 def multiply(a, b):
     """_summary_
 
@@ -21,4 +22,3 @@ def multiply(a, b):
         _type_: _description_
     """
     return a * b
-

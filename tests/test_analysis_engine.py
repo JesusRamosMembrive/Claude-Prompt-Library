@@ -32,6 +32,13 @@ class FakeClock:
         return self._value
 
 
+def symbol_signatures(summary):
+    return {
+        (symbol.kind.value, symbol.name, symbol.parent or None)
+        for symbol in summary.symbols
+    }
+
+
 def test_project_scanner_extracts_functions_classes_and_methods(tmp_path: Path) -> None:
     module_path = write_module(
         tmp_path,
@@ -103,7 +110,9 @@ class Bar:
 def test_symbol_index_builds_tree_structure(tmp_path: Path) -> None:
     write_module(tmp_path, "a/__init__.py", "")
     file_one = write_module(tmp_path, "a/feature.py", "def run():\n    return True")
-    file_two = write_module(tmp_path, "b/util.py", "class Helper:\n    def work(self):\n        return True")
+    file_two = write_module(
+        tmp_path, "b/util.py", "class Helper:\n    def work(self):\n        return True"
+    )
 
     scanner = ProjectScanner(tmp_path)
     summaries = scanner.scan()
@@ -119,6 +128,8 @@ def test_symbol_index_builds_tree_structure(tmp_path: Path) -> None:
     feature_node = tree.children["a"].children["feature.py"]
     util_node = tree.children["b"].children["util.py"]
 
+    assert feature_node.file_summary is not None
+    assert util_node.file_summary is not None
     assert feature_node.file_summary.path == file_one.resolve()
     assert util_node.file_summary.path == file_two.resolve()
     assert any(symbol.name == "run" for symbol in feature_node.file_summary.symbols)
@@ -140,9 +151,53 @@ def test_project_scanner_handles_js_files(tmp_path: Path) -> None:
     filenames = {summary.path.name for summary in results}
     assert "helpers.js" in filenames
 
-    js_summary = next(summary for summary in results if summary.path.name == "helpers.js")
+    js_summary = next(
+        summary for summary in results if summary.path.name == "helpers.js"
+    )
     symbol_names = {symbol.name for symbol in js_summary.symbols}
     assert "sum" in symbol_names
+
+
+def test_project_scanner_handles_complex_js_patterns(tmp_path: Path) -> None:
+    pytest.importorskip("esprima")
+    write_module(
+        tmp_path,
+        "pkg/math.js",
+        """
+/**
+ * Colección de utilidades matemáticas.
+ */
+export class Calculator {
+  add(a, b) {
+    return a + b;
+  }
+
+  multiply(a, b) {
+    return a * b;
+  }
+}
+
+export const identity = (value) => value;
+
+const format = function (value) {
+  return String(value).trim();
+};
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+    js_summary = next(summary for summary in results if summary.path.name == "math.js")
+
+    signatures = symbol_signatures(js_summary)
+    expected = {
+        ("class", "Calculator", None),
+        ("method", "add", "Calculator"),
+        ("method", "multiply", "Calculator"),
+        ("function", "identity", None),
+        ("function", "format", None),
+    }
+    assert expected <= signatures
 
 
 def test_project_scanner_handles_ts_files(tmp_path: Path) -> None:
@@ -162,9 +217,56 @@ export const handler = (value: number): number => value * 2;
     scanner = ProjectScanner(tmp_path)
     results = scanner.scan()
 
-    ts_summary = next(summary for summary in results if summary.path.name == "service.ts")
+    ts_summary = next(
+        summary for summary in results if summary.path.name == "service.ts"
+    )
     names = {symbol.name for symbol in ts_summary.symbols}
     assert {"Service", "handler"} <= names
+
+
+def test_project_scanner_handles_ts_methods_and_exports(tmp_path: Path) -> None:
+    pytest.importorskip("tree_sitter_languages")
+    write_module(
+        tmp_path,
+        "pkg/toolkit.ts",
+        """
+export class Toolbox {
+  constructor(private readonly prefix: string) {}
+
+  format(value: string): string {
+    return `${this.prefix}:${value}`;
+  }
+
+  static version(): string {
+    return "1.0.0";
+  }
+}
+
+export const mapValues = <T, R>(items: T[], fn: (item: T) => R): R[] => {
+  return items.map(fn);
+};
+
+function helper(input: number): number {
+  return input * 10;
+}
+""",
+    )
+
+    scanner = ProjectScanner(tmp_path)
+    results = scanner.scan()
+
+    ts_summary = next(
+        summary for summary in results if summary.path.name == "toolkit.ts"
+    )
+    signatures = symbol_signatures(ts_summary)
+    expected = {
+        ("class", "Toolbox", None),
+        ("method", "format", "Toolbox"),
+        ("method", "version", "Toolbox"),
+        ("function", "mapValues", None),
+        ("function", "helper", None),
+    }
+    assert expected <= signatures
 
 
 def test_project_scanner_handles_html_files(tmp_path: Path) -> None:
@@ -186,7 +288,9 @@ def test_project_scanner_handles_html_files(tmp_path: Path) -> None:
     scanner = ProjectScanner(tmp_path)
     summaries = scanner.scan()
 
-    html_summary = next(summary for summary in summaries if summary.path.name == "index.html")
+    html_summary = next(
+        summary for summary in summaries if summary.path.name == "index.html"
+    )
     names = {symbol.name for symbol in html_summary.symbols}
     assert "app" in names
     assert "custom-element" in names
@@ -213,7 +317,9 @@ def test_snapshot_store_persists_and_restores_summaries(tmp_path: Path) -> None:
 
 
 def test_scanner_can_hydrate_index_from_snapshot(tmp_path: Path) -> None:
-    module_path = write_module(tmp_path, "pkg/example.py", "class A:\n    def run(self):\n        return True")
+    module_path = write_module(
+        tmp_path, "pkg/example.py", "class A:\n    def run(self):\n        return True"
+    )
 
     scanner = ProjectScanner(tmp_path)
     index = SymbolIndex(tmp_path)

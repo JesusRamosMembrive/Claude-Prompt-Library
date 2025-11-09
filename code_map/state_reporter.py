@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Optional
 
 from .analyzer_registry import AnalyzerCapability
 from .scanner import ProjectScanner
@@ -50,6 +50,10 @@ class StateReporter:
             "root_path": self.settings.root_path.as_posix(),
             "exclude_dirs": list(self.settings.exclude_dirs),
             "include_docstrings": self.settings.include_docstrings,
+            "ollama_insights_enabled": self.settings.ollama_insights_enabled,
+            "ollama_insights_model": self.settings.ollama_insights_model,
+            "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
+            "ollama_insights_focus": self.settings.ollama_insights_focus or "general",
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
         }
@@ -61,6 +65,8 @@ class StateReporter:
         last_full_scan: Optional[datetime],
         last_event_batch: Optional[datetime],
         pending_events: int,
+        insights_last_run: Optional[datetime],
+        insights_next_run: Optional[datetime],
     ) -> Dict[str, Any]:
         """
         Construye el payload de estado para la API.
@@ -77,13 +83,21 @@ class StateReporter:
         summaries = self.index.get_all()
         total_files = len(summaries)
         total_symbols = sum(len(summary.symbols) for summary in summaries)
-        capabilities = [_serialize_capability(cap) for cap in self.scanner.registry.capabilities]
+        capabilities = [
+            _serialize_capability(cap) for cap in self.scanner.registry.capabilities
+        ]
 
         return {
             "root_path": self.settings.root_path.as_posix(),
             "absolute_root": str(self.settings.root_path),
             "watcher_active": watcher_active,
             "include_docstrings": self.settings.include_docstrings,
+            "ollama_insights_enabled": self.settings.ollama_insights_enabled,
+            "ollama_insights_model": self.settings.ollama_insights_model,
+            "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
+            "ollama_insights_focus": self.settings.ollama_insights_focus or "general",
+            "ollama_insights_last_run": insights_last_run,
+            "ollama_insights_next_run": insights_next_run,
             "last_full_scan": last_full_scan,
             "last_event_batch": last_event_batch,
             "files_indexed": total_files,

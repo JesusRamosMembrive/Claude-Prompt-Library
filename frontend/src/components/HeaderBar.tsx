@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { RescanButton } from "./RescanButton";
 
-interface HeaderBarProps {
+export interface HeaderBarProps {
   watcherActive?: boolean;
   rootPath?: string;
   lastFullScan?: string | null;
@@ -21,15 +21,18 @@ export function HeaderBar({
 
   const rootLabel = rootPath ?? "CODE_MAP_ROOT";
   const description = lastFullScan
-    ? `Último escaneo: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} archivos`
-    : `${filesIndexed ?? 0} archivos indexados`;
+    ? `Last scan: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} files`
+    : `${filesIndexed ?? 0} indexed files`;
 
   const navLinks = [
-    { to: "/", label: "Inicio" },
-    { to: "/stage-toolkit", label: "Stage Toolkit" },
+    { to: "/", label: "Home" },
+    { to: "/stage-toolkit", label: "StageToolKit" },
     { to: "/code-map", label: "Code Map" },
-    { to: "/class-graph", label: "Class Graph" },
     { to: "/class-uml", label: "Class UML" },
+    { to: "/linters", label: "Linters" },
+    { to: "/ollama", label: "Ollama" },
+    { to: "/overview", label: "Overview" },
+    { to: "/prompts", label: "Prompts" },
   ];
 
   return (
@@ -56,7 +59,7 @@ export function HeaderBar({
         </nav>
         <div className="status-indicator" title={`Root: ${rootLabel}`}>
           <span className="status-dot" style={{ opacity: watcherActive ? 1 : 0.4 }} />
-          {watcherActive ? "Watcher activo" : "Watcher inactivo"}
+          {watcherActive ? "Watcher active" : "Watcher inactive"}
         </div>
         <Link className="secondary-btn" to="/settings">
           Settings

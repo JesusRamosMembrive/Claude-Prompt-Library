@@ -16,14 +16,13 @@ Usage:
 
 Output:
     Markdown-formatted report to stdout containing:
-    - Project structure tree (via 'tree' command, depth 3)
-    - Automated assessment results (from assess_stage.py)
+    - Project structure tree (rendered natively, depth 3)
+    - Automated assessment results (using assess_stage module)
     - Analysis instructions for Claude Code
     - Decision criteria for Stage 2 vs Stage 3 borderline cases
 
 Dependencies:
     - assess_stage.py (must be in same directory)
-    - tree command (optional, graceful fallback if not installed)
 
 Notes:
     - Ignores common noise (.venv, node_modules, .git, etc.)
@@ -31,9 +30,13 @@ Notes:
     - Provides specific guidance for human/AI review
     - Output can be piped to file or clipboard
 """
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-import subprocess
+from typing import List
+
+from assess_stage import assess_stage, print_assessment
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -42,39 +45,78 @@ if __name__ == "__main__":
 
     project_path = Path(sys.argv[1])
 
-    # Get filtered tree
-    try:
-        tree = subprocess.check_output(
-            ["tree", "-L", "3", "-I", ".venv|node_modules|.git|__pycache__|*.pyc|*.egg-info"],
-            cwd=str(project_path),
-            text=True,
-            stderr=subprocess.DEVNULL
-        )
-    except:
-        tree = "tree command not available - install with: sudo apt install tree"
+    IGNORE_NAMES = {
+        ".venv",
+        "node_modules",
+        ".git",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+    }
+    IGNORE_SUFFIXES = (".pyc", ".egg-info")
+    MAX_DEPTH = 3
 
-    print("""# Stage Assessment - Deep Analysis
+    def _should_ignore(path: Path) -> bool:
+        name = path.name
+        if name in IGNORE_NAMES:
+            return True
+        return any(name.endswith(suffix) for suffix in IGNORE_SUFFIXES)
+
+    def _children(path: Path) -> List[Path]:
+        try:
+            entries = [child for child in path.iterdir() if not _should_ignore(child)]
+        except OSError:
+            return []
+        return sorted(entries, key=lambda item: (not item.is_dir(), item.name.lower()))
+
+    def _render_branch(root: Path, depth: int, prefix: str, lines: List[str]) -> None:
+        if depth > MAX_DEPTH:
+            return
+        entries = _children(root)
+        last_index = len(entries) - 1
+        for index, child in enumerate(entries):
+            connector = "└── " if index == last_index else "├── "
+            display_name = f"{child.name}/" if child.is_dir() else child.name
+            lines.append(f"{prefix}{connector}{display_name}")
+            if child.is_dir():
+                extension = "    " if index == last_index else "│   "
+                _render_branch(child, depth + 1, prefix + extension, lines)
+
+    def render_tree(path: Path) -> str:
+        resolved = path.expanduser().resolve()
+        if not resolved.exists():
+            return f"(path not found: {resolved})"
+        lines = [resolved.name]
+        _render_branch(resolved, 1, "", lines)
+        return "\n".join(lines)
+
+    tree = render_tree(project_path)
+
+    print(
+        """# Stage Assessment - Deep Analysis
 
 ## Project Structure
-```""")
+```"""
+    )
     print(tree)
-    print("""```
+    print(
+        """```
 
 ## Automated Assessment
 
-""")
+"""
+    )
 
-    # Run assess_stage.py
+    # Run assess_stage via module import
     try:
-        assess = subprocess.check_output(
-            ["python", "assess_stage.py", str(project_path)],
-            text=True
-        )
-        print(assess)
-    except:
-        print("Could not run assess_stage.py")
+        assessment = assess_stage(project_path)
+        print_assessment(assessment)
+    except Exception as exc:  # pragma: no cover - diagnostic path
+        print(f"Could not run assess_stage.py: {exc}")
 
-    print("""
+    print(
+        """
 
 ## Instructions for Claude Code
 
@@ -113,4 +155,5 @@ Please provide:
 Consider that Stage 2 → Stage 3 is gradual. If borderline, choose based on:
 - **Choose Stage 2 if**: Structure works, no pain points, patterns not needed yet
 - **Choose Stage 3 if**: Files are large, would benefit from patterns, architecture needed
-""")
+"""
+    )

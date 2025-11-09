@@ -12,6 +12,7 @@ from .index import SymbolIndex
 from .cache import SnapshotStore
 from .watcher import WatcherService
 from .state import AppState
+
 try:
     from .server import create_app
 except ImportError:  # pragma: no cover - dependencia opcional

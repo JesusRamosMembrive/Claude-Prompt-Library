@@ -29,8 +29,7 @@ export function ActivityFeed(): JSX.Element {
   if (empty) {
     return (
       <p style={{ color: "#7f869d", fontSize: "13px" }}>
-        Aún no hay actividad registrada. Modifica archivos `.py` para ver los eventos
-        detectados por el watcher.
+        No activity recorded yet. Modify `.py` files to see events detected by the watcher.
       </p>
     );
   }
@@ -43,7 +42,7 @@ export function ActivityFeed(): JSX.Element {
           className={`activity-item ${item.type === "deleted" ? "deleted" : ""}`}
         >
           <span>
-            {item.type === "deleted" ? "🗑 Eliminado" : "📝 Actualizado"} ·{" "}
+            {item.type === "deleted" ? "🗑 Deleted" : "📝 Updated"} ·{" "}
             <strong>{item.path}</strong>
           </span>
           <span className="activity-time">{formatTimeAgo(item.timestamp)}</span>

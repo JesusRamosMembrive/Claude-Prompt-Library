@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+from .ast_utils import ImportResolver
+
 # ---------------------------------------------------------------------------
 # Modelos de datos
 
@@ -98,13 +100,8 @@ class ModuleAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _resolve_relative(self, module: str, level: int) -> str:
-        parts = self.info.module.split(".")
-        if level > len(parts):
-            return module
-        base = parts[: -level]
-        if module:
-            base.append(module)
-        return ".".join(base)
+        """Resolve relative imports to absolute module paths."""
+        return ImportResolver.resolve_relative_import(self.info.module, module, level)
 
     # -- Clases -------------------------------------------------------------
 
@@ -220,7 +217,9 @@ def _extract_type_names(node: Optional[ast.AST]) -> Set[str]:
                 names.update(_extract_type_names(elt))
         else:
             names.update(_extract_type_names(node.slice))
-    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):  # PEP 604 unions
+    elif isinstance(node, ast.BinOp) and isinstance(
+        node.op, ast.BitOr
+    ):  # PEP 604 unions
         names.update(_extract_type_names(node.left))
         names.update(_extract_type_names(node.right))
     elif isinstance(node, ast.Tuple):
@@ -326,7 +325,31 @@ def build_class_graph(
 
 
 def _analyze_modules(root: Path) -> Iterable[ModuleInfo]:
+    """Analyze Python modules in root, excluding common directories like .venv."""
+    excluded_dirs = {
+        "__pycache__",
+        ".git",
+        ".hg",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".svn",
+        ".tox",
+        ".venv",
+        "venv",
+        "env",
+        ".code-map",
+        "node_modules",
+        ".next",
+        "dist",
+        "build",
+    }
+
     for path in root.rglob("*.py"):
+        # Skip files in excluded directories
+        if any(part in excluded_dirs for part in path.relative_to(root).parts):
+            continue
+
         try:
             module = _module_name_from_path(root, path)
             tree = ast.parse(path.read_text(encoding="utf-8"))

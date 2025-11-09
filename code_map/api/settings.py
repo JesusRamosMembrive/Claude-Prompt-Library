@@ -48,11 +48,25 @@ async def update_settings(
             candidate = candidate.resolve()
         root_path = candidate
 
+    model_value: Optional[str] = None
+    if payload.ollama_insights_model is not None:
+        trimmed = payload.ollama_insights_model.strip()
+        model_value = trimmed or None
+
+    frequency_value = payload.ollama_insights_frequency_minutes
+    focus_value: Optional[str] = None
+    if payload.ollama_insights_focus is not None:
+        focus_value = payload.ollama_insights_focus.strip()
+
     try:
         updated = await state.update_settings(
             root_path=root_path,
             include_docstrings=payload.include_docstrings,
             exclude_dirs=payload.exclude_dirs,
+            ollama_insights_enabled=payload.ollama_insights_enabled,
+            ollama_insights_model=model_value,
+            ollama_insights_frequency_minutes=frequency_value,
+            ollama_insights_focus=focus_value,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -70,7 +84,9 @@ async def get_status(state: AppState = Depends(get_app_state)) -> StatusResponse
 
 
 @router.post("/settings/browse", response_model=BrowseDirectoryResponse)
-async def browse_directory(state: AppState = Depends(get_app_state)) -> BrowseDirectoryResponse:
+async def browse_directory(
+    state: AppState = Depends(get_app_state),
+) -> BrowseDirectoryResponse:
     """Abre un diálogo nativo para seleccionar un directorio."""
 
     def _select_directory(initial: Path) -> str:

@@ -17,11 +17,11 @@ export function RootPathSection({
 }: RootPathSectionProps): JSX.Element {
   return (
     <section className="settings-card">
-      <h2>Ruta del proyecto</h2>
-      <p>Define el directorio raíz que será analizado por el backend.</p>
+      <h2>Project path</h2>
+      <p>Define the root directory that the backend will analyze.</p>
       <div className="setting-row">
         <div className="setting-info">
-          <strong>Ruta actual</strong>
+          <strong>Current path</strong>
           <span>{absoluteRoot ?? rootValue}</span>
         </div>
         <div className="setting-controls">
@@ -30,10 +30,10 @@ export function RootPathSection({
             value={rootValue}
             onChange={(event) => onRootChange(event.target.value)}
             disabled={disabled}
-            placeholder="/ruta/del/proyecto"
+            placeholder="/path/to/project"
           />
           <button type="button" onClick={onBrowse} disabled={browseDisabled || disabled}>
-            Seleccionar…
+            Browse…
           </button>
         </div>
       </div>
