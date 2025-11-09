@@ -58,6 +58,11 @@ async def update_settings(
     if payload.ollama_insights_focus is not None:
         focus_value = payload.ollama_insights_focus.strip()
 
+    backend_url_value: Optional[str] = None
+    if payload.backend_url is not None:
+        trimmed_url = payload.backend_url.strip()
+        backend_url_value = trimmed_url or None
+
     try:
         updated = await state.update_settings(
             root_path=root_path,
@@ -67,6 +72,7 @@ async def update_settings(
             ollama_insights_model=model_value,
             ollama_insights_frequency_minutes=frequency_value,
             ollama_insights_focus=focus_value,
+            backend_url=backend_url_value,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

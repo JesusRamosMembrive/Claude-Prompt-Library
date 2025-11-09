@@ -95,6 +95,7 @@ class SettingsResponse(BaseModel):
     ollama_insights_model: Optional[str]
     ollama_insights_frequency_minutes: Optional[int]
     ollama_insights_focus: Optional[str]
+    backend_url: Optional[str]
     watcher_active: bool
 
 
@@ -117,6 +118,12 @@ class SettingsUpdateRequest(BaseModel):
         min_length=0,
         max_length=64,
         description="Foco de análisis para los insights automáticos.",
+    )
+    backend_url: Optional[str] = Field(
+        default=None,
+        min_length=0,
+        max_length=256,
+        description="URL del servidor backend (ej: http://192.168.1.100:8000)",
     )
 
 

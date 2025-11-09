@@ -11,6 +11,7 @@ from typing import Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from .scheduler import ChangeScheduler
 from .state import AppState
@@ -50,6 +51,14 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
     app = FastAPI(title="Code Map API", lifespan=lifespan)
     app.include_router(api_router)
     app.state.app_state = state  # type: ignore[attr-defined]
+
+    # Serve frontend static files in production mode
+    # The frontend is built into frontend/dist/ during Docker build
+    frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+    if frontend_dist.exists() and frontend_dist.is_dir():
+        # Mount static files at root path
+        # html=True enables SPA fallback routing (all routes -> index.html)
+        app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
 
     return app
 

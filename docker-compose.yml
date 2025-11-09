@@ -1,0 +1,70 @@
+services:
+  code-map:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-map-app
+    image: code-map:latest
+
+    ports:
+      # Map container port 8000 to host port 8080
+      - "8080:8000"
+
+    volumes:
+      # Mount project to analyze (user specifies via PROJECT_PATH env var)
+      # Default to current directory if not specified
+      # :ro = read-only mount (safer for code analysis)
+      - ${PROJECT_PATH:-./}:/work:ro
+
+      # Persistent database storage
+      # Named volume ensures data persists across container restarts
+      - code-map-data:/app/.code-map
+
+    environment:
+      # Project root path inside container
+      - CODE_MAP_ROOT=/work
+
+      # Include docstrings in analysis
+      - CODE_MAP_INCLUDE_DOCSTRINGS=1
+
+      # Database path inside container
+      - CODE_MAP_DB_PATH=/app/.code-map/state.db
+
+      # Cache directory (use writable location instead of read-only /work)
+      - CODE_MAP_CACHE_DIR=/app/.code-map
+
+      # Linter configuration (optional, uncomment to customize)
+      # - CODE_MAP_DISABLE_LINTERS=0
+      # - CODE_MAP_LINTERS_TOOLS=ruff,mypy,bandit,pytest
+      # - CODE_MAP_LINTERS_MAX_PROJECT_FILES=2000
+      # - CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB=200
+      # - CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS=300
+
+      # Ollama integration (optional, uncomment if using Ollama)
+      # - CODE_MAP_OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # - CODE_MAP_OLLAMA_MODEL=codellama
+
+    healthcheck:
+      # Check if API is responding
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/settings"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+    restart: unless-stopped
+
+    # Optional: Resource limits (uncomment to enable)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 2G
+
+volumes:
+  # Named volume for persistent database
+  code-map-data:
+    driver: local

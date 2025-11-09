@@ -32,7 +32,13 @@
       "Bash(fuser:*)",
       "Bash(while read pid)",
       "Bash(do echo \"PID: $pid\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(docker compose:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(groups:*)",
+      "Bash(docker version:*)",
+      "Bash(sudo usermod:*)",
+      "Bash(sudo docker compose:*)"
     ],
     "deny": [],
     "ask": []

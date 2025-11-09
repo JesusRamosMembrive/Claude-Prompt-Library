@@ -8,9 +8,11 @@ import { queryKeys } from "../api/queryKeys";
 import { DEFAULT_EXCLUDED_DIRS } from "../config/defaultExcludes";
 import { useActivityStore } from "../state/useActivityStore";
 import { useSelectionStore } from "../state/useSelectionStore";
+import { useBackendStore } from "../state/useBackendStore";
 import { DocstringsSection } from "./settings/DocstringsSection";
 import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
 import { RootPathSection } from "./settings/RootPathSection";
+import { BackendUrlSection } from "./settings/BackendUrlSection";
 
 interface SettingsViewProps {
   settingsQuery: UseQueryResult<SettingsPayload>;
@@ -36,6 +38,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
   const settings = settingsQuery.data;
   const originalRoot = settings?.root_path ?? "";
   const originalDoc = settings?.include_docstrings ?? true;
+  const originalBackendUrl = settings?.backend_url ?? "";
   const originalCustomExcludes = useMemo(
     () => sortExcludes(extractCustomExcludes(settings?.exclude_dirs)),
     [settings?.exclude_dirs],
@@ -43,8 +46,11 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
 
   const [formRoot, setFormRoot] = useState(originalRoot);
   const [formDocstrings, setFormDocstrings] = useState(originalDoc);
+  const [formBackendUrl, setFormBackendUrl] = useState(originalBackendUrl);
   const [customExcludes, setCustomExcludes] = useState<string[]>(originalCustomExcludes);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const setBackendUrl = useBackendStore((state) => state.setBackendUrl);
 
   useEffect(() => {
     if (!settings) {
@@ -52,6 +58,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     }
     setFormRoot(settings.root_path);
     setFormDocstrings(settings.include_docstrings);
+    setFormBackendUrl(settings.backend_url ?? "");
     setCustomExcludes(sortExcludes(extractCustomExcludes(settings.exclude_dirs)));
   }, [settings]);
 
@@ -64,6 +71,10 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
       queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
       if (result.updated.includes("root_path")) {
         useSelectionStore.getState().clearSelection();
+      }
+      if (result.updated.includes("backend_url")) {
+        // Update Zustand store when backend_url changes
+        setBackendUrl(result.settings.backend_url ?? null);
       }
       setCustomExcludes(sortExcludes(extractCustomExcludes(result.settings.exclude_dirs)));
       setStatusMessage(
@@ -98,8 +109,11 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     if (originalDoc !== formDocstrings) {
       return true;
     }
+    if (originalBackendUrl !== formBackendUrl.trim()) {
+      return true;
+    }
     return excludesChanged;
-  }, [settings, originalRoot, formRoot, originalDoc, formDocstrings, excludesChanged]);
+  }, [settings, originalRoot, formRoot, originalDoc, formDocstrings, originalBackendUrl, formBackendUrl, excludesChanged]);
 
   const handleSave = () => {
     if (!settings || !isDirty || mutation.isPending) {
@@ -108,6 +122,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
 
     const payload: SettingsUpdatePayload = {};
     const trimmedRoot = formRoot.trim();
+    const trimmedBackendUrl = formBackendUrl.trim();
 
     if (trimmedRoot && trimmedRoot !== originalRoot) {
       payload.root_path = trimmedRoot;
@@ -115,6 +130,10 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
 
     if (formDocstrings !== originalDoc) {
       payload.include_docstrings = formDocstrings;
+    }
+
+    if (trimmedBackendUrl !== originalBackendUrl) {
+      payload.backend_url = trimmedBackendUrl || null;
     }
 
     if (excludesChanged) {
@@ -231,6 +250,12 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
           onRootChange={setFormRoot}
           onBrowse={() => browseMutation.mutate()}
           browseDisabled={browseMutation.isPending || isMutating || isLoading}
+        />
+
+        <BackendUrlSection
+          backendUrl={formBackendUrl}
+          disabled={isLoading || isMutating}
+          onBackendUrlChange={setFormBackendUrl}
         />
 
         <ExcludeDirsSection

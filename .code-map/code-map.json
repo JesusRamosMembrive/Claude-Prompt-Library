@@ -2,7 +2,7 @@
   {
     "path": "assess_stage.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447382+00:00",
+    "modified_at": "2025-11-09T08:07:52.601270+00:00",
     "symbols": [
       {
         "name": "assess_stage",
@@ -45,28 +45,28 @@
   {
     "path": "claude_assess.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447382+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447863+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/__main__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447894+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447894+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [
       {
         "name": "get_modified_time",
@@ -137,7 +137,7 @@
   {
     "path": "code_map/analyzer_registry.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447894+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [
       {
         "name": "AnalyzerCapability",
@@ -250,7 +250,7 @@
   {
     "path": "code_map/api/analysis.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.447894+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [
       {
         "name": "health",
@@ -322,7 +322,7 @@
   {
     "path": "code_map/api/graph.py",
     "relative": true,
-    "modified_at": "2025-11-08T06:45:39.860880+00:00",
+    "modified_at": "2025-11-09T08:07:52.601532+00:00",
     "symbols": [
       {
         "name": "get_class_graph",
@@ -358,7 +358,7 @@
   {
     "path": "code_map/api/integrations.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.602051+00:00",
     "symbols": [
       {
         "name": "get_ollama_status",
@@ -408,7 +408,7 @@
   {
     "path": "code_map/api/linters.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.602051+00:00",
     "symbols": [
       {
         "name": "get_linters_discovery",
@@ -479,7 +479,7 @@
   {
     "path": "code_map/api/preview.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.602051+00:00",
     "symbols": [
       {
         "name": "preview_file",
@@ -515,14 +515,14 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-11-08T20:42:26.908348+00:00",
+    "modified_at": "2025-11-09T08:07:52.602051+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T11:04:39.987680+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -590,371 +590,371 @@
       {
         "name": "SettingsUpdateRequest",
         "kind": "class",
-        "lineno": 101,
+        "lineno": 102,
         "parent": null,
         "docstring": "Petici\u00f3n para actualizar los settings."
       },
       {
         "name": "SettingsUpdateResponse",
         "kind": "class",
-        "lineno": 123,
+        "lineno": 130,
         "parent": null,
         "docstring": "Respuesta de la actualizaci\u00f3n de settings."
       },
       {
         "name": "AnalyzerCapabilitySchema",
         "kind": "class",
-        "lineno": 130,
+        "lineno": 137,
         "parent": null,
         "docstring": "Esquema para una capacidad del analizador."
       },
       {
         "name": "StatusResponse",
         "kind": "class",
-        "lineno": 142,
+        "lineno": 149,
         "parent": null,
         "docstring": "Respuesta del endpoint de status."
       },
       {
         "name": "PreviewResponse",
         "kind": "class",
-        "lineno": 163,
+        "lineno": 170,
         "parent": null,
         "docstring": "Respuesta del endpoint de preview."
       },
       {
         "name": "OptionalFilesStatus",
         "kind": "class",
-        "lineno": 170,
+        "lineno": 177,
         "parent": null,
         "docstring": "Estado opcional (archivos recomendados pero no obligatorios)."
       },
       {
         "name": "AgentInstallStatus",
         "kind": "class",
-        "lineno": 178,
+        "lineno": 185,
         "parent": null,
         "docstring": "Estado de instalaci\u00f3n para un agente (Claude o Codex)."
       },
       {
         "name": "DocsStatus",
         "kind": "class",
-        "lineno": 188,
+        "lineno": 195,
         "parent": null,
         "docstring": "Estado de los documentos de referencia."
       },
       {
         "name": "StageDetectionStatus",
         "kind": "class",
-        "lineno": 197,
+        "lineno": 204,
         "parent": null,
         "docstring": "Resultado de la detecci\u00f3n autom\u00e1tica de etapa."
       },
       {
         "name": "StageStatusResponse",
         "kind": "class",
-        "lineno": 209,
+        "lineno": 216,
         "parent": null,
         "docstring": "Payload completo con el estado stage-aware del proyecto."
       },
       {
         "name": "OllamaModelSchema",
         "kind": "class",
-        "lineno": 219,
+        "lineno": 226,
         "parent": null,
         "docstring": "Modelo disponible en Ollama."
       },
       {
         "name": "OllamaStatusSchema",
         "kind": "class",
-        "lineno": 230,
+        "lineno": 237,
         "parent": null,
         "docstring": "Estado detectado para Ollama."
       },
       {
         "name": "OllamaStatusResponse",
         "kind": "class",
-        "lineno": 243,
+        "lineno": 250,
         "parent": null,
         "docstring": "Respuesta con el estado actual de Ollama."
       },
       {
         "name": "OllamaStartRequest",
         "kind": "class",
-        "lineno": 250,
+        "lineno": 257,
         "parent": null,
         "docstring": "Petici\u00f3n para iniciar el servidor Ollama."
       },
       {
         "name": "OllamaStartResponse",
         "kind": "class",
-        "lineno": 256,
+        "lineno": 263,
         "parent": null,
         "docstring": "Respuesta tras intentar iniciar Ollama."
       },
       {
         "name": "OllamaTestRequest",
         "kind": "class",
-        "lineno": 267,
+        "lineno": 274,
         "parent": null,
         "docstring": "Petici\u00f3n para realizar un chat de prueba con Ollama."
       },
       {
         "name": "OllamaTestResponse",
         "kind": "class",
-        "lineno": 277,
+        "lineno": 284,
         "parent": null,
         "docstring": "Respuesta tras ejecutar una prueba de chat contra Ollama."
       },
       {
         "name": "OllamaInsightsRequest",
         "kind": "class",
-        "lineno": 288,
+        "lineno": 295,
         "parent": null,
         "docstring": "Petici\u00f3n para generar insights manualmente."
       },
       {
         "name": "OllamaInsightsResponse",
         "kind": "class",
-        "lineno": 305,
+        "lineno": 312,
         "parent": null,
         "docstring": "Respuesta tras generar insights manualmente."
       },
       {
         "name": "OllamaInsightEntry",
         "kind": "class",
-        "lineno": 313,
+        "lineno": 320,
         "parent": null,
         "docstring": "Elemento individual dentro del historial de insights."
       },
       {
         "name": "OllamaInsightsClearResponse",
         "kind": "class",
-        "lineno": 322,
+        "lineno": 329,
         "parent": null,
         "docstring": "Respuesta tras limpiar el historial de insights."
       },
       {
         "name": "StageInitRequest",
         "kind": "class",
-        "lineno": 328,
+        "lineno": 335,
         "parent": null,
         "docstring": "Petici\u00f3n para inicializar los assets stage-aware."
       },
       {
         "name": "StageInitResponse",
         "kind": "class",
-        "lineno": 334,
+        "lineno": 341,
         "parent": null,
         "docstring": "Respuesta tras ejecutar init_project.py."
       },
       {
         "name": "LinterToolSchema",
         "kind": "class",
-        "lineno": 345,
+        "lineno": 352,
         "parent": null,
         "docstring": "Estado de una herramienta est\u00e1ndar de linters."
       },
       {
         "name": "LinterCustomRuleSchema",
         "kind": "class",
-        "lineno": 358,
+        "lineno": 365,
         "parent": null,
         "docstring": "Descripci\u00f3n de una regla de calidad personalizada."
       },
       {
         "name": "NotificationChannelSchema",
         "kind": "class",
-        "lineno": 369,
+        "lineno": 376,
         "parent": null,
         "docstring": "Canal disponible para notificaciones de escritorio."
       },
       {
         "name": "LintersDiscoveryResponse",
         "kind": "class",
-        "lineno": 379,
+        "lineno": 386,
         "parent": null,
         "docstring": "Payload con el resultado del discovery de linters."
       },
       {
         "name": "LinterIssueDetailSchema",
         "kind": "class",
-        "lineno": 389,
+        "lineno": 396,
         "parent": null,
         "docstring": "Detalle de incidencias registradas por un linter."
       },
       {
         "name": "LinterToolRunSchema",
         "kind": "class",
-        "lineno": 403,
+        "lineno": 410,
         "parent": null,
         "docstring": "Resultado de ejecutar una herramienta est\u00e1ndar."
       },
       {
         "name": "LinterRunCustomRuleSchema",
         "kind": "class",
-        "lineno": 421,
+        "lineno": 428,
         "parent": null,
         "docstring": "Estado de una regla personalizada ejecutada."
       },
       {
         "name": "LinterCoverageSchema",
         "kind": "class",
-        "lineno": 434,
+        "lineno": 441,
         "parent": null,
         "docstring": "Instant\u00e1nea de cobertura de tests."
       },
       {
         "name": "LinterReportSummarySchema",
         "kind": "class",
-        "lineno": 442,
+        "lineno": 449,
         "parent": null,
         "docstring": "Resumen de un reporte de linters."
       },
       {
         "name": "LinterChartDataSchema",
         "kind": "class",
-        "lineno": 459,
+        "lineno": 466,
         "parent": null,
         "docstring": "Datos agregados para visualizaciones."
       },
       {
         "name": "LintersReportSchema",
         "kind": "class",
-        "lineno": 467,
+        "lineno": 474,
         "parent": null,
         "docstring": "Payload completo de un reporte de linters."
       },
       {
         "name": "LintersReportListItemSchema",
         "kind": "class",
-        "lineno": 483,
+        "lineno": 490,
         "parent": null,
         "docstring": "Elemento resumido para listados de reportes."
       },
       {
         "name": "LintersReportRecordSchema",
         "kind": "class",
-        "lineno": 496,
+        "lineno": 503,
         "parent": null,
         "docstring": "Registro completo con el payload detallado."
       },
       {
         "name": "NotificationEntrySchema",
         "kind": "class",
-        "lineno": 502,
+        "lineno": 509,
         "parent": null,
         "docstring": "Notificaci\u00f3n almacenada en la base de datos."
       },
       {
         "name": "BrowseDirectoryResponse",
         "kind": "class",
-        "lineno": 518,
+        "lineno": 525,
         "parent": null,
         "docstring": "Respuesta al seleccionar un directorio en el servidor."
       },
       {
         "name": "ClassGraphNode",
         "kind": "class",
-        "lineno": 524,
+        "lineno": 531,
         "parent": null,
         "docstring": "Nodo del grafo de clases."
       },
       {
         "name": "ClassGraphEdge",
         "kind": "class",
-        "lineno": 533,
+        "lineno": 540,
         "parent": null,
         "docstring": "Arista del grafo de clases."
       },
       {
         "name": "ClassGraphStats",
         "kind": "class",
-        "lineno": 543,
+        "lineno": 550,
         "parent": null,
         "docstring": "M\u00e9tricas del grafo generado."
       },
       {
         "name": "ClassGraphResponse",
         "kind": "class",
-        "lineno": 551,
+        "lineno": 558,
         "parent": null,
         "docstring": "Respuesta completa del grafo de clases."
       },
       {
         "name": "UMLAttribute",
         "kind": "class",
-        "lineno": 559,
+        "lineno": 566,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLMethod",
         "kind": "class",
-        "lineno": 565,
+        "lineno": 572,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLClass",
         "kind": "class",
-        "lineno": 571,
+        "lineno": 578,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLDiagramResponse",
         "kind": "class",
-        "lineno": 582,
+        "lineno": 589,
         "parent": null,
         "docstring": null
       },
       {
         "name": "serialize_symbol",
         "kind": "function",
-        "lineno": 587,
+        "lineno": 594,
         "parent": null,
         "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
       },
       {
         "name": "serialize_error",
         "kind": "function",
-        "lineno": 602,
+        "lineno": 609,
         "parent": null,
         "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
       },
       {
         "name": "serialize_summary",
         "kind": "function",
-        "lineno": 611,
+        "lineno": 618,
         "parent": null,
         "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
       },
       {
         "name": "serialize_tree",
         "kind": "function",
-        "lineno": 626,
+        "lineno": 633,
         "parent": null,
         "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
       },
       {
         "name": "serialize_search_results",
         "kind": "function",
-        "lineno": 655,
+        "lineno": 662,
         "parent": null,
         "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
       },
       {
         "name": "serialize_settings",
         "kind": "function",
-        "lineno": 664,
+        "lineno": 671,
         "parent": null,
         "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
       },
       {
         "name": "serialize_status",
         "kind": "function",
-        "lineno": 670,
+        "lineno": 677,
         "parent": null,
         "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
       }
@@ -964,7 +964,7 @@
   {
     "path": "code_map/api/settings.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T11:04:49.541768+00:00",
     "symbols": [
       {
         "name": "get_settings",
@@ -983,14 +983,14 @@
       {
         "name": "get_status",
         "kind": "function",
-        "lineno": 81,
+        "lineno": 87,
         "parent": null,
         "docstring": "Obtiene el estado actual de la aplicaci\u00f3n."
       },
       {
         "name": "browse_directory",
         "kind": "function",
-        "lineno": 87,
+        "lineno": 93,
         "parent": null,
         "docstring": "Abre un di\u00e1logo nativo para seleccionar un directorio."
       }
@@ -1000,7 +1000,7 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.602388+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
@@ -1022,7 +1022,7 @@
   {
     "path": "code_map/api/tracer.py",
     "relative": true,
-    "modified_at": "2025-11-09T07:53:56.075536+00:00",
+    "modified_at": "2025-11-09T08:07:52.602655+00:00",
     "symbols": [
       {
         "name": "AnalyzeFileRequest",
@@ -1142,7 +1142,7 @@
   {
     "path": "code_map/ast_utils.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.602655+00:00",
     "symbols": [
       {
         "name": "ImportResolver",
@@ -1164,7 +1164,7 @@
   {
     "path": "code_map/cache.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T10:31:07.723115+00:00",
     "symbols": [
       {
         "name": "SnapshotStore",
@@ -1183,56 +1183,56 @@
       {
         "name": "load",
         "kind": "method",
-        "lineno": 25,
+        "lineno": 34,
         "parent": "SnapshotStore",
         "docstring": "Carga un snapshot desde el disco."
       },
       {
         "name": "save",
         "kind": "method",
-        "lineno": 43,
+        "lineno": 52,
         "parent": "SnapshotStore",
         "docstring": "Guarda un snapshot en el disco."
       },
       {
         "name": "_serialize_file",
         "kind": "method",
-        "lineno": 53,
+        "lineno": 62,
         "parent": "SnapshotStore",
         "docstring": "Serializa un objeto FileSummary a un diccionario."
       },
       {
         "name": "_serialize_symbol",
         "kind": "method",
-        "lineno": 73,
+        "lineno": 82,
         "parent": "SnapshotStore",
         "docstring": "Serializa un objeto SymbolInfo a un diccionario."
       },
       {
         "name": "_serialize_error",
         "kind": "method",
-        "lineno": 83,
+        "lineno": 92,
         "parent": "SnapshotStore",
         "docstring": "Serializa un objeto AnalysisError a un diccionario."
       },
       {
         "name": "_deserialize_file",
         "kind": "method",
-        "lineno": 91,
+        "lineno": 100,
         "parent": "SnapshotStore",
         "docstring": "Deserializa un diccionario a un objeto FileSummary."
       },
       {
         "name": "_deserialize_symbol",
         "kind": "method",
-        "lineno": 118,
+        "lineno": 127,
         "parent": "SnapshotStore",
         "docstring": "Deserializa un diccionario a un objeto SymbolInfo."
       },
       {
         "name": "_deserialize_error",
         "kind": "method",
-        "lineno": 130,
+        "lineno": 139,
         "parent": "SnapshotStore",
         "docstring": "Deserializa un diccionario a un objeto AnalysisError."
       }
@@ -1242,7 +1242,7 @@
   {
     "path": "code_map/call_tracer_v2.py",
     "relative": true,
-    "modified_at": "2025-11-09T07:00:03.771911+00:00",
+    "modified_at": "2025-11-09T08:07:52.602951+00:00",
     "symbols": [
       {
         "name": "CrossFileCallGraphExtractor",
@@ -1327,7 +1327,7 @@
   {
     "path": "code_map/class_graph.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603113+00:00",
     "symbols": [
       {
         "name": "ClassInfo",
@@ -1559,7 +1559,7 @@
   {
     "path": "code_map/cli.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603191+00:00",
     "symbols": [
       {
         "name": "_validate_root",
@@ -1687,7 +1687,7 @@
   {
     "path": "code_map/events.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603276+00:00",
     "symbols": [
       {
         "name": "ChangeEventType",
@@ -1744,7 +1744,7 @@
   {
     "path": "code_map/html_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603401+00:00",
     "symbols": [
       {
         "name": "HtmlAnalyzer",
@@ -1773,7 +1773,7 @@
   {
     "path": "code_map/import_resolver.py",
     "relative": true,
-    "modified_at": "2025-11-09T07:46:36.688922+00:00",
+    "modified_at": "2025-11-09T08:07:52.603520+00:00",
     "symbols": [
       {
         "name": "ImportResolver",
@@ -1837,7 +1837,7 @@
   {
     "path": "code_map/index.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603520+00:00",
     "symbols": [
       {
         "name": "SymbolIndex",
@@ -1929,14 +1929,14 @@
   {
     "path": "code_map/insights/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-09T08:07:52.603520+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/insights/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449602+00:00",
+    "modified_at": "2025-11-09T08:07:52.603770+00:00",
     "symbols": [
       {
         "name": "_resolve_focus",
@@ -1972,7 +1972,7 @@
   {
     "path": "code_map/insights/storage.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449602+00:00",
+    "modified_at": "2025-11-09T08:07:52.603770+00:00",
     "symbols": [
       {
         "name": "StoredInsight",
@@ -2022,14 +2022,14 @@
   {
     "path": "code_map/integrations/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449602+00:00",
+    "modified_at": "2025-11-09T08:07:52.603770+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449780+00:00",
+    "modified_at": "2025-11-09T08:07:52.604051+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
@@ -2219,7 +2219,7 @@
   {
     "path": "code_map/js_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449780+00:00",
+    "modified_at": "2025-11-09T08:07:52.604051+00:00",
     "symbols": [
       {
         "name": "_node_get",
@@ -2304,7 +2304,7 @@
   {
     "path": "code_map/linters/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.449780+00:00",
+    "modified_at": "2025-11-09T08:07:52.604051+00:00",
     "symbols": [
       {
         "name": "linters_discovery_payload",
@@ -2319,7 +2319,7 @@
   {
     "path": "code_map/linters/discovery.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604051+00:00",
     "symbols": [
       {
         "name": "ToolDefinition",
@@ -2397,7 +2397,7 @@
   {
     "path": "code_map/linters/pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604385+00:00",
     "symbols": [
       {
         "name": "_safe_severity",
@@ -2538,7 +2538,7 @@
   {
     "path": "code_map/linters/report_schema.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604476+00:00",
     "symbols": [
       {
         "name": "CheckStatus",
@@ -2693,7 +2693,7 @@
   {
     "path": "code_map/linters/storage.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604558+00:00",
     "symbols": [
       {
         "name": "_normalize_root",
@@ -2884,7 +2884,7 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604558+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
@@ -2969,7 +2969,7 @@
   {
     "path": "code_map/scheduler.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604558+00:00",
     "symbols": [
       {
         "name": "_QueuedEvent",
@@ -3040,12 +3040,12 @@
   {
     "path": "code_map/server.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:55:47.845852+00:00",
     "symbols": [
       {
         "name": "create_app",
         "kind": "function",
-        "lineno": 21,
+        "lineno": 22,
         "parent": null,
         "docstring": "Crea y configura la aplicaci\u00f3n FastAPI.\n\nArgs:\n    root: La ruta ra\u00edz del proyecto a escanear.\n\nReturns:\n    La instancia de la aplicaci\u00f3n FastAPI."
       }
@@ -3055,96 +3055,96 @@
   {
     "path": "code_map/settings.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T11:03:47.294119+00:00",
     "symbols": [
       {
         "name": "_normalize_exclusions",
         "kind": "function",
-        "lineno": 27,
+        "lineno": 28,
         "parent": null,
         "docstring": "Combina las exclusiones por defecto con exclusiones adicionales."
       },
       {
         "name": "AppSettings",
         "kind": "class",
-        "lineno": 44,
+        "lineno": 45,
         "parent": null,
         "docstring": "Define la configuraci\u00f3n de la aplicaci\u00f3n."
       },
       {
         "name": "to_payload",
         "kind": "method",
-        "lineno": 55,
+        "lineno": 57,
         "parent": "AppSettings",
         "docstring": "Convierte la configuraci\u00f3n a un diccionario serializable."
       },
       {
         "name": "with_updates",
         "kind": "method",
-        "lineno": 68,
+        "lineno": 71,
         "parent": "AppSettings",
         "docstring": "Crea una nueva instancia de AppSettings con actualizaciones."
       },
       {
         "name": "_parse_env_flag",
         "kind": "function",
-        "lineno": 125,
+        "lineno": 134,
         "parent": null,
         "docstring": "Parsea una variable de entorno como un booleano."
       },
       {
         "name": "_coerce_path",
         "kind": "function",
-        "lineno": 137,
+        "lineno": 146,
         "parent": null,
         "docstring": "Convierte un valor a una ruta absoluta."
       },
       {
         "name": "database_path",
         "kind": "function",
-        "lineno": 144,
+        "lineno": 153,
         "parent": null,
         "docstring": "Obtiene la ruta del archivo SQLite para estado global."
       },
       {
         "name": "open_database",
         "kind": "function",
-        "lineno": 153,
+        "lineno": 162,
         "parent": null,
         "docstring": "Abre una conexi\u00f3n a la base de datos y asegura el esquema."
       },
       {
         "name": "_ensure_db_schema",
         "kind": "function",
-        "lineno": 163,
+        "lineno": 172,
         "parent": null,
         "docstring": "Crea la tabla de configuraci\u00f3n si no existe."
       },
       {
         "name": "_load_settings_from_db",
         "kind": "function",
-        "lineno": 265,
+        "lineno": 278,
         "parent": null,
         "docstring": "Carga la configuraci\u00f3n desde la base de datos SQLite si existe."
       },
       {
         "name": "_save_settings_to_db",
         "kind": "function",
-        "lineno": 366,
+        "lineno": 392,
         "parent": null,
         "docstring": "Persiste la configuraci\u00f3n actual en SQLite."
       },
       {
         "name": "load_settings",
         "kind": "function",
-        "lineno": 462,
+        "lineno": 531,
         "parent": null,
         "docstring": "Carga la configuraci\u00f3n de la aplicaci\u00f3n desde el disco y el entorno."
       },
       {
         "name": "save_settings",
         "kind": "function",
-        "lineno": 511,
+        "lineno": 580,
         "parent": null,
         "docstring": "Guarda la configuraci\u00f3n en el disco."
       }
@@ -3154,7 +3154,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450006+00:00",
+    "modified_at": "2025-11-09T08:07:52.604836+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -3218,7 +3218,7 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450302+00:00",
+    "modified_at": "2025-11-09T11:04:07.257349+00:00",
     "symbols": [
       {
         "name": "_parse_enabled_tools_env",
@@ -3405,14 +3405,14 @@
       {
         "name": "_build_components",
         "kind": "method",
-        "lineno": 650,
+        "lineno": 654,
         "parent": "AppState",
         "docstring": "(Re)construye los componentes de la aplicaci\u00f3n a partir de la configuraci\u00f3n."
       },
       {
         "name": "_apply_settings",
         "kind": "method",
-        "lineno": 671,
+        "lineno": 678,
         "parent": "AppState",
         "docstring": "Aplica la nueva configuraci\u00f3n a la aplicaci\u00f3n."
       }
@@ -3422,7 +3422,7 @@
   {
     "path": "code_map/state_reporter.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450302+00:00",
+    "modified_at": "2025-11-09T08:07:52.605056+00:00",
     "symbols": [
       {
         "name": "_serialize_capability",
@@ -3458,7 +3458,7 @@
   {
     "path": "code_map/ts_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450302+00:00",
+    "modified_at": "2025-11-09T08:07:52.605056+00:00",
     "symbols": [
       {
         "name": "_TsParser",
@@ -3536,7 +3536,7 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-11-08T06:45:34.845845+00:00",
+    "modified_at": "2025-11-09T08:07:52.605056+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
@@ -3845,7 +3845,7 @@
   {
     "path": "code_map/watcher.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.450302+00:00",
+    "modified_at": "2025-11-09T08:07:52.605056+00:00",
     "symbols": [
       {
         "name": "_EventHandler",
@@ -4044,7 +4044,7 @@
   {
     "path": "frontend/index.html",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.453638+00:00",
+    "modified_at": "2025-11-09T08:07:52.606375+00:00",
     "symbols": [
       {
         "name": "root",
@@ -4059,19 +4059,19 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T05:03:24.690090+00:00",
+    "modified_at": "2025-11-09T11:08:18.511977+00:00",
     "symbols": [
       {
         "name": "App",
         "kind": "function",
-        "lineno": 17,
+        "lineno": 19,
         "parent": null,
         "docstring": null
       },
       {
         "name": "withLayout",
         "kind": "function",
-        "lineno": 31,
+        "lineno": 42,
         "parent": null,
         "docstring": null
       }
@@ -4081,215 +4081,215 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-11-08T06:45:19.586736+00:00",
+    "modified_at": "2025-11-09T11:06:14.303417+00:00",
     "symbols": [
       {
         "name": "buildUrl",
         "kind": "function",
-        "lineno": 47,
+        "lineno": 49,
         "parent": null,
         "docstring": null
       },
       {
         "name": "fetchJson",
         "kind": "function",
-        "lineno": 73,
+        "lineno": 86,
         "parent": null,
         "docstring": null
       },
       {
         "name": "fetchJsonNullable",
         "kind": "function",
-        "lineno": 92,
+        "lineno": 105,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OllamaTestError",
         "kind": "class",
-        "lineno": 122,
+        "lineno": 135,
         "parent": null,
         "docstring": null
       },
       {
         "name": "constructor",
         "kind": "method",
-        "lineno": 126,
+        "lineno": 139,
         "parent": "OllamaTestError",
         "docstring": null
       },
       {
         "name": "getTree",
         "kind": "function",
-        "lineno": 144,
+        "lineno": 157,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getFileSummary",
         "kind": "function",
-        "lineno": 162,
+        "lineno": 175,
         "parent": null,
         "docstring": null
       },
       {
         "name": "searchSymbols",
         "kind": "function",
-        "lineno": 181,
+        "lineno": 194,
         "parent": null,
         "docstring": null
       },
       {
         "name": "triggerRescan",
         "kind": "function",
-        "lineno": 197,
+        "lineno": 210,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getEventsUrl",
         "kind": "function",
-        "lineno": 214,
+        "lineno": 227,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getSettings",
         "kind": "function",
-        "lineno": 231,
+        "lineno": 244,
         "parent": null,
         "docstring": null
       },
       {
         "name": "updateSettings",
         "kind": "function",
-        "lineno": 250,
+        "lineno": 263,
         "parent": null,
         "docstring": null
       },
       {
         "name": "browseForRoot",
         "kind": "function",
-        "lineno": 263,
+        "lineno": 276,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStageStatus",
         "kind": "function",
-        "lineno": 272,
+        "lineno": 285,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getOllamaStatus",
         "kind": "function",
-        "lineno": 279,
+        "lineno": 292,
         "parent": null,
         "docstring": null
       },
       {
         "name": "startOllama",
         "kind": "function",
-        "lineno": 286,
+        "lineno": 299,
         "parent": null,
         "docstring": null
       },
       {
         "name": "testOllamaChat",
         "kind": "function",
-        "lineno": 318,
+        "lineno": 331,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getOllamaInsights",
         "kind": "function",
-        "lineno": 365,
+        "lineno": 378,
         "parent": null,
         "docstring": null
       },
       {
         "name": "triggerOllamaInsights",
         "kind": "function",
-        "lineno": 370,
+        "lineno": 383,
         "parent": null,
         "docstring": null
       },
       {
         "name": "clearOllamaInsights",
         "kind": "function",
-        "lineno": 393,
+        "lineno": 406,
         "parent": null,
         "docstring": null
       },
       {
         "name": "initializeStageToolkit",
         "kind": "function",
-        "lineno": 402,
+        "lineno": 415,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getClassUml",
         "kind": "function",
-        "lineno": 409,
+        "lineno": 422,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getClassUmlSvg",
         "kind": "function",
-        "lineno": 436,
+        "lineno": 449,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStatus",
         "kind": "function",
-        "lineno": 480,
+        "lineno": 493,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getPreview",
         "kind": "function",
-        "lineno": 484,
+        "lineno": 497,
         "parent": null,
         "docstring": null
       },
       {
         "name": "appendGraphvizParams",
         "kind": "function",
-        "lineno": 535,
+        "lineno": 548,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersLatestReport",
         "kind": "function",
-        "lineno": 551,
+        "lineno": 564,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersReports",
         "kind": "function",
-        "lineno": 555,
+        "lineno": 568,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersNotifications",
         "kind": "function",
-        "lineno": 566,
+        "lineno": 579,
         "parent": null,
         "docstring": null
       },
       {
         "name": "markNotificationAsRead",
         "kind": "function",
-        "lineno": 579,
+        "lineno": 592,
         "parent": null,
         "docstring": null
       }
@@ -4299,21 +4299,21 @@
   {
     "path": "frontend/src/api/queryKeys.ts",
     "relative": true,
-    "modified_at": "2025-11-08T06:41:58.166082+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-11-08T06:45:13.958696+00:00",
+    "modified_at": "2025-11-09T11:05:11.563957+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/components/ActivityFeed.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455219+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [
       {
         "name": "formatTimeAgo",
@@ -4335,7 +4335,7 @@
   {
     "path": "frontend/src/components/AppLayout.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [
       {
         "name": "AppLayout",
@@ -4348,52 +4348,9 @@
     "errors": []
   },
   {
-    "path": "frontend/src/components/ClassGraphView.tsx",
-    "relative": true,
-    "modified_at": "2025-10-31T12:37:21.642784+00:00",
-    "symbols": [
-      {
-        "name": "ClassGraphView",
-        "kind": "function",
-        "lineno": 16,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "toggleEdgeType",
-        "kind": "function",
-        "lineno": 50,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "EdgeList",
-        "kind": "function",
-        "lineno": 199,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "buildGraphData",
-        "kind": "function",
-        "lineno": 271,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "renderNode",
-        "kind": "function",
-        "lineno": 348,
-        "parent": null,
-        "docstring": null
-      }
-    ],
-    "errors": []
-  },
-  {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-11-08T08:44:12.315338+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -4479,7 +4436,7 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T05:23:18.210647+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
@@ -4501,7 +4458,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T05:03:44.241175+00:00",
+    "modified_at": "2025-11-09T08:07:52.606652+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -4516,7 +4473,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T08:04:36.259422+00:00",
+    "modified_at": "2025-11-09T08:42:12.555415+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -4538,7 +4495,7 @@
   {
     "path": "frontend/src/components/LintersView.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.607330+00:00",
     "symbols": [
       {
         "name": "formatDate",
@@ -4602,7 +4559,7 @@
   {
     "path": "frontend/src/components/OllamaInsightsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.607773+00:00",
     "symbols": [
       {
         "name": "normalizeFocus",
@@ -4666,7 +4623,7 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.607773+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
@@ -4723,7 +4680,7 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T06:15:51.111221+00:00",
+    "modified_at": "2025-11-09T08:07:52.607773+00:00",
     "symbols": [
       {
         "name": "getFileExtension",
@@ -4766,7 +4723,7 @@
   {
     "path": "frontend/src/components/PromptLibraryView.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.607773+00:00",
     "symbols": [
       {
         "name": "parseTagsInput",
@@ -4823,7 +4780,7 @@
   {
     "path": "frontend/src/components/RescanButton.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.607773+00:00",
     "symbols": [
       {
         "name": "RescanButton",
@@ -4838,7 +4795,7 @@
   {
     "path": "frontend/src/components/SearchPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "SearchPanel",
@@ -4853,47 +4810,47 @@
   {
     "path": "frontend/src/components/SettingsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-08T06:24:15.764586+00:00",
+    "modified_at": "2025-11-09T11:07:56.553011+00:00",
     "symbols": [
       {
         "name": "extractCustomExcludes",
         "kind": "function",
-        "lineno": 21,
+        "lineno": 23,
         "parent": null,
         "docstring": null
       },
       {
         "name": "sortExcludes",
         "kind": "function",
-        "lineno": 28,
+        "lineno": 30,
         "parent": null,
         "docstring": null
       },
       {
         "name": "SettingsView",
         "kind": "function",
-        "lineno": 32,
+        "lineno": 34,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleSave",
         "kind": "function",
-        "lineno": 104,
+        "lineno": 118,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleAddExclude",
         "kind": "function",
-        "lineno": 133,
+        "lineno": 152,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleRemoveExclude",
         "kind": "function",
-        "lineno": 156,
+        "lineno": 175,
         "parent": null,
         "docstring": null
       }
@@ -4903,7 +4860,7 @@
   {
     "path": "frontend/src/components/Sidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "Sidebar",
@@ -4953,7 +4910,7 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "formatList",
@@ -5003,7 +4960,7 @@
   {
     "path": "frontend/src/components/StatusPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "formatRelative",
@@ -5032,7 +4989,7 @@
   {
     "path": "frontend/src/components/TraceModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-09T05:02:15.586787+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "TraceModal",
@@ -5047,7 +5004,7 @@
   {
     "path": "frontend/src/components/__tests__/PreviewPane.test.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "createWrapper",
@@ -5060,9 +5017,31 @@
     "errors": []
   },
   {
+    "path": "frontend/src/components/settings/BackendUrlSection.tsx",
+    "relative": true,
+    "modified_at": "2025-11-09T11:06:46.360620+00:00",
+    "symbols": [
+      {
+        "name": "BackendUrlSection",
+        "kind": "function",
+        "lineno": 9,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleTestConnection",
+        "kind": "function",
+        "lineno": 20,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/components/settings/DocstringsSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-08T06:29:42.621824+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "DocstringsSection",
@@ -5077,7 +5056,7 @@
   {
     "path": "frontend/src/components/settings/ExcludeDirsSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.456959+00:00",
+    "modified_at": "2025-11-09T08:07:52.608330+00:00",
     "symbols": [
       {
         "name": "ExcludeDirsSection",
@@ -5099,7 +5078,7 @@
   {
     "path": "frontend/src/components/settings/RootPathSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.456959+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "RootPathSection",
@@ -5119,24 +5098,9 @@
     "errors": []
   },
   {
-    "path": "frontend/src/hooks/useClassGraphQuery.ts",
-    "relative": true,
-    "modified_at": "2025-10-31T12:37:21.646112+00:00",
-    "symbols": [
-      {
-        "name": "useClassGraphQuery",
-        "kind": "function",
-        "lineno": 12,
-        "parent": null,
-        "docstring": null
-      }
-    ],
-    "errors": []
-  },
-  {
     "path": "frontend/src/hooks/useClassUmlQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-08T07:24:17.681777+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useClassUmlQuery",
@@ -5180,7 +5144,7 @@
   {
     "path": "frontend/src/hooks/useLintersLatestReport.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useLintersLatestReport",
@@ -5195,7 +5159,7 @@
   {
     "path": "frontend/src/hooks/useLintersNotifications.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useLintersNotifications",
@@ -5210,7 +5174,7 @@
   {
     "path": "frontend/src/hooks/useLintersReports.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useLintersReports",
@@ -5225,7 +5189,7 @@
   {
     "path": "frontend/src/hooks/useMarkNotificationRead.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useMarkNotificationRead",
@@ -5240,7 +5204,7 @@
   {
     "path": "frontend/src/hooks/useOllamaInsightsQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useOllamaInsightsQuery",
@@ -5255,7 +5219,7 @@
   {
     "path": "frontend/src/hooks/useOllamaStartMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useOllamaStartMutation",
@@ -5270,7 +5234,7 @@
   {
     "path": "frontend/src/hooks/useOllamaStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useOllamaStatusQuery",
@@ -5285,7 +5249,7 @@
   {
     "path": "frontend/src/hooks/useOllamaTestMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457203+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "useOllamaTestMutation",
@@ -5394,9 +5358,24 @@
     "errors": []
   },
   {
+    "path": "frontend/src/state/useBackendStore.ts",
+    "relative": true,
+    "modified_at": "2025-11-09T11:05:41.135186+00:00",
+    "symbols": [
+      {
+        "name": "setBackendUrl",
+        "kind": "function",
+        "lineno": 54,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/state/usePromptLibrary.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457604+00:00",
+    "modified_at": "2025-11-09T08:07:52.609330+00:00",
     "symbols": [
       {
         "name": "normalizeTags",
@@ -5474,21 +5453,21 @@
   {
     "path": "frontend/vite.config.ts",
     "relative": true,
-    "modified_at": "2025-11-09T04:41:23.931111+00:00",
+    "modified_at": "2025-11-09T08:07:52.610330+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "init_project.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.462302+00:00",
+    "modified_at": "2025-11-09T08:07:52.617891+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "mad-ideas/run_all_checks.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463377+00:00",
+    "modified_at": "2025-11-09T08:07:52.617891+00:00",
     "symbols": [
       {
         "name": "module_available",
@@ -5524,7 +5503,7 @@
   {
     "path": "stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463377+00:00",
+    "modified_at": "2025-11-09T08:07:52.618239+00:00",
     "symbols": [
       {
         "name": "StageThresholds",
@@ -5651,14 +5630,14 @@
   {
     "path": "stage_init/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463377+00:00",
+    "modified_at": "2025-11-09T08:07:52.618239+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "stage_init/cli.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463831+00:00",
+    "modified_at": "2025-11-09T08:07:52.618239+00:00",
     "symbols": [
       {
         "name": "build_parser",
@@ -5694,7 +5673,7 @@
   {
     "path": "stage_init/initializer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463831+00:00",
+    "modified_at": "2025-11-09T08:07:52.618330+00:00",
     "symbols": [
       {
         "name": "InitializationConfig",
@@ -5793,7 +5772,7 @@
   {
     "path": "stage_init/stage_update.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463831+00:00",
+    "modified_at": "2025-11-09T08:07:52.618330+00:00",
     "symbols": [
       {
         "name": "StageUpdateResult",
@@ -5836,7 +5815,7 @@
   {
     "path": "stage_init/templates.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.463831+00:00",
+    "modified_at": "2025-11-09T08:07:52.618330+00:00",
     "symbols": [
       {
         "name": "TemplateSummary",
@@ -5914,7 +5893,7 @@
   {
     "path": "testZone/example.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464706+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "sum",
@@ -5950,7 +5929,7 @@
   {
     "path": "tests/test_analysis_engine.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "write_module",
@@ -6091,7 +6070,7 @@
   {
     "path": "tests/test_api.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -6351,7 +6330,7 @@
   {
     "path": "tests/test_insights_scheduler.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "_DummyWatcher",
@@ -6422,7 +6401,7 @@
   {
     "path": "tests/test_linters_pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "test_run_linters_pipeline_generates_report",
@@ -6437,7 +6416,7 @@
   {
     "path": "tests/test_linters_pipeline_options.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -6466,7 +6445,7 @@
   {
     "path": "tests/test_stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "write_module",
@@ -6509,7 +6488,7 @@
   {
     "path": "tests/test_stage_initializer.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.464727+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "_silence_logs",
@@ -6538,7 +6517,7 @@
   {
     "path": "tools/debug_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.465187+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "HttpResponse",
@@ -6581,7 +6560,7 @@
   {
     "path": "tools/test_backend_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.465254+00:00",
+    "modified_at": "2025-11-09T08:07:52.619330+00:00",
     "symbols": [
       {
         "name": "parse_args",
@@ -6603,7 +6582,7 @@
   {
     "path": "tracerTesting/driverExample.py",
     "relative": true,
-    "modified_at": "2025-11-09T06:53:28.243103+00:00",
+    "modified_at": "2025-11-09T08:07:52.620509+00:00",
     "symbols": [
       {
         "name": "driverExampleClass",
@@ -6632,7 +6611,7 @@
   {
     "path": "tracerTesting/endpointExample.py",
     "relative": true,
-    "modified_at": "2025-11-09T06:53:30.928945+00:00",
+    "modified_at": "2025-11-09T08:07:52.620629+00:00",
     "symbols": [
       {
         "name": "endpointExampleClass",
@@ -6661,7 +6640,7 @@
   {
     "path": "tracerTesting/middlewareExample.py",
     "relative": true,
-    "modified_at": "2025-11-09T06:53:24.423894+00:00",
+    "modified_at": "2025-11-09T08:07:52.620718+00:00",
     "symbols": [
       {
         "name": "middlewareAPI",

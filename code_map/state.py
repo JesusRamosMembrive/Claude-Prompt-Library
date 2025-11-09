@@ -19,7 +19,7 @@ from .index import SymbolIndex
 from .scanner import ProjectScanner
 from .scheduler import ChangeScheduler
 from .watcher import WatcherService
-from .settings import AppSettings, save_settings, ENV_DISABLE_LINTERS
+from .settings import AppSettings, save_settings, ENV_DISABLE_LINTERS, ENV_CACHE_DIR
 from .linters import (
     CheckStatus,
     Severity,
@@ -578,6 +578,7 @@ class AppState:
         ollama_insights_model: Optional[str] = None,
         ollama_insights_frequency_minutes: Optional[int] = None,
         ollama_insights_focus: Optional[str] = None,
+        backend_url: Optional[str] = None,
     ) -> List[str]:
         """Actualiza la configuración de la aplicación."""
         if ollama_insights_frequency_minutes is not None:
@@ -611,6 +612,7 @@ class AppState:
             ollama_insights_enabled=ollama_insights_enabled,
             ollama_insights_model=ollama_insights_model,
             ollama_insights_frequency_minutes=ollama_insights_frequency_minutes,
+            backend_url=backend_url,
             **focus_kwargs,
         )
         updated_fields: List[str] = []
@@ -639,6 +641,8 @@ class AppState:
             updated_fields.append("ollama_insights_frequency_minutes")
         if new_settings.ollama_insights_focus != self.settings.ollama_insights_focus:
             updated_fields.append("ollama_insights_focus")
+        if new_settings.backend_url != self.settings.backend_url:
+            updated_fields.append("backend_url")
 
         if not updated_fields:
             return []
@@ -655,7 +659,10 @@ class AppState:
             exclude_dirs=self.settings.exclude_dirs,
         )
         self.index = SymbolIndex(self.settings.root_path)
-        self.snapshot_store = SnapshotStore(self.settings.root_path)
+        # Use alternative cache directory if specified (for Docker with read-only mounts)
+        cache_dir = os.getenv(ENV_CACHE_DIR)
+        cache_dir_path = Path(cache_dir) if cache_dir else None
+        self.snapshot_store = SnapshotStore(self.settings.root_path, cache_dir=cache_dir_path)
         self.reporter = StateReporter(
             settings=self.settings,
             scanner=self.scanner,
