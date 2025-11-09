@@ -49,7 +49,7 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
     save_settings(state.settings)
 
     app = FastAPI(title="Code Map API", lifespan=lifespan)
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     app.state.app_state = state  # type: ignore[attr-defined]
 
     # Serve frontend static files in production mode

@@ -13,6 +13,7 @@ import { DocstringsSection } from "./settings/DocstringsSection";
 import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
 import { RootPathSection } from "./settings/RootPathSection";
 import { BackendUrlSection } from "./settings/BackendUrlSection";
+import { DirectoryBrowserModal } from "./settings/DirectoryBrowserModal";
 
 interface SettingsViewProps {
   settingsQuery: UseQueryResult<SettingsPayload>;
@@ -49,6 +50,7 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
   const [formBackendUrl, setFormBackendUrl] = useState(originalBackendUrl);
   const [customExcludes, setCustomExcludes] = useState<string[]>(originalCustomExcludes);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [showDirectoryBrowser, setShowDirectoryBrowser] = useState(false);
 
   const setBackendUrl = useBackendStore((state) => state.setBackendUrl);
 
@@ -187,9 +189,24 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : "Could not open the dialog";
-      setStatusMessage(`Error selecting directory: ${message}`);
+      // If error contains "tkinter", open fallback modal
+      if (message.includes("tkinter")) {
+        setShowDirectoryBrowser(true);
+        setStatusMessage("Using directory browser (tkinter not available)");
+      } else if (message.includes("cancelada") || message.includes("cancelled")) {
+        // User cancelled the dialog, don't show error
+        return;
+      } else {
+        setStatusMessage(`Error selecting directory: ${message}`);
+      }
     },
   });
+
+  const handleDirectorySelect = (path: string) => {
+    setFormRoot(path);
+    setStatusMessage(`Selected directory: ${path}`);
+    setShowDirectoryBrowser(false);
+  };
 
   return (
     <div className="settings-view">
@@ -309,6 +326,13 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
         <span>Settings synchronized with the backend</span>
         <span>Last updated: {new Date().toLocaleString()}</span>
       </footer>
+
+      <DirectoryBrowserModal
+        isOpen={showDirectoryBrowser}
+        currentPath={formRoot}
+        onClose={() => setShowDirectoryBrowser(false)}
+        onSelect={handleDirectorySelect}
+      />
     </div>
   );
 }

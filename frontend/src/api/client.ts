@@ -9,6 +9,7 @@ import type {
   StageInitPayload,
   StageInitResponse,
   BrowseDirectoryResponse,
+  ListDirectoriesResponse,
   UMLDiagramResponse,
   LintersReportRecord,
   LintersReportListItem,
@@ -276,6 +277,13 @@ export function updateSettings(payload: SettingsUpdatePayload): Promise<{
 export function browseForRoot(): Promise<BrowseDirectoryResponse> {
   return fetchJson("/settings/browse", {
     method: "POST",
+  });
+}
+
+export function listDirectories(path?: string): Promise<ListDirectoriesResponse> {
+  const url = path ? `/settings/list-directories?path=${encodeURIComponent(path)}` : "/settings/list-directories";
+  return fetchJson(url, {
+    method: "GET",
   });
 }
 

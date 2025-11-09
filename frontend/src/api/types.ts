@@ -231,6 +231,17 @@ export interface BrowseDirectoryResponse {
   path: string;
 }
 
+export interface DirectoryItem {
+  name: string;
+  path: string;
+  is_parent: boolean;
+}
+
+export interface ListDirectoriesResponse {
+  current_path: string;
+  directories: DirectoryItem[];
+}
+
 export interface UMLAttribute {
   name: string;
   type?: string | null;
