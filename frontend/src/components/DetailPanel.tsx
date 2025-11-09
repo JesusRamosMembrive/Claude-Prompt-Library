@@ -136,51 +136,116 @@ export function DetailPanel(): JSX.Element {
       )}
 
       {grouped.classes.map(({ symbol, methods }) => (
-        <article key={symbol.name} className="symbol-card">
-          <div className="symbol-title">
-            {symbol.name}
-            <span className="symbol-meta">
+        <article key={symbol.name} className="symbol-card" style={{
+          borderLeft: "4px solid #9b59d5",
+          background: "#1a1e2a"
+        }}>
+          <div className="symbol-title" style={{
+            fontSize: "18px",
+            fontWeight: 600,
+            marginBottom: "12px",
+            color: "#e4e6eb"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#9b59d5" }}>class</span>
+              {symbol.name}
+            </div>
+            <span className="symbol-meta" style={{ fontSize: "12px", fontWeight: 400 }}>
               <span>line {symbol.lineno}</span>
               <span>{methods.length} methods</span>
             </span>
           </div>
           {symbol.docstring && (
-            <p className="symbol-doc">{formatDocstring(symbol.docstring)}</p>
+            <p className="symbol-doc" style={{
+              fontSize: "14px",
+              lineHeight: "1.6",
+              marginBottom: "16px",
+              color: "#b4b9c9",
+              padding: "8px 12px",
+              background: "#252b3a",
+              borderRadius: "4px"
+            }}>
+              {formatDocstring(symbol.docstring)}
+            </p>
           )}
-          <ul className="symbol-methods">
-            {methods.map((method) => (
-              <li key={method.name}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                  <div style={{ flex: 1 }}>
-                    <span>
-                      {method.parent}.{method.name} (line {method.lineno})
-                    </span>
-                    {method.docstring && (
-                      <span className="symbol-method-doc">
-                        {formatDocstring(method.docstring)}
-                      </span>
-                    )}
+          <div style={{
+            marginTop: "16px",
+            paddingTop: "12px",
+            borderTop: "1px solid #2a2f3e"
+          }}>
+            <h4 style={{
+              fontSize: "13px",
+              color: "#7f869d",
+              marginBottom: "12px",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px"
+            }}>
+              Methods
+            </h4>
+            <ul className="symbol-methods" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {methods.map((method) => (
+                <li key={method.name} style={{
+                  marginBottom: "12px",
+                  padding: "12px",
+                  background: "#252b3a",
+                  borderRadius: "4px",
+                  borderLeft: "3px solid #5b9bd5"
+                }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontSize: "15px",
+                        fontWeight: 500,
+                        color: "#e4e6eb",
+                        marginBottom: "6px",
+                        fontFamily: "monospace"
+                      }}>
+                        {method.name}
+                        <span style={{
+                          fontSize: "12px",
+                          color: "#7f869d",
+                          fontWeight: 400,
+                          marginLeft: "8px"
+                        }}>
+                          (line {method.lineno})
+                        </span>
+                      </div>
+                      {method.docstring && (
+                        <p style={{
+                          fontSize: "13px",
+                          color: "#9aa5b9",
+                          margin: 0,
+                          lineHeight: "1.5",
+                          paddingLeft: "8px",
+                          borderLeft: "2px solid #3a3f4e"
+                        }}>
+                          {formatDocstring(method.docstring)}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setTraceTarget(`${selectedPath}::${method.parent}.${method.name}`)}
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: "12px",
+                        background: "#5b9bd5",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        fontWeight: 500
+                      }}
+                      title="Trace method calls"
+                    >
+                      Trace
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setTraceTarget(`${selectedPath}::${method.parent}.${method.name}`)}
-                    style={{
-                      padding: "2px 8px",
-                      fontSize: "11px",
-                      background: "#5b9bd5",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "3px",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                    title="Trace method calls"
-                  >
-                    Trace
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
         </article>
       ))}
 

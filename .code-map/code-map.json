@@ -515,7 +515,7 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.448491+00:00",
+    "modified_at": "2025-11-08T20:42:26.908348+00:00",
     "symbols": [],
     "errors": []
   },
@@ -1020,6 +1020,126 @@
     "errors": []
   },
   {
+    "path": "code_map/api/tracer.py",
+    "relative": true,
+    "modified_at": "2025-11-09T07:53:56.075536+00:00",
+    "symbols": [
+      {
+        "name": "AnalyzeFileRequest",
+        "kind": "class",
+        "lineno": 24,
+        "parent": null,
+        "docstring": "Request para analizar un archivo y extraer su call graph."
+      },
+      {
+        "name": "CallChain",
+        "kind": "class",
+        "lineno": 34,
+        "parent": null,
+        "docstring": "Representa una cadena de llamadas."
+      },
+      {
+        "name": "TraceChainRequest",
+        "kind": "class",
+        "lineno": 42,
+        "parent": null,
+        "docstring": "Request para trazar cadena desde una funci\u00f3n espec\u00edfica."
+      },
+      {
+        "name": "CallGraphResponse",
+        "kind": "class",
+        "lineno": 54,
+        "parent": null,
+        "docstring": "Response con el call graph extra\u00eddo."
+      },
+      {
+        "name": "TraceChainResponse",
+        "kind": "class",
+        "lineno": 66,
+        "parent": null,
+        "docstring": "Response con la cadena de llamadas trazada."
+      },
+      {
+        "name": "AllChainsResponse",
+        "kind": "class",
+        "lineno": 76,
+        "parent": null,
+        "docstring": "Response con todas las cadenas detectadas en un archivo."
+      },
+      {
+        "name": "analyze_file",
+        "kind": "function",
+        "lineno": 92,
+        "parent": null,
+        "docstring": "Analiza un archivo Python y extrae su call graph.\n\nEl call graph muestra qu\u00e9 funciones llaman a qu\u00e9 otras funciones\ndentro del mismo archivo.\n\n**Stage 1 Limitations:**\n- Solo analiza llamadas dentro del mismo archivo\n- No resuelve imports cross-file\n- No maneja decorators complejos, lambdas o closures"
+      },
+      {
+        "name": "trace_chain",
+        "kind": "function",
+        "lineno": 171,
+        "parent": null,
+        "docstring": "Traza la cadena completa de llamadas desde una funci\u00f3n espec\u00edfica.\n\nSigue todas las llamadas recursivamente desde la funci\u00f3n de inicio\nhasta la profundidad m\u00e1xima especificada.\n\n**Ejemplo:**\nSi tienes `api_move_motors() -> internal_move() -> kinesis_move()`,\nel trace desde `api_move_motors` retornar\u00e1 toda la cadena."
+      },
+      {
+        "name": "get_all_chains",
+        "kind": "function",
+        "lineno": 256,
+        "parent": null,
+        "docstring": "Obtiene todas las cadenas de llamadas posibles en un archivo.\n\nDetecta autom\u00e1ticamente funciones ra\u00edz (no llamadas por otras)\ny genera todas las cadenas desde esas ra\u00edces.\n\n**\u00datil para:**\n- Visualizar flujo completo de un m\u00f3dulo\n- Detectar endpoints y sus cadenas de ejecuci\u00f3n\n- Identificar c\u00f3digo no utilizado"
+      },
+      {
+        "name": "AnalyzeCrossFileRequest",
+        "kind": "class",
+        "lineno": 348,
+        "parent": null,
+        "docstring": "Request para an\u00e1lisis cross-file (Stage 2)."
+      },
+      {
+        "name": "CrossFileCallGraphResponse",
+        "kind": "class",
+        "lineno": 368,
+        "parent": null,
+        "docstring": "Response con call graph cross-file."
+      },
+      {
+        "name": "TraceCrossFileRequest",
+        "kind": "class",
+        "lineno": 393,
+        "parent": null,
+        "docstring": "Request para trace cross-file."
+      },
+      {
+        "name": "CrossFileCallChain",
+        "kind": "class",
+        "lineno": 409,
+        "parent": null,
+        "docstring": "Cadena de llamadas cross-file."
+      },
+      {
+        "name": "TraceCrossFileResponse",
+        "kind": "class",
+        "lineno": 419,
+        "parent": null,
+        "docstring": "Response con trace cross-file."
+      },
+      {
+        "name": "analyze_cross_file",
+        "kind": "function",
+        "lineno": 429,
+        "parent": null,
+        "docstring": "Analiza call graph con resoluci\u00f3n de imports (Stage 2).\n\n**Caracter\u00edsticas Stage 2:**\n- Sigue imports entre archivos\n- Resuelve llamadas a funciones importadas\n- Detecta entry points del proyecto\n- Cachea resultados por archivo\n\n**Formato de nombres:**\n- Nombres cualificados: `path/to/file.py::function_name`\n- M\u00e9todos de clase: `path/to/file.py::ClassName.method_name`\n\n**Ejemplo:**\n```\n{\n  \"call_graph\": {\n    \"server.py::create_app\": [\n      \"settings.py::load_settings\",\n      \"state.py::AppState\"\n    ]\n  }\n}\n```"
+      },
+      {
+        "name": "trace_cross_file",
+        "kind": "function",
+        "lineno": 511,
+        "parent": null,
+        "docstring": "Traza cadena de llamadas cross-file (Stage 2).\n\n**Caracter\u00edsticas:**\n- Sigue llamadas entre archivos diferentes\n- Muestra path completo de ejecuci\u00f3n\n- Detecta ciclos\n\n**Input:**\n- `start_function`: Nombre cualificado `\"path/file.py::function\"`\n- `max_depth`: Profundidad m\u00e1xima a trazar\n\n**Ejemplo:**\n```\nPOST /tracer/trace-cross-file\n{\n  \"start_function\": \"code_map/server.py::create_app\",\n  \"max_depth\": 10\n}\n```"
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/ast_utils.py",
     "relative": true,
     "modified_at": "2025-11-07T15:46:43.448491+00:00",
@@ -1115,6 +1235,91 @@
         "lineno": 130,
         "parent": "SnapshotStore",
         "docstring": "Deserializa un diccionario a un objeto AnalysisError."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/call_tracer_v2.py",
+    "relative": true,
+    "modified_at": "2025-11-09T07:00:03.771911+00:00",
+    "symbols": [
+      {
+        "name": "CrossFileCallGraphExtractor",
+        "kind": "class",
+        "lineno": 30,
+        "parent": null,
+        "docstring": "Extractor de call graphs con an\u00e1lisis cross-file.\n\nCaracter\u00edsticas Stage 2:\n- Sigue imports entre archivos\n- Resuelve llamadas a funciones importadas\n- Cachea resultados por archivo\n- Detecta m\u00e9todos de clase\n\nExample:\n    >>> extractor = CrossFileCallGraphExtractor(project_root=Path(\"/project\"))\n    >>> graph = extractor.analyze_project(entry_point=\"main.py\")\n    >>> print(graph)\n    {\n        'main.py::main': ['utils.py::helper', 'process.py::run'],\n        'utils.py::helper': ['config.py::load_config']\n    }"
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 50,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Inicializa el extractor cross-file.\n\nArgs:\n    project_root: Ra\u00edz del proyecto\n    use_cache: Si True, cachea resultados por archivo"
+      },
+      {
+        "name": "_get_file_hash",
+        "kind": "method",
+        "lineno": 84,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Calcula hash MD5 del contenido del archivo para cache."
+      },
+      {
+        "name": "_get_qualified_name",
+        "kind": "method",
+        "lineno": 89,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Genera nombre cualificado para una funci\u00f3n.\n\nArgs:\n    filepath: Path del archivo\n    function_name: Nombre de la funci\u00f3n\n\nReturns:\n    Nombre cualificado: \"relative/path/file.py::function_name\""
+      },
+      {
+        "name": "analyze_file",
+        "kind": "method",
+        "lineno": 107,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Analiza un archivo y opcionalmente sus dependencias.\n\nArgs:\n    filepath: Archivo a analizar\n    recursive: Si True, analiza tambi\u00e9n archivos importados\n\nReturns:\n    Call graph local del archivo"
+      },
+      {
+        "name": "_extract_functions_and_calls",
+        "kind": "method",
+        "lineno": 225,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Extrae funciones y llamadas del AST.\n\nArgs:\n    node: Nodo actual\n    source: C\u00f3digo fuente\n    filepath: Archivo siendo analizado\n    local_graph: Grafo local a llenar\n    current_func: Funci\u00f3n actual (contexto)\n    current_class: Clase actual (contexto)"
+      },
+      {
+        "name": "_extract_callee_name",
+        "kind": "method",
+        "lineno": 326,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Extrae nombre de funci\u00f3n llamada.\n\nManeja:\n- foo() \u2192 (\"foo\", False, None)\n- obj.method() \u2192 (\"method\", False, None)\n- self.helper() \u2192 (\"helper\", False, None)\n- module.func() \u2192 (\"module\", False, None) para imports\n- self.middleware.apiMethod() \u2192 (\"apiMethod\", True, \"middleware\")\n\nReturns:\n    Tuple of (callee_name, is_instance_method, instance_attr_name)"
+      },
+      {
+        "name": "_get_node_text",
+        "kind": "method",
+        "lineno": 389,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Extrae texto de un nodo."
+      },
+      {
+        "name": "trace_chain_cross_file",
+        "kind": "method",
+        "lineno": 393,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Traza cadena de llamadas cross-file.\n\nArgs:\n    start_function: Nombre cualificado (\"file.py::function\")\n    max_depth: Profundidad m\u00e1xima\n\nReturns:\n    Lista de (depth, qualified_name, callees)"
+      },
+      {
+        "name": "find_entry_points",
+        "kind": "method",
+        "lineno": 425,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Encuentra funciones que no son llamadas por nadie (entry points).\n\nReturns:\n    Lista de nombres cualificados de entry points"
+      },
+      {
+        "name": "export_to_dict",
+        "kind": "method",
+        "lineno": 439,
+        "parent": "CrossFileCallGraphExtractor",
+        "docstring": "Exporta el call graph a un diccionario serializable.\n\nReturns:\n    Dict con estructura del call graph"
       }
     ],
     "errors": []
@@ -1561,6 +1766,70 @@
         "lineno": 28,
         "parent": "HtmlAnalyzer",
         "docstring": "Analiza un archivo HTML y devuelve los elementos relevantes.\n\nArgs:\n    path: Ruta del archivo HTML a procesar.\n\nReturns:\n    Un resumen con los elementos detectados (ids y custom elements)."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/import_resolver.py",
+    "relative": true,
+    "modified_at": "2025-11-09T07:46:36.688922+00:00",
+    "symbols": [
+      {
+        "name": "ImportResolver",
+        "kind": "class",
+        "lineno": 20,
+        "parent": null,
+        "docstring": "Resuelve imports de Python para an\u00e1lisis cross-file.\n\nExample:\n    >>> resolver = ImportResolver(project_root=Path(\"/project\"))\n    >>> imports = resolver.extract_imports(\"module.py\")\n    >>> resolved = resolver.resolve_import(\"from utils import helper\", \"module.py\")\n    >>> print(resolved)  # Path(\"/project/utils.py\"), \"helper\""
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 31,
+        "parent": "ImportResolver",
+        "docstring": "Inicializa el resolver con el directorio ra\u00edz del proyecto.\n\nArgs:\n    project_root: Ruta al directorio ra\u00edz del proyecto"
+      },
+      {
+        "name": "extract_imports",
+        "kind": "method",
+        "lineno": 41,
+        "parent": "ImportResolver",
+        "docstring": "Extrae todos los imports de un archivo Python.\n\nArgs:\n    filepath: Ruta al archivo Python\n\nReturns:\n    Lista de tuplas (module, name, import_type):\n    - (\"utils\", None, \"import\") para `import utils`\n    - (\"utils\", \"helper\", \"from\") para `from utils import helper`\n    - (\".\", \"helper\", \"from\") para `from . import helper`\n\nExample:\n    >>> resolver.extract_imports(\"my_module.py\")\n    [(\"os\", None, \"import\"),\n     (\"pathlib\", \"Path\", \"from\"),\n     (\".utils\", \"helper\", \"from\")]"
+      },
+      {
+        "name": "resolve_import",
+        "kind": "method",
+        "lineno": 93,
+        "parent": "ImportResolver",
+        "docstring": "Resuelve un import a su archivo real y nombre de s\u00edmbolo.\n\nArgs:\n    module: Nombre del m\u00f3dulo (\"utils\", \".helpers\", \"..parent\")\n    name: Nombre espec\u00edfico importado (None si es `import module`)\n    source_file: Archivo desde donde se hace el import\n\nReturns:\n    Tupla (archivo_resuelto, nombre_simbolo) o None si no se puede resolver\n\nExample:\n    >>> resolver.resolve_import(\"utils\", \"helper\", Path(\"src/module.py\"))\n    (Path(\"src/utils.py\"), \"helper\")\n\n    >>> resolver.resolve_import(\".helpers\", \"func\", Path(\"src/module.py\"))\n    (Path(\"src/helpers.py\"), \"func\")"
+      },
+      {
+        "name": "_resolve_absolute",
+        "kind": "method",
+        "lineno": 127,
+        "parent": "ImportResolver",
+        "docstring": "Resuelve import absoluto.\n\nExample:\n    import utils \u2192 utils.py\n    from utils import helper \u2192 utils.py, helper\n    from utils.helpers import func \u2192 utils/helpers.py, func"
+      },
+      {
+        "name": "_resolve_relative",
+        "kind": "method",
+        "lineno": 169,
+        "parent": "ImportResolver",
+        "docstring": "Resuelve import relativo.\n\nExample:\n    from . import helper \u2192 ./helper.py\n    from .utils import func \u2192 ./utils.py, func\n    from ..parent import x \u2192 ../parent.py, x"
+      },
+      {
+        "name": "build_import_map",
+        "kind": "method",
+        "lineno": 224,
+        "parent": "ImportResolver",
+        "docstring": "Construye un mapa de todos los imports del archivo a sus resoluciones.\n\nArgs:\n    filepath: Archivo a analizar\n\nReturns:\n    Dict de {nombre_local: (archivo_real, nombre_en_archivo)}\n\nExample:\n    >>> resolver.build_import_map(Path(\"src/module.py\"))\n    {\n        \"helper\": (Path(\"src/utils.py\"), \"helper\"),\n        \"Path\": (Path(\"pathlib.py\"), \"Path\"),  # externo\n        \"utils\": (Path(\"src/utils.py\"), None)\n    }"
+      },
+      {
+        "name": "get_all_python_files",
+        "kind": "method",
+        "lineno": 266,
+        "parent": "ImportResolver",
+        "docstring": "Obtiene todos los archivos Python del proyecto.\n\nReturns:\n    Lista de paths a archivos .py"
       }
     ],
     "errors": []
@@ -3790,7 +4059,7 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455026+00:00",
+    "modified_at": "2025-11-09T05:03:24.690090+00:00",
     "symbols": [
       {
         "name": "App",
@@ -4124,7 +4393,7 @@
   {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-11-08T07:14:05.136740+00:00",
+    "modified_at": "2025-11-08T08:44:12.315338+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -4136,56 +4405,56 @@
       {
         "name": "handleKeyDown",
         "kind": "function",
-        "lineno": 242,
+        "lineno": 243,
         "parent": null,
         "docstring": null
       },
       {
         "name": "graphvizFormToPayload",
         "kind": "function",
-        "lineno": 970,
+        "lineno": 999,
         "parent": null,
         "docstring": null
       },
       {
         "name": "toNumber",
         "kind": "function",
-        "lineno": 1012,
+        "lineno": 1041,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClassDetailsPanel",
         "kind": "function",
-        "lineno": 1025,
+        "lineno": 1054,
         "parent": null,
         "docstring": null
       },
       {
         "name": "clamp",
         "kind": "function",
-        "lineno": 1131,
+        "lineno": 1160,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleClick",
         "kind": "function",
-        "lineno": 1263,
+        "lineno": 1292,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handler",
         "kind": "function",
-        "lineno": 1327,
+        "lineno": 1356,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parseSvgDimension",
         "kind": "function",
-        "lineno": 1434,
+        "lineno": 1463,
         "parent": null,
         "docstring": null
       }
@@ -4210,19 +4479,19 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T05:23:18.210647+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
         "kind": "function",
-        "lineno": 20,
+        "lineno": 21,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatDocstring",
         "kind": "function",
-        "lineno": 206,
+        "lineno": 315,
         "parent": null,
         "docstring": null
       }
@@ -4232,7 +4501,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T05:03:44.241175+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -4247,7 +4516,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T08:04:36.259422+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -4454,12 +4723,40 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.455386+00:00",
+    "modified_at": "2025-11-09T06:15:51.111221+00:00",
     "symbols": [
+      {
+        "name": "getFileExtension",
+        "kind": "function",
+        "lineno": 14,
+        "parent": null,
+        "docstring": "Funci\u00f3n para detectar el tipo de archivo por extensi\u00f3n"
+      },
+      {
+        "name": "highlightPython",
+        "kind": "function",
+        "lineno": 20,
+        "parent": null,
+        "docstring": "Syntax highlighter simple para Python"
+      },
+      {
+        "name": "isInDocstring",
+        "kind": "function",
+        "lineno": 34,
+        "parent": null,
+        "docstring": "Funci\u00f3n auxiliar para verificar si una posici\u00f3n est\u00e1 dentro de un docstring"
+      },
+      {
+        "name": "highlightTypeScript",
+        "kind": "function",
+        "lineno": 139,
+        "parent": null,
+        "docstring": "Syntax highlighter simple para TypeScript/JavaScript"
+      },
       {
         "name": "PreviewPane",
         "kind": "function",
-        "lineno": 13,
+        "lineno": 183,
         "parent": null,
         "docstring": null
       }
@@ -4726,6 +5023,21 @@
         "name": "CapabilitySummary",
         "kind": "function",
         "lineno": 82,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/TraceModal.tsx",
+    "relative": true,
+    "modified_at": "2025-11-09T05:02:15.586787+00:00",
+    "symbols": [
+      {
+        "name": "TraceModal",
+        "kind": "function",
+        "lineno": 23,
         "parent": null,
         "docstring": null
       }
@@ -5162,7 +5474,7 @@
   {
     "path": "frontend/vite.config.ts",
     "relative": true,
-    "modified_at": "2025-11-07T15:46:43.457713+00:00",
+    "modified_at": "2025-11-09T04:41:23.931111+00:00",
     "symbols": [],
     "errors": []
   },
@@ -6284,6 +6596,93 @@
         "lineno": 63,
         "parent": null,
         "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "tracerTesting/driverExample.py",
+    "relative": true,
+    "modified_at": "2025-11-09T06:53:28.243103+00:00",
+    "symbols": [
+      {
+        "name": "driverExampleClass",
+        "kind": "class",
+        "lineno": 3,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 5,
+        "parent": "driverExampleClass",
+        "docstring": null
+      },
+      {
+        "name": "driverMethod",
+        "kind": "method",
+        "lineno": 8,
+        "parent": "driverExampleClass",
+        "docstring": "Logs an informational message indicating that the driverMethod has been called.\n\nThis method is intended for tracing or debugging purposes to confirm invocation."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "tracerTesting/endpointExample.py",
+    "relative": true,
+    "modified_at": "2025-11-09T06:53:30.928945+00:00",
+    "symbols": [
+      {
+        "name": "endpointExampleClass",
+        "kind": "class",
+        "lineno": 4,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 6,
+        "parent": "endpointExampleClass",
+        "docstring": null
+      },
+      {
+        "name": "endpointMethod",
+        "kind": "method",
+        "lineno": 9,
+        "parent": "endpointExampleClass",
+        "docstring": "Executes the endpoint logic by logging messages before and after calling the apiDriveMethod.\n\nThis method logs an informational message indicating it is about to call the middleware's\napiDriveMethod, invokes that method, and then logs another message after the call.\n\nReturns:\n    None"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "tracerTesting/middlewareExample.py",
+    "relative": true,
+    "modified_at": "2025-11-09T06:53:24.423894+00:00",
+    "symbols": [
+      {
+        "name": "middlewareAPI",
+        "kind": "class",
+        "lineno": 4,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 6,
+        "parent": "middlewareAPI",
+        "docstring": null
+      },
+      {
+        "name": "apiDriveMethod",
+        "kind": "method",
+        "lineno": 9,
+        "parent": "middlewareAPI",
+        "docstring": "Calls the driverMethod of the associated driver object, logging messages before and after the call.\n\nThis method is intended to act as middleware, providing logging around the invocation of driverMethod\nfor debugging or tracing purposes."
       }
     ],
     "errors": []

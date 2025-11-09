@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
+        "/tracer": {
+          target: apiTarget,
+          changeOrigin: true,
+        },
       },
     },
     build: {
