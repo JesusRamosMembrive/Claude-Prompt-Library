@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { getFileSummary } from "../api/client";
@@ -6,6 +6,7 @@ import { queryKeys } from "../api/queryKeys";
 import type { SymbolInfo } from "../api/types";
 import { useSelectionStore } from "../state/useSelectionStore";
 import { PreviewPane } from "./PreviewPane";
+import { TraceModal } from "./TraceModal";
 
 interface ClassWithMethods {
   symbol: SymbolInfo;
@@ -19,6 +20,7 @@ interface GroupedSymbols {
 
 export function DetailPanel(): JSX.Element {
   const selectedPath = useSelectionStore((state) => state.selectedPath);
+  const [traceTarget, setTraceTarget] = useState<string | null>(null);
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.file(selectedPath ?? ""),
@@ -148,14 +150,34 @@ export function DetailPanel(): JSX.Element {
           <ul className="symbol-methods">
             {methods.map((method) => (
               <li key={method.name}>
-                <span>
-                  {method.parent}.{method.name} (line {method.lineno})
-                </span>
-                {method.docstring && (
-                  <span className="symbol-method-doc">
-                    {formatDocstring(method.docstring)}
-                  </span>
-                )}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                  <div style={{ flex: 1 }}>
+                    <span>
+                      {method.parent}.{method.name} (line {method.lineno})
+                    </span>
+                    {method.docstring && (
+                      <span className="symbol-method-doc">
+                        {formatDocstring(method.docstring)}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setTraceTarget(`${selectedPath}::${method.parent}.${method.name}`)}
+                    style={{
+                      padding: "2px 8px",
+                      fontSize: "11px",
+                      background: "#5b9bd5",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "3px",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                    title="Trace method calls"
+                  >
+                    Trace
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -165,7 +187,24 @@ export function DetailPanel(): JSX.Element {
       {grouped.functions.map((fn) => (
         <article key={fn.name} className="symbol-card">
           <div className="symbol-title">
-            {fn.name}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+              {fn.name}
+              <button
+                onClick={() => setTraceTarget(`${selectedPath}::${fn.name}`)}
+                style={{
+                  padding: "2px 8px",
+                  fontSize: "11px",
+                  background: "#5b9bd5",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Trace function calls"
+              >
+                Trace
+              </button>
+            </div>
             <span className="symbol-meta">
               <span>line {fn.lineno}</span>
               <span>function</span>
@@ -196,6 +235,13 @@ export function DetailPanel(): JSX.Element {
           <h3 className="preview-title">Preview</h3>
           <PreviewPane path={selectedPath} />
         </div>
+      )}
+
+      {traceTarget && (
+        <TraceModal
+          qualifiedName={traceTarget}
+          onClose={() => setTraceTarget(null)}
+        />
       )}
     </section>
   );
