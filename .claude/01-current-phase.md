@@ -588,8 +588,159 @@ curl -X POST 'http://127.0.0.1:8000/tracer/analyze-cross-file' \
 
 ---
 
+## Session 6: Stage 2 Frontend Implementation ✅
+
+**Fecha:** 2025-11-09
+
+### Objetivo
+
+Extender la UI del Call Tracer para soportar ambos modos: Stage 1 (single-file) y Stage 2 (cross-file), con toggle para cambiar entre ellos.
+
+### Implementado
+
+1. ✅ **Mode Toggle UI**
+   - Botones para cambiar entre "Stage 1: Single-File" y "Stage 2: Cross-File"
+   - Stage 2 configuración:
+     - Checkbox "Recursive (follow imports)"
+     - Input "Max files" (1-200)
+   - Estado por defecto: Stage 2 (cross-file)
+
+2. ✅ **Stage 2 API Integration**
+   - `CrossFileCallGraphResponse` interface
+   - `TraceCrossFileResponse` interface
+   - Query hooks para `/tracer/analyze-cross-file`
+   - Query hooks para `/tracer/trace-cross-file`
+   - Manejo de errores y loading states
+
+3. ✅ **Enhanced Results Display**
+   - **Analyze Tab (Stage 2):**
+     - Métricas: total functions, files analyzed, entry points
+     - Entry Points section destacada (amarillo)
+     - Call graph con nombres cualificados (`file.py::function`)
+     - Analyzed files list (collapsible)
+   - **Trace Tab (Stage 2):**
+     - Total depth y functions traced
+     - File path indicator por función (📁 icon)
+     - Qualified names format
+     - Truncated callees list (primeros 5 + count)
+
+4. ✅ **Dynamic Placeholders & Help**
+   - Placeholder para función cambia según modo:
+     - Stage 1: "Function name (e.g., create_app)"
+     - Stage 2: "Qualified name (e.g., code_map/server.py::create_app)"
+   - Sección de limitations/capabilities actualizada dinámicamente:
+     - Stage 1: Lista de limitaciones
+     - Stage 2: Lista de capacidades ✅ + limitaciones conocidas
+
+### Código Actualizado
+
+**[frontend/src/components/CallTracerView.tsx](frontend/src/components/CallTracerView.tsx):**
+- +441 líneas, -97 líneas modificadas
+- **New state:**
+  - `analysisMode`: "single-file" | "cross-file"
+  - `recursive`: boolean (default true)
+  - `maxFiles`: number (default 50)
+- **New interfaces:**
+  - `CrossFileCallGraphResponse`
+  - `CrossFileCallChain`
+  - `TraceCrossFileResponse`
+- **New queries:**
+  - `crossFileGraphData` (analyze-cross-file)
+  - `crossFileTraceData` (trace-cross-file)
+- **Enhanced handlers:**
+  - `handleAnalyze()` - Redirige según modo
+  - `handleTrace()` - Redirige según modo
+- **Conditional rendering:**
+  - Analyze tab: Stage 1 vs Stage 2 display
+  - Trace tab: Stage 1 vs Stage 2 display
+  - Footer: Limitations vs Capabilities
+
+### Arquitectura UI
+
+```
+CallTracerView
+├── Mode Toggle Section (Stage 1/2 buttons + Stage 2 config)
+├── Input Section (file path, function, max depth)
+│   └── Dynamic placeholder based on analysisMode
+├── Results Section
+│   ├── Analyze Tab
+│   │   ├── Stage 1: Simple call graph
+│   │   └── Stage 2: Entry points + Cross-file graph + Files list
+│   └── Trace Tab
+│       ├── Stage 1: Call chain with depth
+│       └── Stage 2: Cross-file chain with file paths
+└── Footer
+    ├── Stage 1: Limitations list
+    └── Stage 2: Capabilities ✅ + Known limitations
+```
+
+### Testing
+
+Backend está ejecutando correctamente:
+```bash
+$ curl -X POST http://127.0.0.1:8000/tracer/analyze-cross-file \
+  -H "Content-Type: application/json" \
+  -d '{"file_path":"assess_stage.py","recursive":true,"max_files":50}'
+
+✅ Response: 200 OK
+{
+  "call_graph": {...},
+  "entry_points": [...],
+  "total_functions": 15,
+  "analyzed_files": ["assess_stage.py", "stage_config.py"]
+}
+```
+
+Frontend updates son hot-reloaded (Vite dev mode). UI ahora permite:
+- Toggle entre Stage 1 y Stage 2
+- Analizar con cross-file resolution
+- Ver entry points detectados
+- Trace con qualified names
+- Ver file paths en cada función
+
+### Comparación Visual
+
+**Stage 1 UI:**
+```
+create_app()
+  → configure_routes()
+  → include_router()
+```
+
+**Stage 2 UI:**
+```
+Entry Points:
+  • code_map/server.py::create_app
+
+code_map/server.py::create_app
+  → code_map/settings.py::load_settings
+    📁 code_map/settings.py
+  → code_map/state.py::AppState
+    📁 code_map/state.py
+```
+
+### Commits
+
+- `2dfb370` - "feat: Add Stage 2 cross-file UI support to Call Tracer"
+  - +441 insertions, -97 deletions
+  - Full Stage 1/2 toggle support
+  - Entry points display
+  - Cross-file visualization
+  - Dynamic help text
+
+### Próximos Pasos Potenciales
+
+**Solo si el usuario lo solicita:**
+- Stage 3 visual graph rendering (D3.js, ReactFlow)
+- Export functionality (DOT, Mermaid, JSON)
+- Click-to-navigate en qualified names
+- Minimap para proyectos grandes
+- Performance optimizations para proyectos >500 archivos
+
+---
+
 **Last updated:** 2025-11-09
-**Next review:** Integración con frontend para visualización
+**Next review:** Testing completo de UI en browser, feedback del usuario
 
 ## 🎯 Detected Stage: Stage 3 (High Confidence)
 
