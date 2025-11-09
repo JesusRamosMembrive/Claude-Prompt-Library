@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ..call_tracer import CallGraphExtractor, TREE_SITTER_AVAILABLE
+from ..call_tracer_v2 import CrossFileCallGraphExtractor
 from ..state import AppState
 from .deps import get_app_state
 
@@ -256,3 +257,275 @@ async def get_all_chains(
         chains=chains,
         total_chains=len(chains),
     )
+
+
+# ==================== Stage 2: Cross-File Analysis ====================
+
+
+class AnalyzeCrossFileRequest(BaseModel):
+    """Request para análisis cross-file (Stage 2)."""
+
+    file_path: str = Field(
+        ...,
+        description="Archivo de inicio para análisis cross-file",
+        examples=["code_map/server.py"],
+    )
+    recursive: bool = Field(
+        True,
+        description="Si True, analiza también archivos importados",
+    )
+    max_files: int = Field(
+        50,
+        description="Máximo número de archivos a analizar",
+        ge=1,
+        le=200,
+    )
+
+
+class CrossFileCallGraphResponse(BaseModel):
+    """Response con call graph cross-file."""
+
+    call_graph: Dict[str, List[str]] = Field(
+        ...,
+        description="Call graph con nombres cualificados (file.py::function)",
+        examples=[{
+            "server.py::create_app": ["settings.py::load_settings", "state.py::AppState"],
+            "settings.py::load_settings": []
+        }],
+    )
+    entry_points: List[str] = Field(
+        ...,
+        description="Funciones que no son llamadas por nadie",
+    )
+    total_functions: int = Field(
+        ...,
+        description="Total de funciones analizadas",
+    )
+    analyzed_files: List[str] = Field(
+        ...,
+        description="Lista de archivos analizados",
+    )
+
+
+class TraceCrossFileRequest(BaseModel):
+    """Request para trace cross-file."""
+
+    start_function: str = Field(
+        ...,
+        description="Nombre cualificado de inicio (file.py::function)",
+        examples=["code_map/server.py::create_app"],
+    )
+    max_depth: int = Field(
+        10,
+        description="Profundidad máxima",
+        ge=1,
+        le=50,
+    )
+
+
+class CrossFileCallChain(BaseModel):
+    """Cadena de llamadas cross-file."""
+
+    depth: int = Field(..., description="Nivel de profundidad")
+    qualified_name: str = Field(..., description="Nombre cualificado (file::function)")
+    callees: List[str] = Field(..., description="Funciones llamadas (cualificadas)")
+    file_path: str = Field(..., description="Archivo donde está la función")
+    function_name: str = Field(..., description="Nombre de la función sin cualificación")
+
+
+class TraceCrossFileResponse(BaseModel):
+    """Response con trace cross-file."""
+
+    start_function: str = Field(..., description="Función de inicio")
+    chain: List[CrossFileCallChain] = Field(..., description="Cadena completa")
+    max_depth_reached: bool = Field(..., description="Si alcanzó el límite")
+    total_depth: int = Field(..., description="Profundidad total alcanzada")
+
+
+@router.post("/analyze-cross-file", response_model=CrossFileCallGraphResponse)
+async def analyze_cross_file(
+    request: AnalyzeCrossFileRequest,
+    state: AppState = Depends(get_app_state),
+) -> CrossFileCallGraphResponse:
+    """
+    Analiza call graph con resolución de imports (Stage 2).
+
+    **Características Stage 2:**
+    - Sigue imports entre archivos
+    - Resuelve llamadas a funciones importadas
+    - Detecta entry points del proyecto
+    - Cachea resultados por archivo
+
+    **Formato de nombres:**
+    - Nombres cualificados: `path/to/file.py::function_name`
+    - Métodos de clase: `path/to/file.py::ClassName.method_name`
+
+    **Ejemplo:**
+    ```
+    {
+      "call_graph": {
+        "server.py::create_app": [
+          "settings.py::load_settings",
+          "state.py::AppState"
+        ]
+      }
+    }
+    ```
+    """
+    if not TREE_SITTER_AVAILABLE:
+        raise HTTPException(
+            status_code=500,
+            detail="tree-sitter no disponible",
+        )
+
+    # Resolver ruta
+    try:
+        target_path = state.resolve_path(request.file_path)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    # Verificar que sea Python
+    if target_path.suffix != ".py":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Solo archivos Python (.py). Recibido: {target_path.suffix}",
+        )
+
+    # Analizar cross-file
+    try:
+        extractor = CrossFileCallGraphExtractor(
+            project_root=state.settings.root_path,
+            use_cache=True
+        )
+
+        extractor.analyze_file(target_path, recursive=request.recursive)
+
+        # Limitar archivos analizados
+        if len(extractor.analyzed_files) > request.max_files:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Demasiados archivos ({len(extractor.analyzed_files)}). "
+                       f"Límite: {request.max_files}. Usa recursive=False o aumenta max_files."
+            )
+
+        result = extractor.export_to_dict()
+
+        return CrossFileCallGraphResponse(
+            call_graph=result["call_graph"],
+            entry_points=result["entry_points"],
+            total_functions=result["total_functions"],
+            analyzed_files=result["analyzed_files"],
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error en análisis cross-file: {exc}"
+        ) from exc
+
+
+@router.post("/trace-cross-file", response_model=TraceCrossFileResponse)
+async def trace_cross_file(
+    request: TraceCrossFileRequest,
+    state: AppState = Depends(get_app_state),
+) -> TraceCrossFileResponse:
+    """
+    Traza cadena de llamadas cross-file (Stage 2).
+
+    **Características:**
+    - Sigue llamadas entre archivos diferentes
+    - Muestra path completo de ejecución
+    - Detecta ciclos
+
+    **Input:**
+    - `start_function`: Nombre cualificado `"path/file.py::function"`
+    - `max_depth`: Profundidad máxima a trazar
+
+    **Ejemplo:**
+    ```
+    POST /tracer/trace-cross-file
+    {
+      "start_function": "code_map/server.py::create_app",
+      "max_depth": 10
+    }
+    ```
+    """
+    if not TREE_SITTER_AVAILABLE:
+        raise HTTPException(status_code=500, detail="tree-sitter no disponible")
+
+    try:
+        # Parsear el nombre cualificado
+        if "::" not in request.start_function:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Formato inválido. Use 'file.py::function'. Recibido: {request.start_function}"
+            )
+
+        file_part, func_part = request.start_function.rsplit("::", 1)
+        target_path = state.settings.root_path / file_part
+
+        if not target_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Archivo no encontrado: {file_part}"
+            )
+
+        # Analizar proyecto desde ese archivo
+        extractor = CrossFileCallGraphExtractor(
+            project_root=state.settings.root_path,
+            use_cache=True
+        )
+
+        extractor.analyze_file(target_path, recursive=True)
+
+        # Verificar que la función existe
+        if request.start_function not in extractor.call_graph:
+            available = ", ".join(list(extractor.call_graph.keys())[:10])
+            raise HTTPException(
+                status_code=404,
+                detail=f"Función '{request.start_function}' no encontrada. "
+                       f"Disponibles: {available}..."
+            )
+
+        # Trazar cadena
+        chain_data = extractor.trace_chain_cross_file(
+            request.start_function,
+            max_depth=request.max_depth
+        )
+
+        # Convertir a modelo Pydantic
+        chain = []
+        for depth, qualified_name, callees in chain_data:
+            # Parsear nombre cualificado
+            if "::" in qualified_name:
+                file_str, func_str = qualified_name.rsplit("::", 1)
+            else:
+                file_str, func_str = "unknown", qualified_name
+
+            chain.append(
+                CrossFileCallChain(
+                    depth=depth,
+                    qualified_name=qualified_name,
+                    callees=callees,
+                    file_path=file_str,
+                    function_name=func_str,
+                )
+            )
+
+        max_depth_reached = any(item.depth >= request.max_depth for item in chain)
+        total_depth = max(item.depth for item in chain) if chain else 0
+
+        return TraceCrossFileResponse(
+            start_function=request.start_function,
+            chain=chain,
+            max_depth_reached=max_depth_reached,
+            total_depth=total_depth,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al trazar cross-file: {exc}"
+        ) from exc
