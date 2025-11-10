@@ -20,6 +20,7 @@ ENV_ROOT_PATH = "CODE_MAP_ROOT"
 ENV_INCLUDE_DOCSTRINGS = "CODE_MAP_INCLUDE_DOCSTRINGS"
 ENV_DB_PATH = "CODE_MAP_DB_PATH"
 ENV_DISABLE_LINTERS = "CODE_MAP_DISABLE_LINTERS"
+ENV_CACHE_DIR = "CODE_MAP_CACHE_DIR"
 SETTINGS_VERSION = 2
 DB_FILENAME = "state.db"
 
@@ -51,6 +52,7 @@ class AppSettings:
     ollama_insights_model: Optional[str] = None
     ollama_insights_frequency_minutes: Optional[int] = None
     ollama_insights_focus: Optional[str] = "general"
+    backend_url: Optional[str] = None
 
     def to_payload(self) -> dict:
         """Convierte la configuración a un diccionario serializable."""
@@ -62,6 +64,7 @@ class AppSettings:
             "ollama_insights_model": self.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.ollama_insights_frequency_minutes,
             "ollama_insights_focus": self.ollama_insights_focus or "general",
+            "backend_url": self.backend_url,
             "version": SETTINGS_VERSION,
         }
 
@@ -75,6 +78,7 @@ class AppSettings:
         ollama_insights_model: Optional[str] = None,
         ollama_insights_frequency_minutes: Optional[int] = None,
         ollama_insights_focus: Optional[str] = None,
+        backend_url: Optional[str] = None,
     ) -> "AppSettings":
         """Crea una nueva instancia de AppSettings con actualizaciones."""
 
@@ -119,6 +123,11 @@ class AppSettings:
                 else self.ollama_insights_frequency_minutes
             ),
             ollama_insights_focus=_normalize_focus(ollama_insights_focus),
+            backend_url=(
+                backend_url.strip()
+                if isinstance(backend_url, str) and backend_url.strip()
+                else (self.backend_url if backend_url is None else None)
+            ),
         )
 
 
@@ -258,6 +267,10 @@ def _ensure_db_schema(connection: sqlite3.Connection) -> None:
         "ollama_insights_focus",
         "ALTER TABLE app_settings ADD COLUMN ollama_insights_focus TEXT",
     )
+    _ensure_column(
+        "backend_url",
+        "ALTER TABLE app_settings ADD COLUMN backend_url TEXT",
+    )
 
     connection.commit()
 
@@ -281,7 +294,8 @@ def _load_settings_from_db(
                     ollama_insights_enabled,
                     ollama_insights_model,
                     ollama_insights_frequency_minutes,
-                    ollama_insights_focus
+                    ollama_insights_focus,
+                    backend_url
                 FROM app_settings WHERE id = 1
                 """
             )
@@ -350,6 +364,17 @@ def _load_settings_from_db(
             model_value = None
             freq_value = None
             focus_value = "general"
+
+        # Load backend_url if available
+        backend_url_value = None
+        if insights_supported and "backend_url" in row.keys():
+            backend_url_raw = row["backend_url"]
+            backend_url_value = (
+                backend_url_raw.strip()
+                if isinstance(backend_url_raw, str) and backend_url_raw.strip()
+                else None
+            )
+
         effective_root = stored_root if stored_root.exists() else default_root
 
         return AppSettings(
@@ -360,6 +385,7 @@ def _load_settings_from_db(
             ollama_insights_model=model_value,
             ollama_insights_frequency_minutes=freq_value,
             ollama_insights_focus=focus_value,
+            backend_url=backend_url_value,
         )
 
 
@@ -397,14 +423,57 @@ def _save_settings_to_db(db_path: Path, settings: AppSettings) -> None:
             "ollama_insights_focus",
             "ALTER TABLE app_settings ADD COLUMN ollama_insights_focus TEXT",
         )
+        has_backend_url_column = ensure_column(
+            "backend_url",
+            "ALTER TABLE app_settings ADD COLUMN backend_url TEXT",
+        )
         can_persist_insights = (
             has_insights_column
             and has_model_column
             and has_frequency_column
             and has_focus_column
         )
+        can_persist_backend_url = has_backend_url_column
 
-        if can_persist_insights:
+        if can_persist_insights and can_persist_backend_url:
+            connection.execute(
+                """
+                INSERT INTO app_settings (
+                    id,
+                    root_path,
+                    exclude_dirs,
+                    include_docstrings,
+                    ollama_insights_enabled,
+                    ollama_insights_model,
+                    ollama_insights_frequency_minutes,
+                    ollama_insights_focus,
+                    backend_url,
+                    updated_at
+                )
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+                ON CONFLICT(id) DO UPDATE SET
+                    root_path = excluded.root_path,
+                    exclude_dirs = excluded.exclude_dirs,
+                    include_docstrings = excluded.include_docstrings,
+                    ollama_insights_enabled = excluded.ollama_insights_enabled,
+                    ollama_insights_model = excluded.ollama_insights_model,
+                    ollama_insights_frequency_minutes = excluded.ollama_insights_frequency_minutes,
+                    ollama_insights_focus = excluded.ollama_insights_focus,
+                    backend_url = excluded.backend_url,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    str(settings.root_path),
+                    json.dumps(list(settings.exclude_dirs)),
+                    1 if settings.include_docstrings else 0,
+                    1 if settings.ollama_insights_enabled else 0,
+                    settings.ollama_insights_model,
+                    settings.ollama_insights_frequency_minutes,
+                    settings.ollama_insights_focus,
+                    settings.backend_url,
+                ),
+            )
+        elif can_persist_insights:
             connection.execute(
                 """
                 INSERT INTO app_settings (

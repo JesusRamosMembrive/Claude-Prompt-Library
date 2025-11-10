@@ -16,6 +16,8 @@ from ..state import AppState
 from .deps import get_app_state
 from .schemas import (
     BrowseDirectoryResponse,
+    ListDirectoriesResponse,
+    DirectoryItem,
     SettingsResponse,
     SettingsUpdateRequest,
     SettingsUpdateResponse,
@@ -58,6 +60,11 @@ async def update_settings(
     if payload.ollama_insights_focus is not None:
         focus_value = payload.ollama_insights_focus.strip()
 
+    backend_url_value: Optional[str] = None
+    if payload.backend_url is not None:
+        trimmed_url = payload.backend_url.strip()
+        backend_url_value = trimmed_url or None
+
     try:
         updated = await state.update_settings(
             root_path=root_path,
@@ -67,6 +74,7 @@ async def update_settings(
             ollama_insights_model=model_value,
             ollama_insights_frequency_minutes=frequency_value,
             ollama_insights_focus=focus_value,
+            backend_url=backend_url_value,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -111,3 +119,71 @@ async def browse_directory(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return BrowseDirectoryResponse(path=path)
+
+
+@router.get("/settings/list-directories", response_model=ListDirectoriesResponse)
+async def list_directories(
+    path: Optional[str] = None,
+    state: AppState = Depends(get_app_state),
+) -> ListDirectoriesResponse:
+    """Lista directorios disponibles en el path especificado.
+
+    Si no se especifica path, usa el root_path actual.
+    Útil para Docker donde tkinter no está disponible.
+    """
+    # Determinar el directorio base
+    if path:
+        base_path = Path(path).expanduser().resolve()
+    else:
+        base_path = state.settings.root_path
+
+    # Verificar que el path existe y es un directorio
+    if not base_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"El directorio no existe: {base_path}"
+        )
+
+    if not base_path.is_dir():
+        raise HTTPException(
+            status_code=400, detail=f"El path no es un directorio: {base_path}"
+        )
+
+    # Listar subdirectorios
+    directories: list[DirectoryItem] = []
+
+    # Agregar directorio padre si no estamos en la raíz
+    if base_path.parent != base_path:
+        directories.append(
+            DirectoryItem(
+                name="..",
+                path=str(base_path.parent),
+                is_parent=True,
+            )
+        )
+
+    # Listar subdirectorios
+    try:
+        for item in sorted(base_path.iterdir()):
+            if item.is_dir():
+                # Excluir directorios ocultos y comunes que no son útiles
+                if item.name.startswith("."):
+                    continue
+                if item.name in ("__pycache__", "node_modules", ".git"):
+                    continue
+
+                directories.append(
+                    DirectoryItem(
+                        name=item.name,
+                        path=str(item),
+                        is_parent=False,
+                    )
+                )
+    except PermissionError:
+        raise HTTPException(
+            status_code=403, detail=f"Sin permisos para leer el directorio: {base_path}"
+        )
+
+    return ListDirectoriesResponse(
+        current_path=str(base_path),
+        directories=directories,
+    )

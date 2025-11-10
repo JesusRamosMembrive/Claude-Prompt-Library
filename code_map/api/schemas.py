@@ -95,6 +95,7 @@ class SettingsResponse(BaseModel):
     ollama_insights_model: Optional[str]
     ollama_insights_frequency_minutes: Optional[int]
     ollama_insights_focus: Optional[str]
+    backend_url: Optional[str]
     watcher_active: bool
 
 
@@ -117,6 +118,12 @@ class SettingsUpdateRequest(BaseModel):
         min_length=0,
         max_length=64,
         description="Foco de análisis para los insights automáticos.",
+    )
+    backend_url: Optional[str] = Field(
+        default=None,
+        min_length=0,
+        max_length=256,
+        description="URL del servidor backend (ej: http://192.168.1.100:8000)",
     )
 
 
@@ -519,6 +526,25 @@ class BrowseDirectoryResponse(BaseModel):
     """Respuesta al seleccionar un directorio en el servidor."""
 
     path: str
+
+
+class DirectoryItem(BaseModel):
+    """Representa un directorio en el listado."""
+
+    name: str = Field(..., description="Nombre del directorio")
+    path: str = Field(..., description="Path absoluto del directorio")
+    is_parent: bool = Field(
+        default=False, description="True si es el directorio padre (..)"
+    )
+
+
+class ListDirectoriesResponse(BaseModel):
+    """Respuesta al listar directorios disponibles."""
+
+    current_path: str = Field(..., description="Path del directorio actual")
+    directories: List[DirectoryItem] = Field(
+        default_factory=list, description="Lista de subdirectorios"
+    )
 
 
 class ClassGraphNode(BaseModel):

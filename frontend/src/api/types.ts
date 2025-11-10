@@ -46,6 +46,7 @@ export interface SettingsPayload {
   ollama_insights_model: string | null;
   ollama_insights_frequency_minutes: number | null;
   ollama_insights_focus: string | null;
+  backend_url: string | null;
   watcher_active: boolean;
 }
 
@@ -57,6 +58,7 @@ export interface SettingsUpdatePayload {
   ollama_insights_model?: string | null;
   ollama_insights_frequency_minutes?: number | null;
   ollama_insights_focus?: string | null;
+  backend_url?: string | null;
 }
 
 export interface AnalyzerCapability {
@@ -227,6 +229,17 @@ export interface StageInitResponse {
 
 export interface BrowseDirectoryResponse {
   path: string;
+}
+
+export interface DirectoryItem {
+  name: string;
+  path: string;
+  is_parent: boolean;
+}
+
+export interface ListDirectoriesResponse {
+  current_path: string;
+  directories: DirectoryItem[];
 }
 
 export interface UMLAttribute {

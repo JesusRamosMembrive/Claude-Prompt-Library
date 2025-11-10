@@ -138,10 +138,34 @@ export function LintersView(): JSX.Element {
 
   const hasError = latestReportQuery.isError || historyQuery.isError || notificationsQuery.isError;
 
-  const refetchAll = () => {
-    latestReportQuery.refetch();
-    historyQuery.refetch();
-    notificationsQuery.refetch();
+  const [isRunning, setIsRunning] = useState(false);
+
+  const refetchAll = async () => {
+    setIsRunning(true);
+    try {
+      // Ejecutar los linters manualmente
+      const response = await fetch("/api/linters/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Failed to run linters:", await response.text());
+      }
+
+      // Actualizar todas las queries
+      await Promise.all([
+        latestReportQuery.refetch(),
+        historyQuery.refetch(),
+        notificationsQuery.refetch(),
+      ]);
+    } catch (error) {
+      console.error("Error running linters:", error);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const summaryMetrics = useMemo(() => {
@@ -225,9 +249,26 @@ export function LintersView(): JSX.Element {
             type="button"
             className="secondary-btn"
             onClick={refetchAll}
-            disabled={latestReportQuery.isFetching || historyQuery.isFetching}
+            disabled={isRunning || latestReportQuery.isFetching || historyQuery.isFetching}
+            style={{ position: "relative", overflow: "hidden" }}
           >
-            {latestReportQuery.isFetching || historyQuery.isFetching ? "Refreshing…" : "Refresh"}
+            <span style={{ position: "relative", zIndex: 1 }}>
+              {isRunning ? "Running linters…" : latestReportQuery.isFetching || historyQuery.isFetching ? "Refreshing…" : "Refresh"}
+            </span>
+            {isRunning && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  height: "3px",
+                  width: "100%",
+                  background: "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), transparent)",
+                  backgroundSize: "200% 100%",
+                  animation: "shimmer 1.5s infinite",
+                }}
+              />
+            )}
           </button>
         </div>
       </header>

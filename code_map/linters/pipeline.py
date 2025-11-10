@@ -18,8 +18,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, ca
 
 from defusedxml import ElementTree as _ElementTree  # type: ignore[import-not-found, import-untyped]
 
-ElementTree = cast(Any, _ElementTree)
-
 from ..scanner import DEFAULT_EXCLUDED_DIRS
 from .report_schema import (
     ChartData,
@@ -33,23 +31,47 @@ from .report_schema import (
     ToolRunResult,
 )
 
+ElementTree = cast(Any, _ElementTree)
+
 
 # ============================================================================
 # CONSTANTS - Linter Pipeline Configuration
 # ============================================================================
 
-# Output truncation limits
-MAX_OUTPUT_TRUNCATE_CHARS = 2000  # Maximum characters before truncating tool output
-MAX_ISSUES_SAMPLE_SIZE = 25  # Maximum issues to include in report samples
+@dataclass(frozen=True)
+class LinterConfig:
+    """
+    Centralized configuration for linter pipeline.
+    All magic numbers and thresholds in one place for easy tuning.
+    """
+    # Output truncation limits
+    max_output_chars: int = 2000  # Maximum characters before truncating tool output
+    max_issues_sample: int = 25  # Maximum issues to include in report samples
 
-# Linter tool timeouts (seconds)
-LINTER_TIMEOUT_FAST = 180  # For ruff, black (fast formatters/linters)
-LINTER_TIMEOUT_STANDARD = 240  # For mypy, bandit (type checkers, security scanners)
-LINTER_TIMEOUT_TESTS = 600  # For pytest with coverage (can be slow)
+    # Linter tool timeouts (seconds)
+    timeout_fast: int = 180  # For ruff, black (fast formatters/linters)
+    timeout_standard: int = 240  # For mypy, bandit (type checkers, security scanners)
+    timeout_tests: int = 600  # For pytest with coverage (can be slow)
 
-# File length thresholds
-MAX_FILE_LENGTH_THRESHOLD = 500  # Recommended maximum lines per file before warning
-MAX_FILE_LENGTH_CRITICAL = 1000  # Critical threshold where files are severely oversized
+    # File length thresholds
+    max_file_length_warn: int = 500  # Recommended maximum lines per file before warning
+    max_file_length_critical: int = 1000  # Critical threshold where files are severely oversized
+
+    # Default timeout fallback
+    default_timeout: int = 300  # Used when no specific timeout is defined
+
+
+# Global configuration instance (can be overridden for testing or custom deployments)
+LINTER_CONFIG = LinterConfig()
+
+# Backward compatibility: export constants for existing code
+MAX_OUTPUT_TRUNCATE_CHARS = LINTER_CONFIG.max_output_chars
+MAX_ISSUES_SAMPLE_SIZE = LINTER_CONFIG.max_issues_sample
+LINTER_TIMEOUT_FAST = LINTER_CONFIG.timeout_fast
+LINTER_TIMEOUT_STANDARD = LINTER_CONFIG.timeout_standard
+LINTER_TIMEOUT_TESTS = LINTER_CONFIG.timeout_tests
+MAX_FILE_LENGTH_THRESHOLD = LINTER_CONFIG.max_file_length_warn
+MAX_FILE_LENGTH_CRITICAL = LINTER_CONFIG.max_file_length_critical
 
 # ============================================================================
 
@@ -193,7 +215,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
     ToolSpec(
         key="black",
         name="Black",
-        command=["black", "--check", "--diff", "--color", "never", "."],
+        command=["black", "--check", "--diff", "--no-color", "."],
         module="black",
         parser=_default_parser,
         timeout=LINTER_TIMEOUT_FAST,
@@ -209,7 +231,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
     ToolSpec(
         key="bandit",
         name="Bandit",
-        command=["bandit", "-q", "-r", ".", "-f", "json"],
+        command=["bandit", "-q", "-r", ".", "-f", "json", "-x", "./.venv/*,./tests/*"],
         module="bandit",
         parser=_parse_bandit,
         timeout=LINTER_TIMEOUT_STANDARD,

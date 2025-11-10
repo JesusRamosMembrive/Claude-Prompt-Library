@@ -17,9 +17,18 @@ from .models import AnalysisError, FileSummary, SymbolInfo, SymbolKind
 class SnapshotStore:
     """Gestiona snapshots en `<root>/.code-map/code-map.json`."""
 
-    def __init__(self, root: Path, filename: str = "code-map.json") -> None:
+    def __init__(
+        self,
+        root: Path,
+        filename: str = "code-map.json",
+        cache_dir: Optional[Path] = None,
+    ) -> None:
         self.root = Path(root).expanduser().resolve()
-        self.meta_dir = self.root / META_DIR_NAME
+        # If cache_dir is specified, use it instead of root/.code-map
+        if cache_dir is not None:
+            self.meta_dir = Path(cache_dir).expanduser().resolve()
+        else:
+            self.meta_dir = self.root / META_DIR_NAME
         self.snapshot_path = self.meta_dir / filename
 
     def load(self) -> List[FileSummary]:

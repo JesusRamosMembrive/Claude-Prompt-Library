@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { HomeView } from "./components/HomeView";
 import { CodeMapDashboard } from "./components/CodeMapDashboard";
@@ -9,15 +10,26 @@ import { OverviewDashboard } from "./components/OverviewDashboard";
 import { PromptLibraryView } from "./components/PromptLibraryView";
 import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
+import CodeTimelineView from "./components/CodeTimelineView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
+import { useBackendStore } from "./state/useBackendStore";
 import "./styles/index.css";
 
 export function App(): JSX.Element {
   const settingsQuery = useSettingsQuery();
   const statusQuery = useStatusQuery();
   useEventStream();
+
+  const setBackendUrl = useBackendStore((state) => state.setBackendUrl);
+
+  // Initialize backend URL from settings on app load
+  useEffect(() => {
+    if (settingsQuery.data?.backend_url) {
+      setBackendUrl(settingsQuery.data.backend_url);
+    }
+  }, [settingsQuery.data?.backend_url, setBackendUrl]);
 
   const rootPath = statusQuery.data?.root_path ?? settingsQuery.data?.root_path ?? "";
   const watcherActive = statusQuery.data?.watcher_active ?? false;
@@ -67,6 +79,10 @@ export function App(): JSX.Element {
       <Route
         path="/linters"
         element={withLayout("Linters & Quality", <LintersView />)}
+          />
+          <Route
+            path="/timeline"
+            element={withLayout("Code Timeline", <CodeTimelineView />)}
           />
           <Route
             path="/settings"

@@ -54,6 +54,7 @@ class StateReporter:
             "ollama_insights_model": self.settings.ollama_insights_model,
             "ollama_insights_frequency_minutes": self.settings.ollama_insights_frequency_minutes,
             "ollama_insights_focus": self.settings.ollama_insights_focus or "general",
+            "backend_url": self.settings.backend_url,
             "watcher_active": watcher_active,
             "absolute_root": str(self.settings.root_path),
         }
