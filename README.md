@@ -1,68 +1,106 @@
-# Stage-Aware Development Framework
+# Stage-Aware Development Framework + Code Map
 
-**Prevent over-engineering. Guide evolution. Stay in control.**
+**Prevent over-engineering. Guide evolution. Analyze your code. Stay in control.**
 
-A methodology and toolset for evolutionary software development with Claude Code **and** Codex CLI. Automatically detects your project's maturity and configures your preferred agent(s) to operate within appropriate constraints.
+A comprehensive toolkit combining:
+1. **Stage-Aware Framework** - Evolutionary development methodology with automatic stage detection
+2. **Code Map Backend** - FastAPI service for code analysis, call tracing, and quality tooling
+
+Automatically detects your project's maturity and provides deep insights into your codebase structure.
 
 ---
 
 ## 🎯 The Problem
 
-When developing with AI assistants like Claude Code or Codex:
+**Development Challenges:**
 - ✗ Too easy to over-engineer early prototypes
 - ✗ AI suggests enterprise patterns for 100-line scripts
-- ✗ Hard to maintain "start simple" discipline
+- ✗ Hard to understand complex codebases quickly
 - ✗ Context loss between sessions breaks momentum
+- ✗ Manual code analysis is time-consuming
 
 ## 💡 The Solution
 
-**Stage-Aware Development Framework** enforces evolutionary development through:
-
+### Stage-Aware Framework
+Enforces evolutionary development through:
 1. **Automatic Stage Detection** - Analyzes codebase and recommends Stage 1/2/3
 2. **Stage-Specific Rules** - Prevents complexity until justified
 3. **Specialized Subagents** - Architect, implementer, reviewer that understand stage context
 4. **Session Continuity** - Tracking files preserve decisions and progress
 
+### Code Map Backend
+Provides deep code analysis via REST API:
+1. **Call Tracing** - Track function calls within and across files
+2. **Dependency Graphs** - Visualize module and class relationships
+3. **Linter Pipeline** - Automated code quality checks (ruff, mypy, bandit, pytest)
+4. **AI Insights** - Optional Ollama integration for code analysis
+5. **Multi-Language Support** - Python, JavaScript/TypeScript, HTML
+
 ---
 
 ## 🚀 Quick Start
 
-### New Project
+### Stage-Aware Framework
 
+**New Project:**
 ```bash
-# Both agents (default)
+# Initialize with stage-aware framework
 python init_project.py my-new-project
 
-# Claude únicamente
+# Claude only
 python init_project.py my-new-project --agent=claude
 
-# Codex únicamente
+# Codex only
 python init_project.py my-new-project --agent=codex
 
-# Ensayar sin modificar nada
+# Preview without changes
 python init_project.py my-new-project --dry-run
 
 cd my-new-project
 ```
 
-Siempre se generan los archivos base de seguimiento (`.claude/`).  
-Cuando seleccionas Codex, también se crea `.codex/` con `AGENTS.md` y reglas por etapa adaptadas al CLI.
-
-### Existing Project
-
+**Existing Project:**
 ```bash
+# Add framework + auto-detect stage
 python init_project.py --existing /path/to/project
 ```
 
-Adds framework + **auto-detects stage** + updates tracking.
-
-### Just Check Stage
-
+**Check Stage Only:**
 ```bash
+# Analyze without modifications
 python init_project.py --detect-only /path/to/project
 ```
 
-Analyzes project without modifying anything.
+### Code Map Backend
+
+**Start the API server:**
+```bash
+# Run development server
+python -m code_map.cli run --root /path/to/your/project
+
+# Or using short form
+python -m code_map --root /path/to/your/project
+
+# Access API docs at: http://localhost:8000/docs
+```
+
+**Frontend (React UI):**
+```bash
+cd frontend
+npm install  # or your package manager
+npm run dev
+# Access UI at: http://localhost:5173
+```
+
+**Environment Configuration:**
+```bash
+# API server
+export CODE_MAP_HOST=0.0.0.0      # Default: 127.0.0.1
+export CODE_MAP_PORT=8080          # Default: 8000
+
+# Ollama integration (optional)
+export OLLAMA_HOST=http://localhost:11434
+```
 
 ---
 
@@ -155,10 +193,46 @@ AI executes. Human decides. Framework enforces.
 
 ---
 
-## 📁 What You Get
+## 📁 Project Structure
 
-After initialization:
+```
+claude-prompt-library/
+├── init_project.py              # Stage framework CLI entry point
+├── assess_stage.py              # Stage detection CLI
+├── stage_config.py              # Detection algorithms
+├── templates/                   # Project initialization templates
+│   ├── basic/.claude/           # Tracking files, rules, subagents
+│   └── docs/                    # Reference documentation
+├── code_map/                    # FastAPI backend
+│   ├── server.py                # Application factory
+│   ├── call_tracer.py           # Single-file call tracing (Stage 1)
+│   ├── call_tracer_v2.py        # Cross-file call tracing (Stage 2)
+│   ├── import_resolver.py       # Python import resolution
+│   ├── analyzer.py              # Python code parsing
+│   ├── ts_analyzer.py           # TypeScript/JavaScript parsing
+│   ├── html_analyzer.py         # HTML parsing
+│   ├── linters/                 # Linter pipeline
+│   │   ├── pipeline.py          # Orchestration
+│   │   └── discovery.py         # Tool detection
+│   ├── integrations/            # External services
+│   │   └── ollama_service.py    # Ollama AI integration
+│   └── api/                     # REST endpoints
+│       ├── routes.py            # Main router
+│       ├── analysis.py          # Code analysis
+│       ├── tracer.py            # Call tracing
+│       ├── linters.py           # Linter reports
+│       └── stage.py             # Stage assessment
+├── frontend/                    # React UI
+│   └── src/
+│       ├── components/
+│       │   ├── CallTracerView.tsx    # Call tracing UI
+│       │   ├── ClassUMLView.tsx      # UML visualization
+│       │   └── DependencyGraph.tsx   # Dependency graph
+│       └── App.tsx
+└── tests/                       # Test suite
+```
 
+**After initializing a project:**
 ```
 your-project/
 ├── .claude/
@@ -176,8 +250,9 @@ your-project/
 
 ## 🔧 Commands Reference
 
-### init_project.py
+### Stage Framework
 
+**init_project.py:**
 ```bash
 # New project
 python init_project.py my-app
@@ -188,53 +263,100 @@ python init_project.py --existing /path/to/project
 # Detect only
 python init_project.py --detect-only /path/to/project
 
-# Preview actions without writing
+# Preview without changes
 python init_project.py my-app --dry-run
 
-# Increase logging verbosity
+# Configure specific agent
+python init_project.py my-app --agent=claude
+
+# Verbose logging
 python init_project.py --existing /path/to/project --log-level DEBUG
 ```
 
-**Key options**
-
-- `--agent {claude|codex|both}` to pick which assistants to configure.
-- `--dry-run` prints what would change without touching the filesystem.
-- `--log-level LEVEL` (`INFO` by default) surfaces detailed progress when troubleshooting.
-
-### assess_stage.py
-
+**assess_stage.py:**
 ```bash
 # Detailed stage analysis
 python assess_stage.py /path/to/project
 ```
 
-### claude_assess.py
-
+**claude_assess.py:**
 ```bash
 # Deep analysis with tree visualization
 python claude_assess.py /path/to/project
 ```
 
-**→ Full documentation:** [USAGE.md](./USAGE.md)
+### Code Map Backend
+
+**Run API server:**
+```bash
+# Start server
+python -m code_map.cli run --root /path/to/project
+
+# Custom host/port
+python -m code_map.cli run --root . --host 0.0.0.0 --port 8080
+
+# Enable auto-reload during development
+python -m code_map.cli run --root . --reload
+```
+
+**API Endpoints:**
+- `POST /api/tracer/analyze` - Single-file call graph
+- `POST /api/tracer/analyze-cross-file` - Cross-file analysis with import resolution
+- `POST /api/tracer/trace` - Trace call chain from function
+- `POST /api/linters/run` - Execute linter pipeline
+- `POST /api/stage/assess` - Assess project stage
+- `GET /api/analysis/summary` - Code analysis summary
+- Interactive docs: `http://localhost:8000/docs`
+
+**→ Full documentation:** [USAGE.md](./USAGE.md) | [CLAUDE.md](./CLAUDE.md)
 
 ---
 
 ## 📚 Documentation
 
+**Stage Framework:**
 - **[USAGE.md](./USAGE.md)** - Complete usage guide with examples
 - **[docs/QUICK_START.md](./docs/QUICK_START.md)** - Quick workflow guide
 - **[docs/STAGE_CRITERIA.md](./docs/STAGE_CRITERIA.md)** - Detailed stage criteria
 - **[docs/STAGES_COMPARISON.md](./docs/STAGES_COMPARISON.md)** - Side-by-side comparison
 
-### ⚙️ Linter Pipeline Controls
+**Code Map:**
+- **[CLAUDE.md](./CLAUDE.md)** - Architecture and development guide
+- **API Docs** - Interactive Swagger UI at `/docs` when server is running
 
-Configure automated lint runs via environment variables before starting the API or CLI:
+## ⚙️ Configuration
 
-- `CODE_MAP_DISABLE_LINTERS=1` — Skip the pipeline entirely.
-- `CODE_MAP_LINTERS_TOOLS=ruff,pytest` — Limit execution to a subset of tools.
-- `CODE_MAP_LINTERS_MAX_PROJECT_FILES=2000` — Skip the run when the project exceeds this file count.
-- `CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB=200` — Skip when the workspace is larger than the threshold.
-- `CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS=300` — Minimum seconds between automatic runs (default 180).
+### Environment Variables
+
+**API Server:**
+```bash
+CODE_MAP_HOST=0.0.0.0              # Default: 127.0.0.1
+CODE_MAP_PORT=8080                 # Default: 8000
+```
+
+**Linter Pipeline:**
+```bash
+CODE_MAP_DISABLE_LINTERS=1                      # Skip linters entirely
+CODE_MAP_LINTERS_TOOLS=ruff,pytest              # Limit to specific tools
+CODE_MAP_LINTERS_MAX_PROJECT_FILES=2000         # Skip if too many files
+CODE_MAP_LINTERS_MAX_PROJECT_SIZE_MB=200        # Skip if project too large
+CODE_MAP_LINTERS_MIN_INTERVAL_SECONDS=300       # Minimum seconds between runs
+```
+
+**Ollama Integration (Optional):**
+```bash
+OLLAMA_HOST=http://localhost:11434  # Ollama server address
+```
+
+### Linter Configuration
+
+The linter pipeline auto-discovers available tools:
+- **ruff** - Fast Python linter
+- **mypy** - Static type checker
+- **bandit** - Security vulnerability scanner
+- **pytest** - Test runner with coverage
+
+Only installed tools are executed. Missing tools are gracefully skipped.
 
 ---
 
@@ -285,7 +407,8 @@ python assess_stage.py my-production-app
 
 ## ⚙️ Requirements
 
-**Runtime:**
+### Stage Framework (Core)
+**Required:**
 - Python 3.10+
 - Standard library only (no external dependencies)
 
@@ -293,17 +416,64 @@ python assess_stage.py my-production-app
 - Claude Code CLI (`claude`) - For CLAUDE.md generation
 - `tree` command - For project visualization
 
+### Code Map Backend
+**Required:**
+- Python 3.10+
+- Dependencies: `pip install -r requirements.txt`
+  - fastapi
+  - pydantic
+  - uvicorn
+  - watchdog
+  - typer
+
+**Optional (for full features):**
+- tree-sitter + tree-sitter-languages (multi-language AST parsing)
+- beautifulsoup4 (HTML analysis)
+- esprima (JavaScript parsing)
+- Linter tools: ruff, mypy, bandit, pytest
+- Ollama (AI-powered insights)
+
+**Frontend:**
+- Node.js 18+ (for React UI)
+- npm/pnpm/yarn
+
 ---
 
 ## 🛠️ Installation
 
+### Quick Setup
+
 ```bash
 # Clone repository
-git clone https://github.com/your-org/stage-aware-framework
-cd stage-aware-framework
+git clone https://github.com/jesusramon/claude-prompt-library
+cd claude-prompt-library
 
-# Use directly (no installation needed)
+# Stage framework works immediately (no dependencies)
 python init_project.py my-project
+```
+
+### Full Setup (Backend + Frontend)
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install frontend dependencies
+cd frontend
+npm install  # or pnpm install / yarn install
+
+# Optional: Install linter tools
+pip install ruff mypy bandit pytest pytest-cov
+
+# Optional: Install Ollama for AI insights
+# https://ollama.ai/download
+```
+
+### Docker Setup (Coming Soon)
+
+```bash
+# Full stack with Docker Compose
+docker compose up
 ```
 
 ---
@@ -396,23 +566,39 @@ This framework emerged from experience developing with Claude Code and other AI 
 
 ## 📊 Project Status
 
-**Current Version:** 3.0 (Stage Detection Integration)
+**Current Version:** 3.2 (Code Map Integration)
 
 **Recent Updates:**
-- ✅ Automatic stage detection (v3.0)
-- ✅ Integrated subagents (v2.5)
-- ✅ Removed prompt library focus (v2.0)
-- ✅ Project initialization (v1.0)
+- ✅ **v3.2** - Code quality improvements (XSS fix, refactoring, config)
+- ✅ **v3.1** - Cross-file call tracing with import resolution
+- ✅ **v3.0** - Stage detection + Code Map backend integration
+- ✅ **v2.5** - Integrated subagents
+- ✅ **v2.0** - Stage-aware framework focus
+- ✅ **v1.0** - Project initialization
+
+**Key Features:**
+- ✅ Automatic stage detection
+- ✅ Call tracing (single-file + cross-file)
+- ✅ Linter pipeline with auto-discovery
+- ✅ React UI for visualization
+- ✅ Multi-language support (Python, JS/TS, HTML)
+- ✅ Ollama integration for AI insights
+- ✅ REST API with OpenAPI docs
 
 **Roadmap:**
+- [ ] Stage 3 visual call graph (D3.js/ReactFlow)
+- [ ] Export functionality (DOT, Mermaid, JSON)
+- [ ] Docker Compose deployment
 - [ ] Stage transition validation
 - [ ] Team collaboration features
-- [ ] IDE integrations
-- [ ] Web dashboard
+- [ ] IDE integrations (VS Code extension)
+- [ ] GitHub Action for PR analysis
 
 ---
 
 ## 🙋 FAQ
+
+### Stage Framework
 
 **Q: Do I have to follow the stages strictly?**
 A: No. They're guides, not rules. Adapt to your context.
@@ -421,13 +607,30 @@ A: No. They're guides, not rules. Adapt to your context.
 A: Yes. Edit `.claude/02-stageX-rules.md` files directly.
 
 **Q: What if stage detection is wrong?**
-A: Manual override: edit `01-current-phase.md` directly.
+A: Manual override: edit `01-current-phase.md` directly or re-run `assess_stage.py`.
 
 **Q: Does this work without Claude Code?**
-A: Yes. The framework works with any AI assistant or human development.
+A: Yes. The framework works with any AI assistant or manual development.
 
 **Q: What about non-Python projects?**
 A: Fully supported. Detection works for Python, JavaScript/TypeScript, Java, Go, Rust, Ruby, PHP, C/C++, and more.
+
+### Code Map
+
+**Q: Can I use Code Map without the stage framework?**
+A: Yes. They're independent. Use the API server standalone for code analysis.
+
+**Q: What languages does call tracing support?**
+A: Currently Python only. JavaScript/TypeScript support is on the roadmap.
+
+**Q: How does cross-file analysis work?**
+A: Uses tree-sitter for AST parsing + custom import resolver to follow imports across files.
+
+**Q: Is Ollama required?**
+A: No. It's optional for AI-powered insights. All other features work without it.
+
+**Q: Can I run this in CI/CD?**
+A: Yes. The linter pipeline and stage detection work great in automated environments.
 
 ---
 
@@ -439,20 +642,68 @@ MIT License - Use freely, commercially or personally.
 
 ## 🤝 Contributing
 
-This is an open methodology. Adapt, extend, share your improvements.
+This project follows its own stage-aware methodology (currently Stage 3).
 
-Key areas for contribution:
+**Key areas for contribution:**
+
+**Stage Framework:**
 - Detection algorithm refinements
 - New subagent types
 - Stage rule improvements
 - Language-specific criteria
 
+**Code Map:**
+- Additional language support (JS/TS call tracing)
+- New analyzers (CSS, SQL, etc.)
+- Performance optimizations
+- UI/UX improvements
+- Integration with more tools
+
+**Process:**
+1. Read `.claude/00-project-brief.md` and `.claude/01-current-phase.md`
+2. Follow stage-specific rules in `.claude/02-stage3-rules.md`
+3. Run tests: `pytest` (backend) and `npm test` (frontend)
+4. Update documentation as needed
+
 ---
 
-**Built with:** Python, YAGNI principles, and experience from too many over-engineered prototypes.
+## 🏗️ Architecture Highlights
 
-**Maintained by:** The "let's keep it simple" philosophy.
+**Backend:**
+- FastAPI for async REST API
+- tree-sitter for multi-language AST parsing
+- Graceful degradation (missing tools are skipped)
+- MD5-based caching for performance
+- Configurable via environment variables
+
+**Frontend:**
+- React 18 with TypeScript
+- TanStack Query for data fetching
+- ReactFlow for graph visualization
+- Vite for fast development
+
+**Security:**
+- SVG sanitization to prevent XSS
+- No shell=True in subprocess calls
+- Path traversal protection
+- Input validation via Pydantic
+
+**Design Decisions:**
+- Non-destructive initialization (preserves existing files)
+- Stage detection with confidence levels
+- Modular architecture (easy to extend)
+- Self-documenting (CLAUDE.md, OpenAPI docs)
 
 ---
 
-*"The best architecture is the one you add when you need it, not the one you designed when you didn't."*
+**Built with:** Python, FastAPI, React, YAGNI principles, and lessons from over-engineered prototypes.
+
+**Philosophy:** "The best architecture is the one you add when you need it, not the one you designed when you didn't."
+
+---
+
+## 📞 Support
+
+- **Issues:** [GitHub Issues](https://github.com/jesusramon/claude-prompt-library/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jesusramon/claude-prompt-library/discussions)
+- **Documentation:** This README + USAGE.md + CLAUDE.md
