@@ -19,18 +19,20 @@ export function HeaderBar({
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const rootLabel = rootPath ?? "CODE_MAP_ROOT";
+  const rootLabel = rootPath ?? "ATLAS_ROOT";
   const description = lastFullScan
     ? `Last scan: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} files`
     : `${filesIndexed ?? 0} indexed files`;
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/stage-toolkit", label: "StageToolKit" },
-    { to: "/code-map", label: "Code Map" },
-    { to: "/class-uml", label: "Class UML" },
+    { to: "/stage-toolkit", label: "Stage Toolkit" },
+    { to: "/code-map", label: "Analysis" },
+    { to: "/class-uml", label: "UML" },
+    { to: "/call-tracer", label: "Call Tracer" },
     { to: "/linters", label: "Linters" },
-    { to: "/ollama", label: "Ollama" },
+    { to: "/timeline", label: "Timeline" },
+    { to: "/ollama", label: "AI Insights" },
     { to: "/overview", label: "Overview" },
     { to: "/prompts", label: "Prompts" },
   ];
@@ -40,7 +42,7 @@ export function HeaderBar({
       <div className="header-left">
         <div className="brand-logo">&lt;/&gt;</div>
         <div className="brand-copy">
-          <h1>{title ?? "Code Map"}</h1>
+          <h1>{title ?? "ATLAS"}</h1>
           <p>{description}</p>
         </div>
       </div>

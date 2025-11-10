@@ -1,6 +1,7 @@
 {
-  "name": "code-map-frontend",
-  "version": "0.1.0",
+  "name": "atlas-frontend",
+  "version": "3.2.0",
+  "description": "ATLAS: Automated Tracing, Linting And Source-mapping - Frontend UI",
   "private": true,
   "type": "module",
   "scripts": {
