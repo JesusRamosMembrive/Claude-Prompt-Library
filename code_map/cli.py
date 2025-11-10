@@ -5,6 +5,7 @@ CLI principal para gestionar Code Map desde la terminal.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
@@ -64,10 +65,13 @@ def run(
         show_default=False,
     ),
     host: str = typer.Option(
-        "127.0.0.1",
-        help="Host donde exponer la API (usa 0.0.0.0 para acceso externo controlado).",
+        os.getenv("CODE_MAP_HOST", "127.0.0.1"),
+        help="Host donde exponer la API (usa 0.0.0.0 para acceso externo controlado). Env: CODE_MAP_HOST",
     ),
-    port: int = typer.Option(8000, help="Puerto donde escuchar."),
+    port: int = typer.Option(
+        int(os.getenv("CODE_MAP_PORT", "8000")),
+        help="Puerto donde escuchar. Env: CODE_MAP_PORT",
+    ),
     log_level: str = typer.Option(
         "info",
         help="Nivel de log de Uvicorn.",

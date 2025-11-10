@@ -241,95 +241,138 @@ class CrossFileCallGraphExtractor:
             current_func: Función actual (contexto)
             current_class: Clase actual (contexto)
         """
-        # Detectar clase
+        # Handle different node types via extracted methods
         if node.type == "class_definition":
-            name_node = node.child_by_field_name("name")
-            if name_node:
-                class_name = self._get_node_text(name_node, source)
-                current_class = class_name
-
-                # Inicializar estructura para atributos de esta clase
-                if filepath not in self.instance_attrs:
-                    self.instance_attrs[filepath] = {}
-                if class_name not in self.instance_attrs[filepath]:
-                    self.instance_attrs[filepath][class_name] = {}
-
-        # Detectar función
-        if node.type == "function_definition":
-            name_node = node.child_by_field_name("name")
-            if name_node:
-                func_name = self._get_node_text(name_node, source)
-
-                # Si está en una clase, prefixar con nombre de clase
-                if current_class:
-                    qualified_func_name = f"{current_class}.{func_name}"
-                else:
-                    qualified_func_name = func_name
-
-                current_func = qualified_func_name
-
-                # Inicializar en el grafo
-                if qualified_func_name not in local_graph:
-                    local_graph[qualified_func_name] = []
-
-        # Detectar asignación de atributo de instancia en __init__
-        # e.g., self.middleware = middlewareAPI()
-        if (
-            node.type == "assignment"
-            and current_class
-            and current_func
-            and current_func.endswith(".__init__")
-        ):
-            # Buscar patrón: self.attr = SomeClass()
-            left_node = node.child_by_field_name("left")
-            right_node = node.child_by_field_name("right")
-
-            if left_node and right_node:
-                # Verificar que left es self.something
-                if left_node.type == "attribute":
-                    obj_node = left_node.child_by_field_name("object")
-                    attr_node = left_node.child_by_field_name("attribute")
-
-                    if (
-                        obj_node
-                        and attr_node
-                        and self._get_node_text(obj_node, source) == "self"
-                    ):
-                        attr_name = self._get_node_text(attr_node, source)
-
-                        # Verificar que right es una llamada: SomeClass()
-                        if right_node.type == "call":
-                            func_node = right_node.child_by_field_name("function")
-                            if func_node and func_node.type == "identifier":
-                                type_name = self._get_node_text(func_node, source)
-                                # Guardar: self.middleware -> middlewareAPI
-                                self.instance_attrs[filepath][current_class][
-                                    attr_name
-                                ] = type_name
-
-        # Detectar llamada
-        if node.type == "call" and current_func:
-            function_node = node.child_by_field_name("function")
-            if function_node:
-                callee_info = self._extract_callee_name(
-                    function_node, source, current_class, filepath
-                )
-                if callee_info:
-                    callee, is_instance_method, instance_attr = callee_info
-                    # Verificar si ya existe (comparar solo el nombre de la función)
-                    already_exists = any(
-                        c[0] == callee for c in local_graph[current_func]
-                    )
-                    if callee and not already_exists:
-                        # Guardar con metadata adicional si es necesario
-                        local_graph[current_func].append(
-                            (callee, is_instance_method, instance_attr)
-                        )
+            current_class = self._handle_class_definition(node, source, filepath, current_class)
+        elif node.type == "function_definition":
+            current_func = self._handle_function_definition(
+                node, source, local_graph, current_func, current_class
+            )
+        elif node.type == "assignment":
+            self._handle_assignment(node, source, filepath, current_class, current_func)
+        elif node.type == "call":
+            self._handle_call(node, source, filepath, local_graph, current_func, current_class)
 
         # Recursión
         for child in node.children:
             self._extract_functions_and_calls(
                 child, source, filepath, local_graph, current_func, current_class
+            )
+
+    def _handle_class_definition(
+        self, node: Node, source: bytes, filepath: Path, current_class: Optional[str]
+    ) -> Optional[str]:
+        """Detecta y registra definición de clase."""
+        name_node = node.child_by_field_name("name")
+        if not name_node:
+            return current_class
+
+        class_name = self._get_node_text(name_node, source)
+
+        # Inicializar estructura para atributos de esta clase
+        if filepath not in self.instance_attrs:
+            self.instance_attrs[filepath] = {}
+        if class_name not in self.instance_attrs[filepath]:
+            self.instance_attrs[filepath][class_name] = {}
+
+        return class_name
+
+    def _handle_function_definition(
+        self,
+        node: Node,
+        source: bytes,
+        local_graph: Dict[str, List[Tuple[str, bool, Optional[str]]]],
+        current_func: Optional[str],
+        current_class: Optional[str],
+    ) -> Optional[str]:
+        """Detecta y registra definición de función."""
+        name_node = node.child_by_field_name("name")
+        if not name_node:
+            return current_func
+
+        func_name = self._get_node_text(name_node, source)
+
+        # Si está en una clase, prefixar con nombre de clase
+        qualified_func_name = (
+            f"{current_class}.{func_name}" if current_class else func_name
+        )
+
+        # Inicializar en el grafo
+        if qualified_func_name not in local_graph:
+            local_graph[qualified_func_name] = []
+
+        return qualified_func_name
+
+    def _handle_assignment(
+        self,
+        node: Node,
+        source: bytes,
+        filepath: Path,
+        current_class: Optional[str],
+        current_func: Optional[str],
+    ) -> None:
+        """
+        Detecta asignación de atributo de instancia en __init__.
+        Ejemplo: self.middleware = middlewareAPI()
+        """
+        # Solo procesar si estamos en __init__ de una clase
+        if not (current_class and current_func and current_func.endswith(".__init__")):
+            return
+
+        left_node = node.child_by_field_name("left")
+        right_node = node.child_by_field_name("right")
+
+        if not (left_node and right_node and left_node.type == "attribute"):
+            return
+
+        # Verificar patrón: self.attr
+        obj_node = left_node.child_by_field_name("object")
+        attr_node = left_node.child_by_field_name("attribute")
+
+        if not (obj_node and attr_node and self._get_node_text(obj_node, source) == "self"):
+            return
+
+        attr_name = self._get_node_text(attr_node, source)
+
+        # Verificar que right es una llamada: SomeClass()
+        if right_node.type == "call":
+            func_node = right_node.child_by_field_name("function")
+            if func_node and func_node.type == "identifier":
+                type_name = self._get_node_text(func_node, source)
+                # Guardar: self.middleware -> middlewareAPI
+                self.instance_attrs[filepath][current_class][attr_name] = type_name
+
+    def _handle_call(
+        self,
+        node: Node,
+        source: bytes,
+        filepath: Path,
+        local_graph: Dict[str, List[Tuple[str, bool, Optional[str]]]],
+        current_func: Optional[str],
+        current_class: Optional[str],
+    ) -> None:
+        """Detecta y registra llamadas a funciones."""
+        if not current_func:
+            return
+
+        function_node = node.child_by_field_name("function")
+        if not function_node:
+            return
+
+        callee_info = self._extract_callee_name(
+            function_node, source, current_class, filepath
+        )
+        if not callee_info:
+            return
+
+        callee, is_instance_method, instance_attr = callee_info
+
+        # Verificar si ya existe (evitar duplicados)
+        already_exists = any(c[0] == callee for c in local_graph[current_func])
+
+        if callee and not already_exists:
+            local_graph[current_func].append(
+                (callee, is_instance_method, instance_attr)
             )
 
     def _extract_callee_name(

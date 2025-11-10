@@ -20,8 +20,10 @@ from urllib import parse as urlparse
 
 import httpx
 
-DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
+# Configuration: Use environment variables with sensible defaults
 OLLAMA_HOST_ENV = "OLLAMA_HOST"
+DEFAULT_OLLAMA_HOST = os.getenv(OLLAMA_HOST_ENV, "http://127.0.0.1:11434")
+DEFAULT_OLLAMA_PORT = 11434  # Standard Ollama port
 MODEL_WARMUP_RETRY_AFTER_SECONDS = 10.0
 _LOADING_STATE_TTL = timedelta(minutes=3)
 _LOADING_LOCK = threading.Lock()
@@ -47,7 +49,7 @@ def _normalize_endpoint(raw: Optional[str]) -> str:
     path = "" if parsed.netloc else ""
 
     if ":" not in netloc and not netloc.startswith("["):
-        netloc = f"{netloc}:11434"
+        netloc = f"{netloc}:{DEFAULT_OLLAMA_PORT}"
 
     normalized = parsed._replace(
         scheme=parsed.scheme or "http",
@@ -483,10 +485,13 @@ def _run_command(
         return None, "Comando no encontrado."
     except subprocess.TimeoutExpired:
         return None, "Tiempo de espera agotado."
-    except Exception as exc:  # pragma: no cover
-        # Intentional broad exception: subprocess errors are unpredictable
-        # (permission errors, resource limits, OS-specific issues, etc.)
+    except (OSError, subprocess.SubprocessError, PermissionError) as exc:  # pragma: no cover
+        # Catch common subprocess errors
         return None, f"Error ejecutando {' '.join(sanitized_command)}: {exc}"
+    except Exception as exc:  # pragma: no cover
+        # Fallback for truly unexpected errors
+        logger.warning("Unexpected error in _safe_run: %s", exc, exc_info=True)
+        return None, f"Error inesperado ejecutando {' '.join(sanitized_command)}: {exc}"
 
     output = (completed.stdout or completed.stderr or "").strip()
     return output or None, None
@@ -541,11 +546,18 @@ def start_ollama_server(
                 close_fds=True,
             )
         )
-    except Exception as exc:  # pragma: no cover
-        # Intentional broad exception: subprocess.Popen can fail for many reasons
-        # (missing binary, permission denied, resource exhaustion, etc.)
+    except (OSError, subprocess.SubprocessError, PermissionError) as exc:  # pragma: no cover
+        # Catch common subprocess errors: missing binary, permissions, resources
         raise OllamaStartError(
             "No se pudo iniciar el proceso ollama serve.",
+            endpoint=status_before.endpoint,
+            original_error=str(exc),
+        ) from exc
+    except Exception as exc:  # pragma: no cover
+        # Fallback for unexpected errors during process creation
+        logger.exception("Unexpected error starting Ollama subprocess")
+        raise OllamaStartError(
+            "Error inesperado al iniciar ollama serve.",
             endpoint=status_before.endpoint,
             original_error=str(exc),
         ) from exc

@@ -5,6 +5,7 @@ Rutas para análisis de trazabilidad de llamadas (Call Tracing).
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, List, Set
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,6 +16,7 @@ from ..state import AppState
 from .deps import get_app_state
 
 router = APIRouter(prefix="/tracer", tags=["tracer"])
+logger = logging.getLogger(__name__)
 
 
 # ==================== Request/Response Models ====================
@@ -157,9 +159,14 @@ async def analyze_file(
         call_graph = simple_call_graph
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, OSError, PermissionError) as exc:
+        # Known errors: invalid file, access denied, etc.
+        raise HTTPException(status_code=400, detail=f"Error al analizar archivo: {exc}") from exc
     except Exception as exc:
+        # Unexpected errors: log with traceback for debugging
+        logger.exception("Unexpected error in analyze_file endpoint")
         raise HTTPException(
-            status_code=500, detail=f"Error al analizar archivo: {exc}"
+            status_code=500, detail=f"Error inesperado al analizar archivo: {exc}"
         ) from exc
 
     return CallGraphResponse(
@@ -248,9 +255,12 @@ async def trace_chain(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except HTTPException:
         raise
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=f"Error al trazar cadena: {exc}") from exc
     except Exception as exc:
+        logger.exception("Unexpected error in trace_chain endpoint")
         raise HTTPException(
-            status_code=500, detail=f"Error al trazar cadena: {exc}"
+            status_code=500, detail=f"Error inesperado al trazar cadena: {exc}"
         ) from exc
 
     return TraceChainResponse(
@@ -337,9 +347,12 @@ async def get_all_chains(
 
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, OSError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=f"Error al extraer cadenas: {exc}") from exc
     except Exception as exc:
+        logger.exception("Unexpected error in get_all_chains endpoint")
         raise HTTPException(
-            status_code=500, detail=f"Error al extraer cadenas: {exc}"
+            status_code=500, detail=f"Error inesperado al extraer cadenas: {exc}"
         ) from exc
 
     return AllChainsResponse(
@@ -513,9 +526,12 @@ async def analyze_cross_file(
             analyzed_files=result["analyzed_files"],
         )
 
+    except (ValueError, OSError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=f"Error en análisis cross-file: {exc}") from exc
     except Exception as exc:
+        logger.exception("Unexpected error in analyze_cross_file endpoint")
         raise HTTPException(
-            status_code=500, detail=f"Error en análisis cross-file: {exc}"
+            status_code=500, detail=f"Error inesperado en análisis cross-file: {exc}"
         ) from exc
 
 
@@ -616,7 +632,10 @@ async def trace_cross_file(
 
     except HTTPException:
         raise
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=f"Error al trazar cross-file: {exc}") from exc
     except Exception as exc:
+        logger.exception("Unexpected error in trace_cross_file endpoint")
         raise HTTPException(
-            status_code=500, detail=f"Error al trazar cross-file: {exc}"
+            status_code=500, detail=f"Error inesperado al trazar cross-file: {exc}"
         ) from exc
