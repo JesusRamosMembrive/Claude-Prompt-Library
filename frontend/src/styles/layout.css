@@ -1,7 +1,7 @@
 .app-root {
-  width: min(100vw, 1520px);
+  width: min(100vw, 1920px);
   margin: 0 auto;
-  padding: 40px 12px 64px;
+  padding: 40px 24px 64px;
   display: flex;
   flex-direction: column;
   gap: 28px;
