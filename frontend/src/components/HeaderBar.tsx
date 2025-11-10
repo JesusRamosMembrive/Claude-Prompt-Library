@@ -29,7 +29,6 @@ export function HeaderBar({
     { to: "/stage-toolkit", label: "Stage Toolkit" },
     { to: "/code-map", label: "Analysis" },
     { to: "/class-uml", label: "UML" },
-    { to: "/call-tracer", label: "Call Tracer" },
     { to: "/linters", label: "Linters" },
     { to: "/timeline", label: "Timeline" },
     { to: "/ollama", label: "AI Insights" },

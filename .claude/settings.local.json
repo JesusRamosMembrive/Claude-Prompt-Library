@@ -42,7 +42,8 @@
       "Bash(git log:*)",
       "Bash(ruff check:*)",
       "Bash(bandit:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
