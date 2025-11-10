@@ -176,9 +176,9 @@
 }
 
 .timeline-commit-cell {
-  min-width: 200px;
-  max-width: 200px;
-  padding: 0.5rem;
+  min-width: 120px;
+  max-width: 120px;
+  padding: 0.4rem 0.3rem;
   border-right: 1px solid rgba(59, 130, 246, 0.1);
   cursor: pointer;
   transition: all 0.2s;
@@ -195,10 +195,10 @@
 }
 
 .timeline-commit-message {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #f6f7fb;
-  margin-bottom: 0.25rem;
-  line-height: 1.2;
+  margin-bottom: 0.2rem;
+  line-height: 1.15;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
@@ -212,13 +212,13 @@
 
 .timeline-commit-hash {
   font-family: monospace;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #a5adc7;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .timeline-commit-date {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #7c849a;
 }
 
@@ -286,8 +286,8 @@
 }
 
 .timeline-cell {
-  min-width: 200px;
-  max-width: 200px;
+  min-width: 120px;
+  max-width: 120px;
   height: 32px;
   border-right: 1px solid rgba(59, 130, 246, 0.08);
   cursor: default;
