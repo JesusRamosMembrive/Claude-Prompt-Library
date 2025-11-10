@@ -1,10 +1,10 @@
-# Stage-Aware Development Framework + Code Map
+# ATLAS: Automated Tracing, Linting And Source-mapping
 
 **Prevent over-engineering. Guide evolution. Analyze your code. Stay in control.**
 
 A comprehensive toolkit combining:
 1. **Stage-Aware Framework** - Evolutionary development methodology with automatic stage detection
-2. **Code Map Backend** - FastAPI service for code analysis, call tracing, and quality tooling
+2. **ATLAS Backend** - FastAPI service for code analysis, call tracing, and quality tooling
 
 Automatically detects your project's maturity and provides deep insights into your codebase structure.
 
@@ -28,7 +28,7 @@ Enforces evolutionary development through:
 3. **Specialized Subagents** - Architect, implementer, reviewer that understand stage context
 4. **Session Continuity** - Tracking files preserve decisions and progress
 
-### Code Map Backend
+### ATLAS Backend
 Provides deep code analysis via REST API:
 1. **Call Tracing** - Track function calls within and across files
 2. **Dependency Graphs** - Visualize module and class relationships
@@ -71,7 +71,7 @@ python init_project.py --existing /path/to/project
 python init_project.py --detect-only /path/to/project
 ```
 
-### Code Map Backend
+### ATLAS Backend
 
 **Start the API server:**
 ```bash
@@ -196,7 +196,7 @@ AI executes. Human decides. Framework enforces.
 ## 📁 Project Structure
 
 ```
-claude-prompt-library/
+atlas/
 ├── init_project.py              # Stage framework CLI entry point
 ├── assess_stage.py              # Stage detection CLI
 ├── stage_config.py              # Detection algorithms
@@ -285,7 +285,7 @@ python assess_stage.py /path/to/project
 python claude_assess.py /path/to/project
 ```
 
-### Code Map Backend
+### ATLAS Backend
 
 **Run API server:**
 ```bash
@@ -320,7 +320,7 @@ python -m code_map.cli run --root . --reload
 - **[docs/STAGE_CRITERIA.md](./docs/STAGE_CRITERIA.md)** - Detailed stage criteria
 - **[docs/STAGES_COMPARISON.md](./docs/STAGES_COMPARISON.md)** - Side-by-side comparison
 
-**Code Map:**
+**ATLAS Backend:**
 - **[CLAUDE.md](./CLAUDE.md)** - Architecture and development guide
 - **API Docs** - Interactive Swagger UI at `/docs` when server is running
 
@@ -416,7 +416,7 @@ python assess_stage.py my-production-app
 - Claude Code CLI (`claude`) - For CLAUDE.md generation
 - `tree` command - For project visualization
 
-### Code Map Backend
+### ATLAS Backend
 **Required:**
 - Python 3.10+
 - Dependencies: `pip install -r requirements.txt`
@@ -445,8 +445,8 @@ python assess_stage.py my-production-app
 
 ```bash
 # Clone repository
-git clone https://github.com/jesusramon/claude-prompt-library
-cd claude-prompt-library
+git clone https://github.com/jesusramon/atlas
+cd atlas
 
 # Stage framework works immediately (no dependencies)
 python init_project.py my-project
@@ -566,12 +566,12 @@ This framework emerged from experience developing with Claude Code and other AI 
 
 ## 📊 Project Status
 
-**Current Version:** 3.2 (Code Map Integration)
+**Current Version:** 3.2 (ATLAS Integration)
 
 **Recent Updates:**
-- ✅ **v3.2** - Code quality improvements (XSS fix, refactoring, config)
+- ✅ **v3.2** - Code quality improvements + ATLAS branding (XSS fix, refactoring, config)
 - ✅ **v3.1** - Cross-file call tracing with import resolution
-- ✅ **v3.0** - Stage detection + Code Map backend integration
+- ✅ **v3.0** - Stage detection + ATLAS backend integration
 - ✅ **v2.5** - Integrated subagents
 - ✅ **v2.0** - Stage-aware framework focus
 - ✅ **v1.0** - Project initialization
@@ -615,9 +615,9 @@ A: Yes. The framework works with any AI assistant or manual development.
 **Q: What about non-Python projects?**
 A: Fully supported. Detection works for Python, JavaScript/TypeScript, Java, Go, Rust, Ruby, PHP, C/C++, and more.
 
-### Code Map
+### ATLAS Backend
 
-**Q: Can I use Code Map without the stage framework?**
+**Q: Can I use ATLAS without the stage framework?**
 A: Yes. They're independent. Use the API server standalone for code analysis.
 
 **Q: What languages does call tracing support?**
@@ -652,7 +652,7 @@ This project follows its own stage-aware methodology (currently Stage 3).
 - Stage rule improvements
 - Language-specific criteria
 
-**Code Map:**
+**ATLAS Backend:**
 - Additional language support (JS/TS call tracing)
 - New analyzers (CSS, SQL, etc.)
 - Performance optimizations
@@ -704,6 +704,19 @@ This project follows its own stage-aware methodology (currently Stage 3).
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/jesusramon/claude-prompt-library/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/jesusramon/claude-prompt-library/discussions)
+- **Issues:** [GitHub Issues](https://github.com/jesusramon/atlas/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jesusramon/atlas/discussions)
 - **Documentation:** This README + USAGE.md + CLAUDE.md
+
+---
+
+## 🎯 Why ATLAS?
+
+**ATLAS** stands for **Automated Tracing, Linting And Source-mapping** - a fitting name for a tool that helps you navigate and understand your codebase, just like the mythological Atlas held up the celestial spheres.
+
+The framework combines:
+- **Tracing** - Follow function calls across your entire codebase
+- **Linting** - Automated code quality checks and recommendations
+- **Source-mapping** - Visualize dependencies, architectures, and relationships
+
+Together with the Stage-Aware Framework, ATLAS ensures you build software that evolves deliberately, not accidentally.
