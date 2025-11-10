@@ -5,8 +5,7 @@ Rutas para análisis de trazabilidad de llamadas (Call Tracing).
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -58,9 +57,13 @@ class CallGraphResponse(BaseModel):
     call_graph: Dict[str, List[str]] = Field(
         ...,
         description="Grafo de llamadas: {caller: [callees]}",
-        examples=[{"create_app": ["configure_routes"], "configure_routes": ["include_router"]}],
+        examples=[
+            {"create_app": ["configure_routes"], "configure_routes": ["include_router"]}
+        ],
     )
-    total_functions: int = Field(..., description="Número total de funciones detectadas")
+    total_functions: int = Field(
+        ..., description="Número total de funciones detectadas"
+    )
 
 
 class TraceChainResponse(BaseModel):
@@ -126,8 +129,7 @@ async def analyze_file(
     # Analizar archivo usando v2 con recursive=False para compatibilidad con v1
     try:
         extractor = CrossFileCallGraphExtractor(
-            project_root=state.settings.root_path,
-            use_cache=True
+            project_root=state.settings.root_path, use_cache=True
         )
         extractor.analyze_file(target_path, recursive=False)
 
@@ -197,8 +199,7 @@ async def trace_chain(
     # Analizar y trazar usando v2
     try:
         extractor = CrossFileCallGraphExtractor(
-            project_root=state.settings.root_path,
-            use_cache=True
+            project_root=state.settings.root_path, use_cache=True
         )
         extractor.analyze_file(target_path, recursive=False)
 
@@ -212,7 +213,9 @@ async def trace_chain(
 
         if not qualified_func:
             # Intentar buscar sin cualificación completa
-            available_simple = [name.split("::")[-1] for name in extractor.call_graph.keys()]
+            available_simple = [
+                name.split("::")[-1] for name in extractor.call_graph.keys()
+            ]
             raise HTTPException(
                 status_code=404,
                 detail=f"Función '{request.start_function}' no encontrada. "
@@ -226,12 +229,17 @@ async def trace_chain(
         # Convertir a modelo Pydantic, simplificando los nombres
         chain = []
         for depth, qualified_name, qualified_callees in chain_data:
-            simple_func = qualified_name.split("::")[-1] if "::" in qualified_name else qualified_name
+            simple_func = (
+                qualified_name.split("::")[-1]
+                if "::" in qualified_name
+                else qualified_name
+            )
             simple_callees = [
-                c.split("::")[-1] if "::" in c else c
-                for c in qualified_callees
+                c.split("::")[-1] if "::" in c else c for c in qualified_callees
             ]
-            chain.append(CallChain(depth=depth, function=simple_func, callees=simple_callees))
+            chain.append(
+                CallChain(depth=depth, function=simple_func, callees=simple_callees)
+            )
 
         # Detectar si se alcanzó max_depth
         max_depth_reached = any(item.depth >= request.max_depth for item in chain)
@@ -283,8 +291,7 @@ async def get_all_chains(
     # Analizar usando v2
     try:
         extractor = CrossFileCallGraphExtractor(
-            project_root=state.settings.root_path,
-            use_cache=True
+            project_root=state.settings.root_path, use_cache=True
         )
         extractor.analyze_file(target_path, recursive=False)
 
@@ -298,9 +305,9 @@ async def get_all_chains(
 
         # Para cada entry point, generar su cadena completa
         chains = []
-        visited_global = set()
+        visited_global: Set[str] = set()
 
-        def build_chain(func: str, visited: set) -> list:
+        def build_chain(func: str, visited: Set[str]) -> List[str]:
             """Construye cadena desde una función."""
             if func in visited:
                 return [func.split("::")[-1] if "::" in func else func]
@@ -371,10 +378,15 @@ class CrossFileCallGraphResponse(BaseModel):
     call_graph: Dict[str, List[str]] = Field(
         ...,
         description="Call graph con nombres cualificados (file.py::function)",
-        examples=[{
-            "server.py::create_app": ["settings.py::load_settings", "state.py::AppState"],
-            "settings.py::load_settings": []
-        }],
+        examples=[
+            {
+                "server.py::create_app": [
+                    "settings.py::load_settings",
+                    "state.py::AppState",
+                ],
+                "settings.py::load_settings": [],
+            }
+        ],
     )
     entry_points: List[str] = Field(
         ...,
@@ -413,7 +425,9 @@ class CrossFileCallChain(BaseModel):
     qualified_name: str = Field(..., description="Nombre cualificado (file::function)")
     callees: List[str] = Field(..., description="Funciones llamadas (cualificadas)")
     file_path: str = Field(..., description="Archivo donde está la función")
-    function_name: str = Field(..., description="Nombre de la función sin cualificación")
+    function_name: str = Field(
+        ..., description="Nombre de la función sin cualificación"
+    )
 
 
 class TraceCrossFileResponse(BaseModel):
@@ -477,8 +491,7 @@ async def analyze_cross_file(
     # Analizar cross-file
     try:
         extractor = CrossFileCallGraphExtractor(
-            project_root=state.settings.root_path,
-            use_cache=True
+            project_root=state.settings.root_path, use_cache=True
         )
 
         extractor.analyze_file(target_path, recursive=request.recursive)
@@ -488,7 +501,7 @@ async def analyze_cross_file(
             raise HTTPException(
                 status_code=400,
                 detail=f"Demasiados archivos ({len(extractor.analyzed_files)}). "
-                       f"Límite: {request.max_files}. Usa recursive=False o aumenta max_files."
+                f"Límite: {request.max_files}. Usa recursive=False o aumenta max_files.",
             )
 
         result = extractor.export_to_dict()
@@ -502,8 +515,7 @@ async def analyze_cross_file(
 
     except Exception as exc:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error en análisis cross-file: {exc}"
+            status_code=500, detail=f"Error en análisis cross-file: {exc}"
         ) from exc
 
 
@@ -541,7 +553,7 @@ async def trace_cross_file(
         if "::" not in request.start_function:
             raise HTTPException(
                 status_code=400,
-                detail=f"Formato inválido. Use 'file.py::function'. Recibido: {request.start_function}"
+                detail=f"Formato inválido. Use 'file.py::function'. Recibido: {request.start_function}",
             )
 
         file_part, func_part = request.start_function.rsplit("::", 1)
@@ -549,14 +561,12 @@ async def trace_cross_file(
 
         if not target_path.exists():
             raise HTTPException(
-                status_code=404,
-                detail=f"Archivo no encontrado: {file_part}"
+                status_code=404, detail=f"Archivo no encontrado: {file_part}"
             )
 
         # Analizar proyecto desde ese archivo
         extractor = CrossFileCallGraphExtractor(
-            project_root=state.settings.root_path,
-            use_cache=True
+            project_root=state.settings.root_path, use_cache=True
         )
 
         extractor.analyze_file(target_path, recursive=True)
@@ -567,13 +577,12 @@ async def trace_cross_file(
             raise HTTPException(
                 status_code=404,
                 detail=f"Función '{request.start_function}' no encontrada. "
-                       f"Disponibles: {available}..."
+                f"Disponibles: {available}...",
             )
 
         # Trazar cadena
         chain_data = extractor.trace_chain_cross_file(
-            request.start_function,
-            max_depth=request.max_depth
+            request.start_function, max_depth=request.max_depth
         )
 
         # Convertir a modelo Pydantic
@@ -609,6 +618,5 @@ async def trace_cross_file(
         raise
     except Exception as exc:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error al trazar cross-file: {exc}"
+            status_code=500, detail=f"Error al trazar cross-file: {exc}"
         ) from exc

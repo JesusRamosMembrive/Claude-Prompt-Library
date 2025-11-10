@@ -38,7 +38,11 @@
       "Bash(groups:*)",
       "Bash(docker version:*)",
       "Bash(sudo usermod:*)",
-      "Bash(sudo docker compose:*)"
+      "Bash(sudo docker compose:*)",
+      "Bash(git log:*)",
+      "Bash(ruff check:*)",
+      "Bash(bandit:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

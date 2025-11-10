@@ -142,7 +142,7 @@
 .timeline-grid-container {
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 8px;
-  overflow-x: auto;
+  overflow-x: hidden;
   background: rgba(12, 14, 21, 0.9);
 }
 
@@ -157,11 +157,16 @@
 }
 
 .timeline-files-spacer {
-  min-width: 200px;
+  min-width: 350px;
   padding: 0.75rem 1rem;
   font-weight: 600;
   color: #f6f7fb;
   border-right: 1px solid rgba(59, 130, 246, 0.2);
+  position: relative;
+  background: rgba(17, 20, 30, 0.98);
+  z-index: 15;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  will-change: transform;
 }
 
 .timeline-commits-row {
@@ -171,8 +176,8 @@
 }
 
 .timeline-commit-cell {
-  min-width: 80px;
-  max-width: 80px;
+  min-width: 200px;
+  max-width: 200px;
   padding: 0.5rem;
   border-right: 1px solid rgba(59, 130, 246, 0.1);
   cursor: pointer;
@@ -189,6 +194,22 @@
   font-weight: 600;
 }
 
+.timeline-commit-message {
+  font-size: 0.75rem;
+  color: #f6f7fb;
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .timeline-commit-hash {
   font-family: monospace;
   font-size: 0.75rem;
@@ -203,8 +224,10 @@
 
 /* Grid Body */
 .timeline-grid-body {
-  max-height: 1200px;
+  max-height: 1800px;
   overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
 }
 
 .timeline-grid-row {
@@ -217,8 +240,8 @@
 }
 
 .timeline-file-label {
-  min-width: 200px;
-  max-width: 200px;
+  min-width: 350px;
+  max-width: 350px;
   padding: 0.5rem 1rem;
   border-right: 1px solid rgba(59, 130, 246, 0.2);
   font-size: 0.85rem;
@@ -227,8 +250,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
   color: #f6f7fb;
+  position: relative;
+  background: rgba(12, 14, 21, 0.98);
+  z-index: 5;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  will-change: transform;
 }
 
 .timeline-file-label:hover {
@@ -241,19 +269,31 @@
   font-weight: 600;
 }
 
+/* File path components */
+.timeline-file-directory {
+  color: #7c849a;
+  font-size: 0.8rem;
+}
+
+.timeline-file-name {
+  color: #f6f7fb;
+  font-weight: 500;
+}
+
 .timeline-cells-row {
   display: flex;
   flex: 1;
 }
 
 .timeline-cell {
-  min-width: 80px;
-  max-width: 80px;
+  min-width: 200px;
+  max-width: 200px;
   height: 32px;
   border-right: 1px solid rgba(59, 130, 246, 0.08);
   cursor: default;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  overflow: hidden;
 }
 
 .timeline-cell--changed {
@@ -513,6 +553,196 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+/* Modal */
+.timeline-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.timeline-modal {
+  background: rgba(17, 20, 30, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.timeline-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.timeline-modal-header h2 {
+  margin: 0;
+  color: #f6f7fb;
+  font-size: 1.5rem;
+}
+
+.timeline-modal-close {
+  background: none;
+  border: none;
+  color: #a5adc7;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.timeline-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.timeline-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.timeline-modal-info {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(12, 14, 21, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.timeline-modal-info-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.timeline-modal-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-modal-info-row strong {
+  color: #a5adc7;
+  min-width: 80px;
+}
+
+.timeline-modal-info-row code {
+  background: rgba(12, 14, 21, 0.8);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  flex: 1;
+}
+
+.timeline-modal-changes {
+  padding: 1.5rem;
+  background: rgba(12, 14, 21, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  min-height: 200px;
+}
+
+.timeline-modal-loading {
+  color: #60a5fa;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.timeline-modal-hint {
+  color: #7c849a;
+  text-align: center;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.timeline-modal-error {
+  color: #f87171;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Diff viewer */
+.timeline-diff-container {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.timeline-diff-line {
+  padding: 0.25rem 0.75rem;
+  white-space: pre;
+  margin: 0;
+}
+
+.timeline-diff-added {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-left: 3px solid #10b981;
+}
+
+.timeline-diff-removed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-left: 3px solid #ef4444;
+}
+
+.timeline-diff-hunk {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-weight: 600;
+  border-left: 3px solid #3b82f6;
+}
+
+.timeline-diff-context {
+  color: #a5adc7;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .timeline-view {
@@ -531,5 +761,15 @@
 
   .timeline-detail-row {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .timeline-modal-info-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

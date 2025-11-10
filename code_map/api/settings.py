@@ -140,14 +140,12 @@ async def list_directories(
     # Verificar que el path existe y es un directorio
     if not base_path.exists():
         raise HTTPException(
-            status_code=404,
-            detail=f"El directorio no existe: {base_path}"
+            status_code=404, detail=f"El directorio no existe: {base_path}"
         )
 
     if not base_path.is_dir():
         raise HTTPException(
-            status_code=400,
-            detail=f"El path no es un directorio: {base_path}"
+            status_code=400, detail=f"El path no es un directorio: {base_path}"
         )
 
     # Listar subdirectorios
@@ -168,9 +166,9 @@ async def list_directories(
         for item in sorted(base_path.iterdir()):
             if item.is_dir():
                 # Excluir directorios ocultos y comunes que no son útiles
-                if item.name.startswith('.'):
+                if item.name.startswith("."):
                     continue
-                if item.name in ('__pycache__', 'node_modules', '.git'):
+                if item.name in ("__pycache__", "node_modules", ".git"):
                     continue
 
                 directories.append(
@@ -182,8 +180,7 @@ async def list_directories(
                 )
     except PermissionError:
         raise HTTPException(
-            status_code=403,
-            detail=f"Sin permisos para leer el directorio: {base_path}"
+            status_code=403, detail=f"Sin permisos para leer el directorio: {base_path}"
         )
 
     return ListDirectoriesResponse(

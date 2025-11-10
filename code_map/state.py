@@ -662,7 +662,9 @@ class AppState:
         # Use alternative cache directory if specified (for Docker with read-only mounts)
         cache_dir = os.getenv(ENV_CACHE_DIR)
         cache_dir_path = Path(cache_dir) if cache_dir else None
-        self.snapshot_store = SnapshotStore(self.settings.root_path, cache_dir=cache_dir_path)
+        self.snapshot_store = SnapshotStore(
+            self.settings.root_path, cache_dir=cache_dir_path
+        )
         self.reporter = StateReporter(
             settings=self.settings,
             scanner=self.scanner,

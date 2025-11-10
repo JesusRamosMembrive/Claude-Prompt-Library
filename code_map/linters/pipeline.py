@@ -18,8 +18,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, ca
 
 from defusedxml import ElementTree as _ElementTree  # type: ignore[import-not-found, import-untyped]
 
-ElementTree = cast(Any, _ElementTree)
-
 from ..scanner import DEFAULT_EXCLUDED_DIRS
 from .report_schema import (
     ChartData,
@@ -32,6 +30,8 @@ from .report_schema import (
     Severity,
     ToolRunResult,
 )
+
+ElementTree = cast(Any, _ElementTree)
 
 
 # ============================================================================
@@ -193,7 +193,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
     ToolSpec(
         key="black",
         name="Black",
-        command=["black", "--check", "--diff", "--color", "never", "."],
+        command=["black", "--check", "--diff", "--no-color", "."],
         module="black",
         parser=_default_parser,
         timeout=LINTER_TIMEOUT_FAST,
@@ -209,7 +209,7 @@ TOOL_SPECS: Tuple[ToolSpec, ...] = (
     ToolSpec(
         key="bandit",
         name="Bandit",
-        command=["bandit", "-q", "-r", ".", "-f", "json"],
+        command=["bandit", "-q", "-r", ".", "-f", "json", "-x", "./.venv/*,./tests/*"],
         module="bandit",
         parser=_parse_bandit,
         timeout=LINTER_TIMEOUT_STANDARD,

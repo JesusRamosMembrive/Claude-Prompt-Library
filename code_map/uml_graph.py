@@ -403,7 +403,7 @@ def build_uml_dot(
         '  graph [fontname="'
         + _quote_attr(options.graph_fontname)
         + f'", fontsize={options.graph_fontsize}, overlap=false, splines={splines_attr}, nodesep={_format_float(options.nodesep)}, ranksep={_format_float(options.ranksep)}, pad="{_format_float(options.pad)}", margin="{_format_float(options.margin)}", bgcolor="{_quote_attr(options.bgcolor)}"];',
-        '  node [shape='
+        "  node [shape="
         + options.node_shape
         + ', style="'
         + _quote_attr(options.node_style)
@@ -566,7 +566,9 @@ def _prepare_graphviz_options(
         reference_color=_sanitize_string(source.reference_color, "#a855f7"),
         inheritance_arrowhead=_sanitize_string(source.inheritance_arrowhead, "empty"),
         association_arrowhead=_sanitize_string(source.association_arrowhead, "normal"),
-        instantiation_arrowhead=_sanitize_string(source.instantiation_arrowhead, "diamond"),
+        instantiation_arrowhead=_sanitize_string(
+            source.instantiation_arrowhead, "diamond"
+        ),
         reference_arrowhead=_sanitize_string(source.reference_arrowhead, "vee"),
         association_style=_sanitize_string(source.association_style, "dashed"),
         instantiation_style=_sanitize_string(source.instantiation_style, "dashed"),

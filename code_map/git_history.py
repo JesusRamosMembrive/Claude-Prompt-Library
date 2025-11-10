@@ -4,15 +4,16 @@ Git history analysis module for Code Timeline Visualization.
 Provides utilities to parse git log, analyze file history, and extract commit information.
 """
 
-import subprocess
+import subprocess  # nosec B404 - Required for invoking git CLI safely. All commands use list args (no shell injection risk).
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Set
+from typing import Any, List, Optional, Dict, Set
 import re
 
 
 class GitHistoryError(Exception):
     """Raised when git operations fail."""
+
     pass
 
 
@@ -25,7 +26,7 @@ class CommitInfo:
         author: str,
         date: datetime,
         message: str,
-        files_changed: List[str]
+        files_changed: List[str],
     ):
         self.hash = hash
         self.author = author
@@ -40,7 +41,7 @@ class CommitInfo:
             "author": self.author,
             "date": self.date.isoformat(),
             "message": self.message,
-            "files_changed": self.files_changed
+            "files_changed": self.files_changed,
         }
 
 
@@ -84,12 +85,12 @@ class GitHistory:
             GitHistoryError: If command fails
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - Git command constructed from controlled list args, no user input in command itself
                 ["git"] + args,
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout
         except subprocess.CalledProcessError as e:
@@ -101,7 +102,7 @@ class GitHistory:
         until: Optional[datetime] = None,
         author: Optional[str] = None,
         file_path: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[CommitInfo]:
         """
         Get commit history with optional filters.
@@ -122,7 +123,7 @@ class GitHistory:
             "log",
             "--name-only",  # Show file names
             "--pretty=format:%H|%an|%ai|%s",
-            f"-n{limit}"
+            f"-n{limit}",
         ]
 
         # Add filters
@@ -185,24 +186,22 @@ class GitHistory:
                             files_changed.append(file_line)
                         i += 1
 
-                    commits.append(CommitInfo(
-                        hash=hash_str,
-                        author=author,
-                        date=date,
-                        message=message,
-                        files_changed=files_changed
-                    ))
+                    commits.append(
+                        CommitInfo(
+                            hash=hash_str,
+                            author=author,
+                            date=date,
+                            message=message,
+                            files_changed=files_changed,
+                        )
+                    )
                     continue
 
             i += 1
 
         return commits
 
-    def get_file_history(
-        self,
-        file_path: str,
-        limit: int = 50
-    ) -> Dict[str, any]:
+    def get_file_history(self, file_path: str, limit: int = 50) -> Dict[str, Any]:
         """
         Get commit history for a specific file.
 
@@ -218,7 +217,7 @@ class GitHistory:
         return {
             "file_path": file_path,
             "commits": [c.to_dict() for c in commits],
-            "total_changes": len(commits)
+            "total_changes": len(commits),
         }
 
     def get_commit_details(self, commit_hash: str) -> Optional[CommitInfo]:
@@ -234,12 +233,7 @@ class GitHistory:
         try:
             commits = self.get_commits(limit=1)
             # Get specific commit
-            args = [
-                "show",
-                "--name-only",
-                "--pretty=format:%H|%an|%ai|%s",
-                commit_hash
-            ]
+            args = ["show", "--name-only", "--pretty=format:%H|%an|%ai|%s", commit_hash]
             output = self._run_git_command(args)
             commits = self._parse_commit_log(output)
             return commits[0] if commits else None
@@ -260,10 +254,8 @@ class GitHistory:
             return []
 
     def get_timeline_matrix(
-        self,
-        limit: int = 50,
-        file_pattern: Optional[str] = None
-    ) -> Dict[str, any]:
+        self, limit: int = 50, file_pattern: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Get timeline data structured for DAW-style visualization.
 
@@ -309,5 +301,23 @@ class GitHistory:
             "files": files_list,
             "matrix": matrix,
             "total_files": len(files_list),
-            "total_commits": len(commits)
+            "total_commits": len(commits),
         }
+
+    def get_file_diff(self, commit_hash: str, file_path: str) -> Optional[str]:
+        """
+        Get the diff for a specific file in a commit.
+
+        Args:
+            commit_hash: Git commit hash
+            file_path: Path to file (relative to repo root)
+
+        Returns:
+            Diff string or None if file not in commit
+        """
+        try:
+            # Get diff for specific file in this commit
+            output = self._run_git_command(["show", f"{commit_hash}", "--", file_path])
+            return output
+        except GitHistoryError:
+            return None

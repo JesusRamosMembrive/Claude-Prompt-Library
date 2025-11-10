@@ -145,3 +145,22 @@ async def mark_notification_as_read(
     updated = mark_notification_read(notification_id, read=read)
     if not updated:
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
+
+
+@router.post("/run", response_model=LintersReportRecordSchema)
+async def run_linters(
+    state: AppState = Depends(get_app_state),
+) -> LintersReportRecordSchema:
+    """Ejecuta el pipeline de linters manualmente y retorna el nuevo reporte."""
+    state._schedule_linters_pipeline(force=True)
+
+    # Esperar a que el task se cree y ejecute
+    if state._linters_task:
+        await state._linters_task
+
+    # Obtener el último reporte generado
+    stored = get_latest_linters_report(root_path=state.settings.root_path)
+    if stored is None:
+        raise HTTPException(status_code=500, detail="No se pudo generar el reporte")
+
+    return _to_report_record(stored)

@@ -6,6 +6,7 @@ import type { StatusPayload } from "../api/types";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useLintersLatestReport } from "../hooks/useLintersLatestReport";
 import { useOllamaInsightsQuery } from "../hooks/useOllamaInsightsQuery";
+import { useTimelineSummary } from "../hooks/useTimelineSummary";
 
 const LINTER_STATUS_LABEL: Record<string, string> = {
   pass: "OK",
@@ -114,6 +115,7 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   const stageStatusQuery = useStageStatusQuery();
   const lintersQuery = useLintersLatestReport();
   const ollamaInsightsQuery = useOllamaInsightsQuery(5);
+  const timelineSummaryQuery = useTimelineSummary();
 
   const statusData = statusQuery.data;
   const rootPath = statusData?.absolute_root ?? statusData?.root_path ?? "—";
@@ -216,6 +218,35 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   const ollamaInsightsLastRun = statusData?.ollama_insights_last_run ?? null;
   const ollamaInsightsNextRun = statusData?.ollama_insights_next_run ?? null;
 
+  const timelineSummary = timelineSummaryQuery.data ?? null;
+  const timelineTotalCommits = timelineSummary?.total_commits ?? 0;
+  const timelineTotalFiles = timelineSummary?.total_files ?? 0;
+  const timelineLatestCommit = timelineSummary?.latest_commit ?? null;
+  const timelineActiveFiles = timelineSummary?.active_files_count ?? 0;
+
+  let timelineTone: "success" | "warn" | "neutral" = "neutral";
+  let timelineLabel = "No data";
+  if (timelineSummaryQuery.isLoading) {
+    timelineLabel = "Loading…";
+  } else if (timelineSummaryQuery.error) {
+    timelineTone = "warn";
+    timelineLabel = "Unavailable";
+  } else if (timelineTotalCommits > 0) {
+    timelineTone = "success";
+    timelineLabel = `${timelineTotalCommits.toLocaleString("en-US")} commits`;
+  } else {
+    timelineTone = "warn";
+    timelineLabel = "No commits";
+  }
+
+  const timelineSummaryText = timelineSummaryQuery.isLoading
+    ? "Loading commit history…"
+    : timelineSummaryQuery.error
+      ? "Could not load timeline data. Make sure this is a git repository."
+      : timelineLatestCommit
+        ? `Latest commit by ${timelineLatestCommit.author} on ${formatDateTime(timelineLatestCommit.date)}.`
+        : "No commit history available yet.";
+
   const pendingEvents = statusData?.pending_events ?? 0;
   const capabilityIssues =
     statusData?.capabilities?.filter((capability) => !capability.available) ?? [];
@@ -315,6 +346,24 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
       });
     }
 
+    if (timelineLatestCommit) {
+      const commitTimestamp = parseTimestamp(timelineLatestCommit.date);
+      if (commitTimestamp) {
+        const truncatedMessage =
+          timelineLatestCommit.message.length > 80
+            ? `${timelineLatestCommit.message.slice(0, 77)}…`
+            : timelineLatestCommit.message;
+        items.push({
+          id: `timeline-commit-${timelineLatestCommit.hash}`,
+          label: "Git commit",
+          description: `${truncatedMessage} by ${timelineLatestCommit.author}`,
+          timestamp: commitTimestamp,
+          formattedDate: new Date(commitTimestamp).toLocaleString("en-US"),
+          link: { label: "View Timeline", to: "/timeline" },
+        });
+      }
+    }
+
     return items
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 6);
@@ -331,6 +380,7 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
     latestOllamaInsight,
     ollamaInsightsLastRun,
     ollamaInsightsNextRun,
+    timelineLatestCommit,
   ]);
 
   const alerts: Array<{
@@ -541,6 +591,7 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
       ) : null}
 
       <section className="overview-grid">
+        {/* Grid 2x2: Stage Toolkit, Code Map, Linters, Timeline */}
         <article className="overview-card overview-card--stage">
           <header className="overview-card__header">
             <div>
@@ -638,6 +689,61 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
           </dl>
         </article>
 
+        <article className="overview-card overview-card--timeline">
+          <header className="overview-card__header">
+            <div>
+              <span className={`overview-pill ${timelineTone}`}>{timelineLabel}</span>
+              <h3>Code Timeline</h3>
+            </div>
+            <Link className="overview-card__cta" to="/timeline">
+              Open Timeline →
+            </Link>
+          </header>
+          <p className="overview-card__summary">{timelineSummaryText}</p>
+          {timelineLatestCommit ? (
+            <div style={{
+              padding: "0.75rem",
+              background: "rgba(12, 14, 21, 0.6)",
+              borderRadius: "4px",
+              marginBottom: "1rem",
+              border: "1px solid rgba(59, 130, 246, 0.1)"
+            }}>
+              <p style={{
+                fontSize: "0.85rem",
+                color: "#f6f7fb",
+                marginBottom: "0.25rem",
+                lineHeight: "1.4"
+              }}>
+                {timelineLatestCommit.message}
+              </p>
+              <span style={{ fontSize: "0.75rem", color: "#7c849a" }}>
+                {timelineLatestCommit.hash.substring(0, 7)} · {timelineLatestCommit.author}
+              </span>
+            </div>
+          ) : null}
+          <dl className="overview-metrics">
+            <div>
+              <dt>Total commits</dt>
+              <dd>{timelineTotalCommits.toLocaleString("en-US")}</dd>
+            </div>
+            <div>
+              <dt>Files tracked</dt>
+              <dd>{timelineTotalFiles.toLocaleString("en-US")}</dd>
+            </div>
+            <div>
+              <dt>Active files</dt>
+              <dd>{timelineActiveFiles.toLocaleString("en-US")}</dd>
+            </div>
+            <div>
+              <dt>Latest commit</dt>
+              <dd>{formatDateTime(timelineLatestCommit?.date)}</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+
+      {/* Ollama Insights - Full Width Section */}
+      <section className="overview-grid-full">
         <article className="overview-card overview-card--ollama">
           <header className="overview-card__header">
             <div>

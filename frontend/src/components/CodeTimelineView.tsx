@@ -2,7 +2,7 @@
  * CodeTimelineView - DAW-style visualization of git commit history
  */
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import "../styles/timeline.css";
 
@@ -22,9 +22,98 @@ interface TimelineMatrixResponse {
   total_commits: number;
 }
 
+interface DiffModalProps {
+  commit: { hash: string; file: string };
+  onClose: () => void;
+}
+
+function DiffModal({ commit, onClose }: DiffModalProps) {
+  const { data: diffData, isLoading, error } = useQuery({
+    queryKey: ["file-diff", commit.hash, commit.file],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("file_path", commit.file);
+      const response = await fetch(`/api/timeline/diff/${commit.hash}?${params}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch diff: ${response.statusText}`);
+      }
+      return response.json();
+    },
+  });
+
+  const formatDiffLine = (line: string) => {
+    if (line.startsWith('+') && !line.startsWith('+++')) {
+      return <div className="timeline-diff-line timeline-diff-added">{line}</div>;
+    } else if (line.startsWith('-') && !line.startsWith('---')) {
+      return <div className="timeline-diff-line timeline-diff-removed">{line}</div>;
+    } else if (line.startsWith('@@')) {
+      return <div className="timeline-diff-line timeline-diff-hunk">{line}</div>;
+    } else {
+      return <div className="timeline-diff-line timeline-diff-context">{line}</div>;
+    }
+  };
+
+  return (
+    <div className="timeline-modal-overlay" onClick={onClose}>
+      <div className="timeline-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="timeline-modal-header">
+          <h2>File Changes</h2>
+          <button className="timeline-modal-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="timeline-modal-body">
+          <div className="timeline-modal-info">
+            <div className="timeline-modal-info-row">
+              <strong>File:</strong>
+              <code>{commit.file}</code>
+            </div>
+            <div className="timeline-modal-info-row">
+              <strong>Commit:</strong>
+              <code>{commit.hash}</code>
+            </div>
+          </div>
+
+          {isLoading && (
+            <div className="timeline-modal-changes">
+              <p className="timeline-modal-loading">Loading diff...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="timeline-modal-changes">
+              <p className="timeline-modal-error">
+                Error loading diff: {(error as Error).message}
+              </p>
+            </div>
+          )}
+
+          {diffData && (
+            <div className="timeline-modal-changes">
+              <div className="timeline-diff-container">
+                {diffData.diff.split('\n').map((line: string, idx: number) => (
+                  <div key={idx}>{formatDiffLine(line)}</div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CodeTimelineView() {
   const [limit, setLimit] = useState(30);
   const [filePattern, setFilePattern] = useState("");
+  const [selectedCommit, setSelectedCommit] = useState<{
+    hash: string;
+    file: string;
+  } | null>(null);
+
+  // Refs for synchronizing horizontal scroll
+  const commitsHeaderRef = useRef<HTMLDivElement>(null);
+  const gridBodyRef = useRef<HTMLDivElement>(null);
 
   const {
     data: matrixData,
@@ -60,6 +149,76 @@ export default function CodeTimelineView() {
 
   const formatShortHash = (hash: string) => hash.substring(0, 7);
   const getFileName = (path: string) => path.split("/").pop() || path;
+
+  const formatFilePath = (path: string) => {
+    const parts = path.split("/");
+    if (parts.length === 1) {
+      return <span className="timeline-file-name">{parts[0]}</span>;
+    }
+
+    const directory = parts.slice(0, -1).join("/");
+    const filename = parts[parts.length - 1];
+
+    return (
+      <>
+        <span className="timeline-file-directory">{directory}/</span>
+        <span className="timeline-file-name">{filename}</span>
+      </>
+    );
+  };
+
+  // Synchronize horizontal scroll between header and body
+  useEffect(() => {
+    const headerRow = commitsHeaderRef.current;
+    const bodyContainer = gridBodyRef.current;
+
+    if (!headerRow || !bodyContainer) return;
+
+    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
+      target.scrollLeft = source.scrollLeft;
+    };
+
+    const handleHeaderScroll = () => {
+      if (headerRow && bodyContainer) {
+        syncScroll(headerRow, bodyContainer);
+      }
+    };
+
+    const handleBodyScroll = () => {
+      if (headerRow && bodyContainer) {
+        syncScroll(bodyContainer, headerRow);
+      }
+    };
+
+    headerRow.addEventListener('scroll', handleHeaderScroll);
+    bodyContainer.addEventListener('scroll', handleBodyScroll);
+
+    return () => {
+      headerRow.removeEventListener('scroll', handleHeaderScroll);
+      bodyContainer.removeEventListener('scroll', handleBodyScroll);
+    };
+  }, [matrixData]); // Re-run when data changes
+
+  // Keep file labels visible during horizontal scroll
+  useEffect(() => {
+    const bodyContainer = gridBodyRef.current;
+    if (!bodyContainer) return;
+
+    const updateStickyPositions = () => {
+      const scrollLeft = bodyContainer.scrollLeft;
+      const fileLabels = bodyContainer.querySelectorAll('.timeline-file-label');
+
+      fileLabels.forEach((label) => {
+        (label as HTMLElement).style.transform = `translateX(${scrollLeft}px)`;
+      });
+    };
+
+    bodyContainer.addEventListener('scroll', updateStickyPositions);
+
+    return () => {
+      bodyContainer.removeEventListener('scroll', updateStickyPositions);
+    };
+  }, [matrixData]);
 
   return (
     <div className="timeline-view">
@@ -143,15 +302,15 @@ export default function CodeTimelineView() {
                 {/* Header Row with Commits */}
                 <div className="timeline-commits-header">
                   <div className="timeline-files-spacer">Files</div>
-                  <div className="timeline-commits-row">
+                  <div className="timeline-commits-row" ref={commitsHeaderRef}>
                     {matrixData.commits.map((commit) => (
                       <div
                         key={commit.hash}
                         className="timeline-commit-cell"
-                        title={`${commit.hash}\n${commit.message}\nby ${commit.author}\n${commit.date}`}
+                        title={`${commit.message}\n\n${formatShortHash(commit.hash)}\nby ${commit.author}\n${commit.date}`}
                       >
-                        <div className="timeline-commit-hash">
-                          {formatShortHash(commit.hash)}
+                        <div className="timeline-commit-message">
+                          {commit.message}
                         </div>
                         <div className="timeline-commit-date">
                           {formatDate(commit.date)}
@@ -162,12 +321,12 @@ export default function CodeTimelineView() {
                 </div>
 
                 {/* Grid Body: Files × Commits */}
-                <div className="timeline-grid-body">
+                <div className="timeline-grid-body" ref={gridBodyRef}>
                   {matrixData.files.map((file, fileIdx) => (
                     <div key={file} className="timeline-grid-row">
                       {/* File name (left column) */}
                       <div className="timeline-file-label" title={file}>
-                        {getFileName(file)}
+                        {formatFilePath(file)}
                       </div>
 
                       {/* Cells for each commit */}
@@ -184,9 +343,14 @@ export default function CodeTimelineView() {
                                 changed
                                   ? `${getFileName(file)} changed in ${formatShortHash(
                                       commit.hash
-                                    )}`
+                                    )}\nClick to see changes`
                                   : ""
                               }
+                              onClick={() => {
+                                if (changed) {
+                                  setSelectedCommit({ hash: commit.hash, file });
+                                }
+                              }}
                             />
                           );
                         })}
@@ -216,6 +380,9 @@ export default function CodeTimelineView() {
           )}
         </div>
       )}
+
+      {/* Modal for commit changes */}
+      {selectedCommit && <DiffModal commit={selectedCommit} onClose={() => setSelectedCommit(null)} />}
     </div>
   );
 }

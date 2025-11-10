@@ -533,14 +533,18 @@ class DirectoryItem(BaseModel):
 
     name: str = Field(..., description="Nombre del directorio")
     path: str = Field(..., description="Path absoluto del directorio")
-    is_parent: bool = Field(default=False, description="True si es el directorio padre (..)")
+    is_parent: bool = Field(
+        default=False, description="True si es el directorio padre (..)"
+    )
 
 
 class ListDirectoriesResponse(BaseModel):
     """Respuesta al listar directorios disponibles."""
 
     current_path: str = Field(..., description="Path del directorio actual")
-    directories: List[DirectoryItem] = Field(default_factory=list, description="Lista de subdirectorios")
+    directories: List[DirectoryItem] = Field(
+        default_factory=list, description="Lista de subdirectorios"
+    )
 
 
 class ClassGraphNode(BaseModel):

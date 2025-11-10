@@ -1,11 +1,12 @@
 import logging
 from middlewareExample import middlewareAPI
 
-class endpointExampleClass():
-    
+
+class endpointExampleClass:
+
     def __init__(self):
         self.middleware = middlewareAPI()
-        
+
     def endpointMethod(self):
         """
         Executes the endpoint logic by logging messages before and after calling the apiDriveMethod.

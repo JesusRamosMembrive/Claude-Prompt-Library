@@ -58,7 +58,9 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
     if frontend_dist.exists() and frontend_dist.is_dir():
         # Mount static files at root path
         # html=True enables SPA fallback routing (all routes -> index.html)
-        app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
+        app.mount(
+            "/", StaticFiles(directory=str(frontend_dist), html=True), name="static"
+        )
 
     return app
 

@@ -607,3 +607,12 @@
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

@@ -1,11 +1,12 @@
 import logging
 from driverExample import driverExampleClass
 
-class middlewareAPI():
-    
+
+class middlewareAPI:
+
     def __init__(self):
         self.driver = driverExampleClass()
-        
+
     def apiDriveMethod(self):
         """
         Calls the driverMethod of the associated driver object, logging messages before and after the call.

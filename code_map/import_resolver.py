@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class ImportResolver:
@@ -38,7 +38,9 @@ class ImportResolver:
         self.project_root = project_root.resolve()
         self._import_cache: Dict[str, List[Tuple[str, Optional[str], Path]]] = {}
 
-    def extract_imports(self, filepath: str | Path) -> List[Tuple[str, Optional[str], str]]:
+    def extract_imports(
+        self, filepath: str | Path
+    ) -> List[Tuple[str, Optional[str], str]]:
         """
         Extrae todos los imports de un archivo Python.
 
@@ -63,12 +65,12 @@ class ImportResolver:
             return []
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=str(path))
         except (SyntaxError, UnicodeDecodeError):
             return []
 
-        imports = []
+        imports: List[Tuple[str, Optional[str], str]] = []
 
         for node in ast.walk(tree):
             # import module
@@ -91,10 +93,7 @@ class ImportResolver:
         return imports
 
     def resolve_import(
-        self,
-        module: str,
-        name: Optional[str],
-        source_file: Path
+        self, module: str, name: Optional[str], source_file: Path
     ) -> Optional[Tuple[Path, Optional[str]]]:
         """
         Resuelve un import a su archivo real y nombre de símbolo.
@@ -118,17 +117,14 @@ class ImportResolver:
         source_dir = source_file.parent
 
         # Imports absolutos (sin dots)
-        if not module.startswith('.'):
+        if not module.startswith("."):
             return self._resolve_absolute(module, name, source_dir)
 
         # Imports relativos (con dots)
         return self._resolve_relative(module, name, source_dir)
 
     def _resolve_absolute(
-        self,
-        module: str,
-        name: Optional[str],
-        source_dir: Optional[Path] = None
+        self, module: str, name: Optional[str], source_dir: Optional[Path] = None
     ) -> Optional[Tuple[Path, Optional[str]]]:
         """
         Resuelve import absoluto.
@@ -140,7 +136,7 @@ class ImportResolver:
         """
         # Convertir nombre de módulo a path
         # utils.helpers → utils/helpers.py
-        module_path = Path(module.replace('.', '/'))
+        module_path = Path(module.replace(".", "/"))
 
         # Primero, intentar relativo al directorio del archivo fuente
         # Esto maneja imports entre archivos del mismo directorio sin ser relativos
@@ -167,10 +163,7 @@ class ImportResolver:
         return None
 
     def _resolve_relative(
-        self,
-        module: str,
-        name: Optional[str],
-        source_dir: Path
+        self, module: str, name: Optional[str], source_dir: Path
     ) -> Optional[Tuple[Path, Optional[str]]]:
         """
         Resuelve import relativo.
@@ -182,7 +175,7 @@ class ImportResolver:
         """
         # Contar niveles de dots
         level = 0
-        while module.startswith('.'):
+        while module.startswith("."):
             level += 1
             module = module[1:]
 
@@ -209,7 +202,7 @@ class ImportResolver:
             return None
 
         # from .module import name → ./module.py, name
-        module_path = Path(module.replace('.', '/'))
+        module_path = Path(module.replace(".", "/"))
 
         candidate_file = target_dir / f"{module_path}.py"
         if candidate_file.exists():
@@ -221,10 +214,7 @@ class ImportResolver:
 
         return None
 
-    def build_import_map(
-        self,
-        filepath: Path
-    ) -> Dict[str, Tuple[Path, Optional[str]]]:
+    def build_import_map(self, filepath: Path) -> Dict[str, Tuple[Path, Optional[str]]]:
         """
         Construye un mapa de todos los imports del archivo a sus resoluciones.
 
@@ -254,10 +244,10 @@ class ImportResolver:
                 # Determinar nombre local
                 if import_type == "import":
                     # import utils → local name = "utils"
-                    local_name = module.split('.')[-1]
+                    local_name = module.split(".")[-1]
                 else:
                     # from utils import helper → local name = "helper"
-                    local_name = name if name else module.split('.')[-1]
+                    local_name = name if name else module.split(".")[-1]
 
                 import_map[local_name] = (target_file, symbol)
 
