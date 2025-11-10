@@ -30,16 +30,16 @@ export function HomeView({
   const detectionLabel = detectionBadgeLabel(detection);
   const backendOffline =
     statusQuery.isError || (!statusQuery.isFetching && !statusQuery.data && !statusQuery.isLoading);
-  const executableUrl = "https://github.com/jesusramos/Claude-Prompt-Library/releases/latest";
+  const executableUrl = "https://github.com/jesusramon/atlas/releases/latest";
 
   return (
     <div className="home-view">
       {backendOffline && (
         <div className="home-alert home-alert--error" role="alert">
           <div className="home-alert__text">
-            <strong>Backend desconectado.</strong>
+            <strong>ATLAS Backend offline.</strong>
             <span>
-              Inicia el servidor local o descarga el ejecutable empaquetado para Code Map.
+              Start the local server or download the packaged executable for ATLAS.
             </span>
           </div>
           <a
@@ -48,7 +48,7 @@ export function HomeView({
             target="_blank"
             rel="noreferrer"
           >
-            Descargar ejecutable →
+            Download executable →
           </a>
         </div>
       )}
@@ -58,9 +58,9 @@ export function HomeView({
           <span className={`home-stage-pill ${detectionTone}`}>
             {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
           </span>
-          <h2>Build with AI without losing control.</h2>
+          <h2>ATLAS: Navigate Your Codebase with Precision</h2>
           <p>
-            Define shared standards, break down work into milestones, monitor the details of each task, run integrated linters, and rely on local AI for contextual tips.
+            Automated Tracing, Linting And Source-mapping. Define shared standards, monitor code quality with integrated linters, trace function calls across files, and rely on local AI for contextual insights.
           </p>
         </div>
         <div className="home-hero__logo">
@@ -149,13 +149,13 @@ export function HomeView({
 
         <Link to="/code-map" className="home-card">
           <div className="home-card-body">
-            <h3>Code Map</h3>
+            <h3>Code Analysis</h3>
             <p>
               Browse symbols, semantic search, and recent repository activity—ideal for exploring
               the code with context.
             </p>
           </div>
-          <span className="home-card-cta">Open Code Map →</span>
+          <span className="home-card-cta">Open Analysis →</span>
         </Link>
 
         <Link to="/class-uml" className="home-card">
