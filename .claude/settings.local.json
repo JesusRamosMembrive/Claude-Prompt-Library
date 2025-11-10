@@ -43,7 +43,8 @@
       "Bash(ruff check:*)",
       "Bash(bandit:*)",
       "Bash(echo:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []
