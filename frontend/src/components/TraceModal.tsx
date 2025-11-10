@@ -24,7 +24,7 @@ export function TraceModal({ qualifiedName, onClose }: TraceModalProps): JSX.Ele
   const { data, isLoading, isError, error } = useQuery<TraceChainResponse>({
     queryKey: ["trace", qualifiedName],
     queryFn: async () => {
-      const response = await fetch("/tracer/trace-cross-file", {
+      const response = await fetch("/api/tracer/trace-cross-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -169,6 +169,16 @@ export function HomeView({
           <span className="home-card-cta">View UML →</span>
         </Link>
 
+        <Link to="/timeline" className="home-card">
+          <div className="home-card-body">
+            <h3>Code Timeline</h3>
+            <p>
+              DAW-style visualization of git history. See which files changed together over time—perfect for understanding code evolution.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Timeline →</span>
+        </Link>
+
         <Link to="/linters" className="home-card">
           <div className="home-card-body">
             <h3>Linters</h3>

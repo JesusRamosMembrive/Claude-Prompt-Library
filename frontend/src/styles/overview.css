@@ -432,7 +432,14 @@
 .overview-grid {
   display: grid;
   gap: 26px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: auto auto;
+}
+
+.overview-grid-full {
+  display: grid;
+  gap: 26px;
+  margin-top: 26px;
 }
 
 .overview-card {
@@ -589,6 +596,10 @@
   .overview-toasts {
     position: static;
     align-self: stretch;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
   }
 }
 

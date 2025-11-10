@@ -328,3 +328,197 @@
   color: #7f869d;
   font-size: 12px;
 }
+
+/* ============================================================================
+   Directory Browser Modal
+   ============================================================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: rgba(18, 22, 33, 0.98);
+  border: 1px solid #23283c;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #23283c;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #d4dbf2;
+  letter-spacing: 0.5px;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #7f869d;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #7dd3fc;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #23283c;
+}
+
+.directory-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.directory-current-path {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(17, 21, 31, 0.85);
+  border: 1px solid #1f2537;
+  border-radius: 10px;
+}
+
+.directory-current-path strong {
+  font-size: 12px;
+  color: #8690b2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.directory-current-path code {
+  font-size: 13px;
+  color: #7dd3fc;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.directory-loading,
+.directory-error,
+.directory-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  justify-content: center;
+  color: #7f869d;
+  font-size: 14px;
+}
+
+.directory-error {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+  border-radius: 10px;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(125, 211, 252, 0.3);
+  border-top-color: #7dd3fc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.directory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.directory-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(17, 21, 31, 0.6);
+  border: 1px solid #1f2537;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.directory-item:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.directory-item--parent {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.directory-item--parent:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.directory-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.directory-name {
+  flex: 1;
+  font-size: 14px;
+  color: #d4dbf2;
+  word-break: break-word;
+}

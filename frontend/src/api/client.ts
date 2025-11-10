@@ -9,6 +9,7 @@ import type {
   StageInitPayload,
   StageInitResponse,
   BrowseDirectoryResponse,
+  ListDirectoriesResponse,
   UMLDiagramResponse,
   LintersReportRecord,
   LintersReportListItem,
@@ -24,6 +25,7 @@ import type {
   OllamaInsightsClearResponse,
   GraphvizOptionsPayload,
 } from "./types";
+import { useBackendStore } from "../state/useBackendStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
   ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
@@ -40,12 +42,24 @@ const API_PREFIX = API_BASE ? "" : "/api";
  *     URL completa combinando base URL, prefijo y path
  *
  * Notes:
- *     - Usa VITE_API_BASE_URL si está configurado (producción)
- *     - Fallback a '/api' prefix para desarrollo local
+ *     - Usa backend_url del store si está configurado
+ *     - Fallback a VITE_API_BASE_URL si está configurado (producción)
+ *     - Fallback final a '/api' prefix para desarrollo local
  *     - Remueve trailing slash de la base URL
  */
-const buildUrl = (path: string): string =>
-  `${API_BASE ?? ""}${API_PREFIX}${path}`;
+const buildUrl = (path: string): string => {
+  // Prioridad: Runtime store > Env var > /api prefix
+  const runtimeUrl = useBackendStore.getState().backendUrl;
+
+  if (runtimeUrl) {
+    // URL configurada en runtime (desde settings)
+    const cleanedUrl = runtimeUrl.replace(/\/$/, "");
+    return `${cleanedUrl}/api${path}`;
+  }
+
+  // Fallback a comportamiento original
+  return `${API_BASE ?? ""}${API_PREFIX}${path}`;
+};
 
 /**
  * Realiza una petición HTTP y parsea la respuesta como JSON.
@@ -263,6 +277,13 @@ export function updateSettings(payload: SettingsUpdatePayload): Promise<{
 export function browseForRoot(): Promise<BrowseDirectoryResponse> {
   return fetchJson("/settings/browse", {
     method: "POST",
+  });
+}
+
+export function listDirectories(path?: string): Promise<ListDirectoriesResponse> {
+  const url = path ? `/settings/list-directories?path=${encodeURIComponent(path)}` : "/settings/list-directories";
+  return fetchJson(url, {
+    method: "GET",
   });
 }
 

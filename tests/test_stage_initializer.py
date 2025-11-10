@@ -47,5 +47,7 @@ def test_initializer_creates_files(tmp_path: Path) -> None:
     assert project_path.exists()  # nosec B101 - verificamos efectos de inicialización
     assert (project_path / ".claude").exists()  # nosec B101 - verificación de test
     assert (project_path / "docs").exists()  # nosec B101 - verificación de test
-    assert result.template_summaries["claude"].copied  # nosec B101 - verificación de test
+    assert result.template_summaries[
+        "claude"
+    ].copied  # nosec B101 - verificación de test
     assert result.stage_update is not None  # nosec B101 - verificación de test

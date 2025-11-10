@@ -1187,7 +1187,28 @@ const UmlSvgContainer = forwardRef<UmlSvgHandle, UmlSvgContainerProps>(function 
   const zoomRef = useRef(1);
   const [isPanning, setIsPanning] = useState(false);
 
-  const content = useMemo(() => ({ __html: svg }), [svg]);
+  /**
+   * Sanitize SVG content to prevent XSS attacks.
+   * Removes script tags, event handlers, and dangerous attributes.
+   */
+  const sanitizeSvg = useCallback((svgContent: string): string => {
+    // Remove script tags
+    let sanitized = svgContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+    // Remove event handlers (onclick, onload, etc.)
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+
+    // Remove javascript: protocol in attributes
+    sanitized = sanitized.replace(/javascript:/gi, '');
+
+    // Remove data: URIs (except for safe SVG images)
+    sanitized = sanitized.replace(/data:(?!image\/svg\+xml)[^"']*/gi, '');
+
+    return sanitized;
+  }, []);
+
+  const content = useMemo(() => ({ __html: sanitizeSvg(svg) }), [svg, sanitizeSvg]);
 
   useEffect(() => {
     zoomRef.current = zoom;
