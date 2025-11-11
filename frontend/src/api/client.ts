@@ -2,6 +2,7 @@ import type {
   FileSummary,
   FileDiffResponse,
   ChangesResponse,
+  DocsListResponse,
   ProjectTreeNode,
   SettingsPayload,
   SettingsUpdatePayload,
@@ -187,6 +188,10 @@ export function getWorkingTreeDiff(path: string): Promise<FileDiffResponse> {
 
 export function getWorkingTreeChanges(): Promise<ChangesResponse> {
   return fetchJson<ChangesResponse>("/changes");
+}
+
+export function getDocsListing(): Promise<DocsListResponse> {
+  return fetchJson<DocsListResponse>("/docs");
 }
 
 /**

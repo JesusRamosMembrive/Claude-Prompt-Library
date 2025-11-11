@@ -11,6 +11,7 @@ import { PromptLibraryView } from "./components/PromptLibraryView";
 import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
 import CodeTimelineView from "./components/CodeTimelineView";
+import { DocsLibraryView } from "./components/DocsLibraryView";
 import { useEventStream } from "./hooks/useEventStream";
 import { useSettingsQuery } from "./hooks/useSettingsQuery";
 import { useStatusQuery } from "./hooks/useStatusQuery";
@@ -59,6 +60,10 @@ export function App(): JSX.Element {
           <Route
             path="/code-map"
             element={withLayout("Code Map", <CodeMapDashboard statusQuery={statusQuery} />)}
+          />
+          <Route
+            path="/docs"
+            element={withLayout("Project Docs", <DocsLibraryView />)}
           />
           <Route
             path="/stage-toolkit"

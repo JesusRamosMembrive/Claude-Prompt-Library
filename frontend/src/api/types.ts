@@ -42,6 +42,20 @@ export interface ChangesResponse {
   changes: WorkingTreeChange[];
 }
 
+export interface DocFileInfo {
+  name: string;
+  path: string;
+  size_bytes: number;
+  modified_at?: string | null;
+}
+
+export interface DocsListResponse {
+  docs_path: string;
+  exists: boolean;
+  file_count: number;
+  files: DocFileInfo[];
+}
+
 export interface ProjectTreeNode {
   name: string;
   path: string;

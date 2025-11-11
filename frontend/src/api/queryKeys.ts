@@ -3,6 +3,8 @@ export const queryKeys = {
   file: (path: string) => ["file", path] as const,
   fileDiff: (path: string) => ["file-diff", path] as const,
   changes: ["changes"] as const,
+  docs: ["docs"] as const,
+  docPreview: (path: string) => ["doc-preview", path] as const,
   search: (term: string) => ["search", term] as const,
   settings: ["settings"] as const,
   status: ["status"] as const,

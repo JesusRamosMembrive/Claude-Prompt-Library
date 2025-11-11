@@ -6,6 +6,7 @@ Rutas de análisis y exploración del proyecto.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncIterator, Dict, Iterable, List, Optional
 
@@ -19,6 +20,8 @@ from .deps import get_app_state
 from .schemas import (
     ChangeNotification,
     ChangesResponse,
+    DocFileSchema,
+    DocsListResponse,
     FileDiffResponse,
     FileSummarySchema,
     HealthResponse,
@@ -75,6 +78,38 @@ def _serialize_change_entries(
         )
     return entries
 
+
+def _attach_missing_change_nodes(
+    tree: ProjectTreeNode,
+    root_path: Path,
+    change_paths: Iterable[str],
+) -> None:
+    """Inserta nodos sintéticos para archivos con cambios no presentes en el índice."""
+
+    for rel_path in change_paths:
+        if not rel_path:
+            continue
+
+        parts = [part for part in Path(rel_path).parts if part]
+        if not parts:
+            continue
+
+        node = tree
+        current_path = root_path
+        for index, part in enumerate(parts):
+            current_path = current_path / part
+            is_last = index == len(parts) - 1
+
+            child = node.children.get(part)
+            if child is None:
+                child = ProjectTreeNode(
+                    name=part,
+                    path=current_path,
+                    is_dir=not is_last,
+                )
+                node.children[part] = child
+
+            node = child
 
 def _change_payload_for_path(
     history: Optional[GitHistory],
@@ -190,6 +225,49 @@ async def list_working_tree_changes(
     return ChangesResponse(changes=entries)
 
 
+@router.get("/docs", response_model=DocsListResponse)
+async def list_docs_directory(
+    state: AppState = Depends(get_app_state),
+) -> DocsListResponse:
+    """Lista los archivos markdown en docs/."""
+
+    docs_dir = (state.settings.root_path / "docs").resolve()
+    docs_relative = state.to_relative(docs_dir)
+
+    if not docs_dir.exists() or not docs_dir.is_dir():
+        return DocsListResponse(
+            docs_path=docs_relative,
+            exists=False,
+            file_count=0,
+            files=[],
+        )
+
+    files: List[DocFileSchema] = []
+    for path in sorted(docs_dir.rglob("*.md")):
+        if not path.is_file():
+            continue
+        try:
+            stat_info = path.stat()
+        except OSError:
+            continue
+        modified = datetime.fromtimestamp(stat_info.st_mtime, tz=timezone.utc)
+        files.append(
+            DocFileSchema(
+                name=path.name,
+                path=state.to_relative(path),
+                size_bytes=stat_info.st_size,
+                modified_at=modified,
+            )
+        )
+
+    return DocsListResponse(
+        docs_path=docs_relative,
+        exists=True,
+        file_count=len(files),
+        files=files,
+    )
+
+
 @router.get("/search", response_model=SearchResultsSchema)
 async def search(
     q: str = Query(
@@ -226,34 +304,3 @@ async def rescan(state: AppState = Depends(get_app_state)) -> RescanResponse:
     """Dispara un escaneo completo del proyecto."""
     count = await state.perform_full_scan()
     return RescanResponse(files=count)
-def _attach_missing_change_nodes(
-    tree: ProjectTreeNode,
-    root_path: Path,
-    change_paths: Iterable[str],
-) -> None:
-    """Ensure newly added files appear in the in-memory tree."""
-
-    for rel_path in change_paths:
-        if not rel_path:
-            continue
-
-        parts = [part for part in Path(rel_path).parts if part]
-        if not parts:
-            continue
-
-        node = tree
-        current_path = root_path
-        for index, part in enumerate(parts):
-            current_path = current_path / part
-            is_last = index == len(parts) - 1
-
-            child = node.children.get(part)
-            if child is None:
-                child = ProjectTreeNode(
-                    name=part,
-                    path=current_path,
-                    is_dir=not is_last,
-                )
-                node.children[part] = child
-
-            node = child

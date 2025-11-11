@@ -62,6 +62,24 @@ class FileDiffResponse(BaseModel):
     change_summary: Optional[str] = None
 
 
+class DocFileSchema(BaseModel):
+    """Representa un archivo markdown dentro del directorio docs/."""
+
+    name: str
+    path: str
+    size_bytes: int
+    modified_at: Optional[datetime] = None
+
+
+class DocsListResponse(BaseModel):
+    """Respuesta para la lista de archivos de documentación."""
+
+    docs_path: str
+    exists: bool
+    file_count: int
+    files: List[DocFileSchema] = Field(default_factory=list)
+
+
 class WorkingTreeChangeSchema(BaseModel):
     """Representa un archivo con cambios pendientes respecto a HEAD."""
 

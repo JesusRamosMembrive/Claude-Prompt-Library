@@ -158,6 +158,17 @@ export function HomeView({
           <span className="home-card-cta">Open Analysis →</span>
         </Link>
 
+        <Link to="/docs" className="home-card">
+          <div className="home-card-body">
+            <h3>Docs</h3>
+            <p>
+              Inspect every markdown file under <code>docs/</code>, keep architecture notes handy,
+              and preview content without leaving ATLAS.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Docs →</span>
+        </Link>
+
         <Link to="/class-uml" className="home-card">
           <div className="home-card-body">
             <h3>Class UML</h3>
