@@ -20,6 +20,26 @@ export interface FileSummary {
   modified_at?: string | null;
   symbols: SymbolInfo[];
   errors: AnalysisError[];
+  change_status?: string | null;
+  change_summary?: string | null;
+}
+
+export interface FileDiffResponse {
+  path: string;
+  diff: string;
+  has_changes: boolean;
+  change_status?: string | null;
+  change_summary?: string | null;
+}
+
+export interface WorkingTreeChange {
+  path: string;
+  status: string;
+  summary?: string | null;
+}
+
+export interface ChangesResponse {
+  changes: WorkingTreeChange[];
 }
 
 export interface ProjectTreeNode {
@@ -30,6 +50,8 @@ export interface ProjectTreeNode {
   symbols: SymbolInfo[] | null;
   errors: AnalysisError[] | null;
   modified_at?: string | null;
+  change_status?: string | null;
+  change_summary?: string | null;
 }
 
 export interface ChangeNotification {

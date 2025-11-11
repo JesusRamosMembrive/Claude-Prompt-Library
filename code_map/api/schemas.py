@@ -48,6 +48,32 @@ class FileSummarySchema(BaseModel):
     modified_at: Optional[datetime] = None
     symbols: List[SymbolSchema] = Field(default_factory=list)
     errors: List[AnalysisErrorSchema] = Field(default_factory=list)
+    change_status: Optional[str] = None
+    change_summary: Optional[str] = None
+
+
+class FileDiffResponse(BaseModel):
+    """Respuesta básica con el diff del working tree versus HEAD."""
+
+    path: str
+    diff: str
+    has_changes: bool
+    change_status: Optional[str] = None
+    change_summary: Optional[str] = None
+
+
+class WorkingTreeChangeSchema(BaseModel):
+    """Representa un archivo con cambios pendientes respecto a HEAD."""
+
+    path: str
+    status: str
+    summary: Optional[str] = None
+
+
+class ChangesResponse(BaseModel):
+    """Respuesta con la lista completa de cambios detectados."""
+
+    changes: List[WorkingTreeChangeSchema] = Field(default_factory=list)
 
 
 class TreeNodeSchema(BaseModel):
@@ -60,6 +86,8 @@ class TreeNodeSchema(BaseModel):
     symbols: Optional[List[SymbolSchema]] = None
     errors: Optional[List[AnalysisErrorSchema]] = None
     modified_at: Optional[datetime] = None
+    change_status: Optional[str] = None
+    change_summary: Optional[str] = None
 
 
 TreeNodeSchema.model_rebuild()
@@ -634,25 +662,38 @@ def serialize_error(error: AnalysisError) -> AnalysisErrorSchema:
     )
 
 
-def serialize_summary(summary: FileSummary, state: AppState) -> FileSummarySchema:
+def serialize_summary(
+    summary: FileSummary,
+    state: AppState,
+    change: Optional[Dict[str, str]] = None,
+) -> FileSummarySchema:
     """Serializa un objeto FileSummary a un FileSummarySchema."""
     symbols = [
         serialize_symbol(symbol, state, include_path=False)
         for symbol in summary.symbols
     ]
     errors = [serialize_error(error) for error in summary.errors]
+    change_status = change.get("status") if change else None
+    change_summary = change.get("summary") if change else None
     return FileSummarySchema(
         path=state.to_relative(summary.path),
         modified_at=summary.modified_at,
         symbols=symbols,
         errors=errors,
+        change_status=change_status,
+        change_summary=change_summary,
     )
 
 
-def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
+def serialize_tree(
+    node: ProjectTreeNode,
+    state: AppState,
+    *,
+    change_map: Optional[Dict[str, Dict[str, str]]] = None,
+) -> TreeNodeSchema:
     """Serializa un objeto ProjectTreeNode a un TreeNodeSchema."""
     children = [
-        serialize_tree(child, state)
+        serialize_tree(child, state, change_map=change_map)
         for child in sorted(node.children.values(), key=lambda n: n.name)
     ]
     summary = node.file_summary
@@ -667,6 +708,17 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
         errors = [serialize_error(error) for error in summary.errors]
         modified_at = summary.modified_at
 
+    rel_path = state.to_relative(node.path)
+    change = change_map.get(rel_path) if change_map else None
+    change_status = change.get("status") if change else None
+    change_summary = change.get("summary") if change else None
+
+    if node.is_dir and not change_status:
+        child_has_changes = any(child.change_status for child in children)
+        if child_has_changes:
+            change_status = "modified"
+            change_summary = "Contiene archivos modificados desde el último commit"
+
     return TreeNodeSchema(
         name=node.name,
         path=state.to_relative(node.path),
@@ -675,6 +727,8 @@ def serialize_tree(node: ProjectTreeNode, state: AppState) -> TreeNodeSchema:
         symbols=symbols,
         errors=errors,
         modified_at=modified_at,
+        change_status=change_status,
+        change_summary=change_summary,
     )
 
 

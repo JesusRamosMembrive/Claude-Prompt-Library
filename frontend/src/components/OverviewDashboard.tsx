@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import type { StatusPayload } from "../api/types";
+import { getWorkingTreeChanges } from "../api/client";
+import { queryKeys } from "../api/queryKeys";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useLintersLatestReport } from "../hooks/useLintersLatestReport";
 import { useOllamaInsightsQuery } from "../hooks/useOllamaInsightsQuery";
 import { useTimelineSummary } from "../hooks/useTimelineSummary";
+import { getChangeLabel, getChangeVariant, isNewFileStatus } from "../utils/changeStatus";
 
 const LINTER_STATUS_LABEL: Record<string, string> = {
   pass: "OK",
@@ -24,12 +27,6 @@ const LINTER_STATUS_TONE: Record<string, "success" | "warn" | "danger" | "neutra
   error: "danger",
   skipped: "neutral",
   default: "neutral",
-};
-
-const NOTIFICATION_LABEL: Record<"info" | "warn" | "danger", string> = {
-  info: "Heads-up",
-  warn: "Warning",
-  danger: "Needs attention",
 };
 
 function formatDateTime(value?: string | null): string {
@@ -116,6 +113,11 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
   const lintersQuery = useLintersLatestReport();
   const ollamaInsightsQuery = useOllamaInsightsQuery(5);
   const timelineSummaryQuery = useTimelineSummary();
+  const changesQuery = useQuery({
+    queryKey: queryKeys.changes,
+    queryFn: getWorkingTreeChanges,
+    refetchInterval: 30000,
+  });
 
   const statusData = statusQuery.data;
   const rootPath = statusData?.absolute_root ?? statusData?.root_path ?? "—";
@@ -217,6 +219,16 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
 
   const ollamaInsightsLastRun = statusData?.ollama_insights_last_run ?? null;
   const ollamaInsightsNextRun = statusData?.ollama_insights_next_run ?? null;
+
+  const pendingChanges = changesQuery.data?.changes ?? [];
+  const newFilesCount = pendingChanges.filter((change) => isNewFileStatus(change.status)).length;
+  const modifiedCount = Math.max(pendingChanges.length - newFilesCount, 0);
+  const changePreview = pendingChanges.slice(0, 3);
+  const additionalChanges = Math.max(pendingChanges.length - changePreview.length, 0);
+  const changeError =
+    changesQuery.error && changesQuery.error instanceof Error
+      ? changesQuery.error
+      : null;
 
   const timelineSummary = timelineSummaryQuery.data ?? null;
   const timelineTotalCommits = timelineSummary?.total_commits ?? 0;
@@ -383,118 +395,8 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
     timelineLatestCommit,
   ]);
 
-  const alerts: Array<{
-    tone: "info" | "warn" | "danger";
-    message: string;
-    link?: { label: string; to: string };
-  }> = [];
-
-  if (!watcherActive) {
-    alerts.push({
-      tone: "warn",
-      message: "Watcher inactive: remember to run a manual scan to keep the map current.",
-      link: { label: "Go to Stage Toolkit", to: "/stage-toolkit" },
-    });
-  }
-
-  if (!stageStatusQuery.isLoading && !detectionAvailable) {
-    alerts.push({
-      tone: "warn",
-      message: detection?.error
-        ? `Stage Toolkit: ${detection.error}`
-        : "Stage Toolkit has no recent detection. Run an analysis to refresh it.",
-      link: { label: "Open Stage Toolkit", to: "/stage-toolkit" },
-    });
-  }
-
-  if (
-    lintersReport &&
-    (lintersStatusKey === "fail" || lintersStatusKey === "error" || lintersCritical > 0)
-  ) {
-    alerts.push({
-      tone: lintersStatusKey === "error" ? "danger" : "warn",
-      message:
-        lintersStatusKey === "error"
-          ? "Linters failed. Review the pipeline for details."
-          : "Linters reported issues. Check the details to prioritize them.",
-      link: { label: "Open Linters", to: "/linters" },
-    });
-  }
-
-  if (pendingEvents > 25) {
-    alerts.push({
-      tone: "info",
-      message: `There are ${pendingEvents.toLocaleString("en-US")} events pending processing.`,
-      link: { label: "View Code Map", to: "/code-map" },
-    });
-  }
-
-  if (capabilityIssues.length > 0) {
-    alerts.push({
-      tone: "warn",
-      message: `Capabilities unavailable: ${capabilityIssues
-        .map((cap) => cap.description || cap.key)
-        .slice(0, 3)
-        .join(", ")}`,
-      link: { label: "Open Settings", to: "/settings" },
-    });
-  }
-
-  const [dismissedNotifications, setDismissedNotifications] = useState<Record<string, boolean>>(
-    {},
-  );
-
-  const notifications = useMemo(
-    () =>
-      alerts.map((alert, index) => ({
-        ...alert,
-        id: `${alert.tone}-${index}-${alert.message}`,
-        label: NOTIFICATION_LABEL[alert.tone],
-      })),
-    [alerts],
-  );
-
-  const visibleNotifications = notifications.filter(
-    (notification) => !dismissedNotifications[notification.id],
-  );
-
-  const dismissNotification = (id: string) => {
-    setDismissedNotifications((prev) => ({ ...prev, [id]: true }));
-  };
-
   return (
     <div className="overview-view">
-      {visibleNotifications.length > 0 ? (
-        <div className="overview-toasts" role="status" aria-live="polite">
-          {visibleNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`overview-toast overview-toast--${notification.tone}`}
-            >
-              <div className="overview-toast__content">
-                <div className="overview-toast__header">
-                  <span className="overview-toast__label">{notification.label}</span>
-                  <button
-                    type="button"
-                    className="overview-toast__dismiss"
-                    onClick={() => dismissNotification(notification.id)}
-                    aria-label="Dismiss notification"
-                  >
-                    ×
-                  </button>
-                </div>
-                <p className="overview-toast__message">{notification.message}</p>
-                {notification.link ? (
-                  <Link className="overview-toast__link" to={notification.link.to}>
-                    {notification.link.label} →
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       <section className="overview-intro">
         <div className="overview-intro__text">
           <h2>Workspace overview</h2>
@@ -564,32 +466,6 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
         </section>
       </section>
 
-      {alerts.length > 0 ? (
-        <section className="overview-review">
-          <div className="overview-section-header">
-            <h3>Review queue</h3>
-            <span className="overview-section-subtitle">
-              Quick reminders of what to investigate next.
-            </span>
-          </div>
-          <div className="overview-alerts">
-            {alerts.map((alert, index) => (
-              <div
-                key={`${alert.message}-${index}`}
-                className={`overview-alert overview-alert--${alert.tone}`}
-              >
-                <span>{alert.message}</span>
-                {alert.link ? (
-                  <Link className="overview-alert__cta" to={alert.link.to}>
-                    {alert.link.label} →
-                  </Link>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       <section className="overview-grid">
         {/* Grid 2x2: Stage Toolkit, Code Map, Linters, Timeline */}
         <article className="overview-card overview-card--stage">
@@ -650,6 +526,51 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
               <dd>{pendingEvents.toLocaleString("en-US")}</dd>
             </div>
           </dl>
+          <div className="overview-code-changes">
+            <div className="overview-code-changes__header">
+              <span
+                className={`overview-pill ${changesQuery.isLoading ? "neutral" : pendingChanges.length > 0 ? "warn" : "success"}`}
+              >
+                {changesQuery.isLoading
+                  ? "Checking changes…"
+                  : pendingChanges.length > 0
+                    ? `${pendingChanges.length} pending ${pendingChanges.length === 1 ? "file" : "files"}`
+                    : "Workspace clean"}
+              </span>
+              {!changesQuery.isLoading && !changeError && pendingChanges.length > 0 && (
+                <span className="overview-code-changes__meta">
+                  {newFilesCount} new · {modifiedCount} modified
+                </span>
+              )}
+            </div>
+            {changeError ? (
+              <p className="overview-code-changes__hint">
+                Could not read git status: {changeError.message}
+              </p>
+            ) : changesQuery.isLoading ? (
+              <p className="overview-code-changes__hint">Gathering recent file changes…</p>
+            ) : pendingChanges.length === 0 ? (
+              <p className="overview-code-changes__hint">All tracked files match HEAD.</p>
+            ) : (
+              <>
+                <ul className="overview-code-changes__list">
+                  {changePreview.map((change) => (
+                    <li key={change.path}>
+                      <span className={`change-pill change-pill--${getChangeVariant(change.status)}`}>
+                        {getChangeLabel(change.status)}
+                      </span>
+                      <span className="overview-code-changes__path">{change.path}</span>
+                    </li>
+                  ))}
+                </ul>
+                {additionalChanges > 0 && (
+                  <p className="overview-code-changes__hint">
+                    +{additionalChanges} more files pending review in Code Map.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </article>
 
         <article className="overview-card overview-card--linters">

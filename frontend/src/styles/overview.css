@@ -509,6 +509,60 @@
   min-height: 54px;
 }
 
+.overview-code-changes {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(7, 11, 21, 0.6);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.overview-code-changes__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-code-changes__meta {
+  color: #cbd5f5;
+  font-size: 0.85rem;
+}
+
+.overview-code-changes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overview-code-changes__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-code-changes__path {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.overview-code-changes__hint {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
 .ollama-insights-list {
   list-style: none;
   margin: 0;

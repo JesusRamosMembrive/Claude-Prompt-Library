@@ -1,5 +1,7 @@
 import type {
   FileSummary,
+  FileDiffResponse,
+  ChangesResponse,
   ProjectTreeNode,
   SettingsPayload,
   SettingsUpdatePayload,
@@ -176,6 +178,15 @@ export function getTree(): Promise<ProjectTreeNode> {
 export function getFileSummary(path: string): Promise<FileSummary> {
   const encoded = encodeURIComponent(path);
   return fetchJson<FileSummary>(`/files/${encoded}`);
+}
+
+export function getWorkingTreeDiff(path: string): Promise<FileDiffResponse> {
+  const encoded = encodeURIComponent(path);
+  return fetchJson<FileDiffResponse>(`/file-diff/${encoded}`);
+}
+
+export function getWorkingTreeChanges(): Promise<ChangesResponse> {
+  return fetchJson<ChangesResponse>("/changes");
 }
 
 /**

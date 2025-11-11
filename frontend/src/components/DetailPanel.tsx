@@ -18,7 +18,11 @@ interface GroupedSymbols {
   functions: SymbolInfo[];
 }
 
-export function DetailPanel(): JSX.Element {
+export function DetailPanel({
+  onShowDiff,
+}: {
+  onShowDiff?: (path: string) => void;
+}): JSX.Element {
   const selectedPath = useSelectionStore((state) => state.selectedPath);
   const [traceTarget, setTraceTarget] = useState<string | null>(null);
 
@@ -107,6 +111,8 @@ export function DetailPanel(): JSX.Element {
 
   const modified =
     data.modified_at != null ? new Date(data.modified_at).toLocaleString() : "—";
+  const hasWorkingChanges = Boolean(data.change_status);
+  const changeLabel = formatChangeStatus(data.change_status);
 
   return (
     <section className="panel">
@@ -116,6 +122,25 @@ export function DetailPanel(): JSX.Element {
           <div className="detail-meta">
             Last modified: {modified} · {data.symbols.length} symbols
           </div>
+          {hasWorkingChanges && (
+            <div className="detail-change-banner">
+              <div className="detail-change-info">
+                {changeLabel && <span className="detail-change-pill">{changeLabel}</span>}
+                {data.change_summary && (
+                  <span className="detail-change-summary">{data.change_summary}</span>
+                )}
+              </div>
+              {onShowDiff && (
+                <button
+                  type="button"
+                  className="detail-change-button"
+                  onClick={() => onShowDiff(selectedPath)}
+                >
+                  View latest changes
+                </button>
+              )}
+            </div>
+          )}
         </div>
         {data.errors.length > 0 && (
           <span className="badge" style={{ background: "rgba(249, 115, 22, 0.18)", color: "#f9a84b" }}>
@@ -314,4 +339,24 @@ export function DetailPanel(): JSX.Element {
 
 function formatDocstring(docstring: string): string {
   return docstring.trim().split("\n\n")[0].replace(/\s+/g, " ");
+}
+
+function formatChangeStatus(status?: string | null): string {
+  if (!status) {
+    return "";
+  }
+  switch (status) {
+    case "untracked":
+      return "New file";
+    case "added":
+      return "Added";
+    case "deleted":
+      return "Deleted";
+    case "renamed":
+      return "Renamed";
+    case "conflict":
+      return "Conflict";
+    default:
+      return "Modified";
+  }
 }

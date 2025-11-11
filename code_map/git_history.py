@@ -1,13 +1,10 @@
-"""
-Git history analysis module for Code Timeline Visualization.
-
-Provides utilities to parse git log, analyze file history, and extract commit information.
-"""
+"""Git helpers for timeline visualizations and Code Map features."""
 
 import subprocess  # nosec B404 - Required for invoking git CLI safely. All commands use list args (no shell injection risk).
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional, Dict, Set
+from typing import Any, Dict, List, Optional, Set
 import re
 
 
@@ -43,6 +40,84 @@ class CommitInfo:
             "message": self.message,
             "files_changed": self.files_changed,
         }
+
+
+@dataclass(slots=True)
+class WorkingTreeChange:
+    """Represents a single file change in the working tree vs HEAD."""
+
+    path: str
+    staged: str
+    unstaged: str
+    raw: str
+    rename_from: Optional[str] = None
+
+    def status_label(self) -> str:
+        """Return a normalized status label (modified, added, etc.)."""
+
+        code = self.raw.strip() or self.raw
+        if code == "??":
+            return "untracked"
+        if code == "!!":
+            return "ignored"
+        tokens = set(code)
+        if "U" in tokens:
+            return "conflict"
+        if "D" in tokens:
+            return "deleted"
+        if "R" in tokens:
+            return "renamed"
+        if "C" in tokens:
+            return "copied"
+        if "A" in tokens:
+            return "added"
+        if "M" in tokens:
+            return "modified"
+        return "modified"
+
+    def summary(self) -> str:
+        """Provide a short human description of the change."""
+
+        status = self.status_label()
+        if status == "ignored":
+            return "Ignored file"
+        if status == "untracked":
+            return "New file (not committed yet)"
+        if status == "renamed" and self.rename_from:
+            return f"Renamed from {self.rename_from}"
+        if status == "deleted":
+            scope = self._format_scope()
+            return f"Deleted {scope}" if scope else "Deleted locally"
+        if status == "conflict":
+            return "Merge conflict in progress"
+        scope = self._format_scope()
+        if scope:
+            return f"{status.capitalize()} ({scope})"
+        return status.capitalize()
+
+    def payload(self) -> Dict[str, str]:
+        """Serialize change metadata for API responses."""
+
+        return {
+            "status": self.status_label(),
+            "summary": self.summary(),
+        }
+
+    def _format_scope(self) -> str:
+        staged_flag = self.staged.strip()
+        unstaged_flag = self.unstaged.strip()
+
+        scopes = []
+        if staged_flag and staged_flag not in {"?", "!"}:
+            scopes.append("staged")
+        if unstaged_flag and unstaged_flag not in {"?", "!"}:
+            scopes.append("working tree")
+
+        if not scopes:
+            return ""
+        if len(scopes) == 2:
+            return "staged + working tree changes"
+        return f"{scopes[0]} changes"
 
 
 class GitHistory:
@@ -303,6 +378,96 @@ class GitHistory:
             "total_files": len(files_list),
             "total_commits": len(commits),
         }
+
+    def get_working_tree_changes(self) -> List[WorkingTreeChange]:
+        """Return a list of files changed since the last commit (HEAD)."""
+
+        output = self._run_git_command(["status", "--porcelain=1", "-z"])
+        if not output:
+            return []
+
+        tokens = output.split("\0")
+        changes: List[WorkingTreeChange] = []
+        idx = 0
+
+        while idx < len(tokens):
+            entry = tokens[idx]
+            idx += 1
+            if not entry:
+                continue
+
+            status = entry[:2]
+            if status.strip() == "!!":
+                # Ignored files are not relevant for change tracking
+                continue
+
+            path_fragment = entry[3:] if len(entry) > 3 else ""
+            rename_from: Optional[str] = None
+
+            if any(flag in {"R", "C"} for flag in status):
+                rename_from = path_fragment
+                if idx < len(tokens):
+                    path_fragment = tokens[idx]
+                    idx += 1
+
+            if not path_fragment:
+                continue
+
+            normalized_path = Path(path_fragment).as_posix()
+            normalized_rename = (
+                Path(rename_from).as_posix() if rename_from else None
+            )
+
+            staged_flag = status[0] if len(status) >= 1 else " "
+            unstaged_flag = status[1] if len(status) >= 2 else " "
+
+            change = WorkingTreeChange(
+                path=normalized_path,
+                staged=staged_flag,
+                unstaged=unstaged_flag,
+                raw=status,
+                rename_from=normalized_rename,
+            )
+
+            if change.status_label() == "ignored":
+                continue
+
+            changes.append(change)
+
+        return changes
+
+    def get_working_tree_change_map(self) -> Dict[str, WorkingTreeChange]:
+        """Return working tree changes keyed by relative path."""
+
+        return {change.path: change for change in self.get_working_tree_changes()}
+
+    def get_working_tree_change_for_path(
+        self, file_path: str
+    ) -> Optional[WorkingTreeChange]:
+        """Fetch working tree change info for a specific file."""
+
+        normalized = Path(file_path).as_posix()
+        return self.get_working_tree_change_map().get(normalized)
+
+    def get_working_tree_diff(self, file_path: str) -> str:
+        """Return diff between working tree and HEAD for the given file."""
+
+        normalized = Path(file_path).as_posix()
+        try:
+            result = subprocess.run(  # nosec B603 - arguments are controlled
+                ["git", "diff", "HEAD", "--", normalized],
+                cwd=self.repo_path,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except subprocess.CalledProcessError as exc:  # pragma: no cover - defensive
+            raise GitHistoryError(f"Git diff failed: {exc.stderr}") from exc
+
+        if result.returncode not in {0, 1}:
+            raise GitHistoryError(result.stderr.strip() or "git diff failed")
+
+        return result.stdout
 
     def get_file_diff(self, commit_hash: str, file_path: str) -> Optional[str]:
         """
