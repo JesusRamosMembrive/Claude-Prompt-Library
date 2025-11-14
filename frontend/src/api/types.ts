@@ -263,6 +263,24 @@ export interface StageInitResponse {
   status: StageStatusPayload;
 }
 
+export interface SuperClaudeLogEntry {
+  command: string[];
+  stdout: string;
+  stderr: string;
+  exit_code: number;
+}
+
+export interface SuperClaudeInstallResponse {
+  success: boolean;
+  error?: string | null;
+  installed_at?: string | null;
+  source_repo: string;
+  source_commit?: string | null;
+  component_counts: Record<string, number>;
+  copied_paths: string[];
+  logs: SuperClaudeLogEntry[];
+}
+
 export interface BrowseDirectoryResponse {
   path: string;
 }

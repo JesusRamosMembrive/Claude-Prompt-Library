@@ -11,6 +11,7 @@ import type {
   StageStatusPayload,
   StageInitPayload,
   StageInitResponse,
+  SuperClaudeInstallResponse,
   BrowseDirectoryResponse,
   ListDirectoriesResponse,
   UMLDiagramResponse,
@@ -440,6 +441,12 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
   return fetchJson<StageInitResponse>("/stage/init", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function installSuperClaudeFramework(): Promise<SuperClaudeInstallResponse> {
+  return fetchJson<SuperClaudeInstallResponse>("/stage/superclaude/install", {
+    method: "POST",
   });
 }
 

@@ -395,6 +395,28 @@ class StageInitResponse(BaseModel):
     status: StageStatusResponse
 
 
+class SuperClaudeLogEntry(BaseModel):
+    """Salida detallada de cada comando ejecutado por el instalador."""
+
+    command: List[str]
+    stdout: str
+    stderr: str
+    exit_code: int
+
+
+class SuperClaudeInstallResponse(BaseModel):
+    """Resultado de sincronizar el framework SuperClaude."""
+
+    success: bool
+    error: Optional[str] = None
+    installed_at: Optional[datetime] = None
+    source_repo: str
+    source_commit: Optional[str] = None
+    component_counts: Dict[str, int] = Field(default_factory=dict)
+    copied_paths: List[str] = Field(default_factory=list)
+    logs: List[SuperClaudeLogEntry] = Field(default_factory=list)
+
+
 class LinterToolSchema(BaseModel):
     """Estado de una herramienta estándar de linters."""
 
