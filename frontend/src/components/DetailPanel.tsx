@@ -109,6 +109,13 @@ export function DetailPanel({
     );
   }
 
+  const hasSymbols =
+    grouped.classes.length > 0 || grouped.functions.length > 0;
+  const showPreviewFirst = !hasSymbols;
+  const showSymbolPlaceholder =
+    !hasSymbols &&
+    shouldShowSymbolPlaceholder(selectedPath, data.symbols.length);
+
   const modified =
     data.modified_at != null ? new Date(data.modified_at).toLocaleString() : "—";
   const hasWorkingChanges = Boolean(data.change_status);
@@ -310,7 +317,14 @@ export function DetailPanel({
         </article>
       ))}
 
-      {grouped.classes.length === 0 && grouped.functions.length === 0 && (
+      {showPreviewFirst && (
+        <div className="preview-container">
+          <h3 className="preview-title">Preview</h3>
+          <PreviewPane path={selectedPath} />
+        </div>
+      )}
+
+      {showSymbolPlaceholder && (
         <div className="placeholder">
           <h3>File without exportable symbols</h3>
           <p>
@@ -320,7 +334,7 @@ export function DetailPanel({
         </div>
       )}
 
-      {selectedPath && (
+      {selectedPath && !showPreviewFirst && (
         <div className="preview-container">
           <h3 className="preview-title">Preview</h3>
           <PreviewPane path={selectedPath} />
@@ -359,4 +373,32 @@ function formatChangeStatus(status?: string | null): string {
     default:
       return "Modified";
   }
+}
+
+const SYMBOL_FRIENDLY_EXTENSIONS = [
+  "py",
+  "ts",
+  "tsx",
+  "js",
+  "jsx",
+  "java",
+  "go",
+  "rb",
+  "rs",
+  "php",
+  "cs",
+  "cpp",
+  "c",
+  "m",
+  "swift",
+];
+
+function shouldShowSymbolPlaceholder(path: string, symbolCount: number): boolean {
+  if (symbolCount > 0) {
+    return false;
+  }
+  const normalized = path.toLowerCase();
+  return SYMBOL_FRIENDLY_EXTENSIONS.some((ext) =>
+    normalized.endsWith(`.${ext}`)
+  );
 }

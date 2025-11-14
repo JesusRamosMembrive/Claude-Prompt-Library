@@ -169,7 +169,7 @@ class SettingsUpdateRequest(BaseModel):
         default=None,
         min_length=0,
         max_length=256,
-        description="URL del servidor backend (ej: http://192.168.1.100:8000)",
+        description="URL del servidor backend (ej: http://192.168.1.100:8010)",
     )
 
 

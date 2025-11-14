@@ -121,6 +121,7 @@ class AppState:
         self._insights_task: Optional[asyncio.Task[None]] = None
         self._insights_timer: Optional[asyncio.Task[None]] = None
         self._insights_pending = False
+        self._insights_last_attempt: Optional[datetime] = None
         self._insights_last_run: Optional[datetime] = None
         self._recent_changes: List[str] = []
 
@@ -345,11 +346,10 @@ class AppState:
     def _compute_insights_next_run(self) -> Optional[datetime]:
         if not self._insights_settings_valid():
             return None
-        if self._insights_last_run is None:
+        reference = self._insights_last_attempt
+        if reference is None:
             return datetime.now(timezone.utc)
-        return self._insights_last_run + timedelta(
-            seconds=self._insights_interval_seconds()
-        )
+        return reference + timedelta(seconds=self._insights_interval_seconds())
 
     async def _build_insights_context(self) -> str:
         parts: List[str] = []
@@ -430,11 +430,10 @@ class AppState:
             return
 
         interval_seconds = self._insights_interval_seconds()
+        reference = self._insights_last_attempt
 
-        if not force and self._insights_last_run is not None:
-            elapsed = (
-                datetime.now(timezone.utc) - self._insights_last_run
-            ).total_seconds()
+        if not force and reference is not None:
+            elapsed = (datetime.now(timezone.utc) - reference).total_seconds()
             remaining = interval_seconds - elapsed
             if remaining > 0:
                 self._insights_pending = True
@@ -452,6 +451,7 @@ class AppState:
         model = self.settings.ollama_insights_model
         if not model:
             return
+        self._insights_last_attempt = datetime.now(timezone.utc)
 
         try:
             context = await self._build_insights_context()

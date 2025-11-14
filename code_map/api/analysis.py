@@ -15,7 +15,7 @@ from fastapi.responses import StreamingResponse
 
 from ..state import AppState
 from ..git_history import GitHistory, GitHistoryError
-from ..models import ProjectTreeNode
+from ..models import ProjectTreeNode, FileSummary
 from .deps import get_app_state
 from .schemas import (
     ChangeNotification,
@@ -126,6 +126,18 @@ def _change_payload_for_path(
     return change.payload()
 
 
+def _create_generic_summary_for_file(path: Path) -> FileSummary:
+    """Construye un FileSummary sin símbolos para archivos no indexados."""
+    modified_at: Optional[datetime] = None
+    try:
+        stat = path.stat()
+    except OSError:
+        pass
+    else:
+        modified_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+    return FileSummary(path=path, modified_at=modified_at)
+
+
 @router.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
     """Comprueba el estado de la API."""
@@ -161,11 +173,12 @@ async def get_file(
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    if not target_path.exists():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado.")
+
     summary = state.index.get_file(target_path)
     if summary is None:
-        raise HTTPException(
-            status_code=404, detail="Archivo no encontrado en el índice."
-        )
+        summary = _create_generic_summary_for_file(target_path)
 
     git_history = _get_git_history(state)
     relative_path = state.to_relative(target_path)

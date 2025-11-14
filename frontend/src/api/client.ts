@@ -31,10 +31,26 @@ import type {
 } from "./types";
 import { useBackendStore } from "../state/useBackendStore";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-  : null;
-const API_PREFIX = API_BASE ? "" : "/api";
+const sanitizeBaseUrl = (value?: string | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.replace(/\/$/, "");
+};
+
+const withApiSuffix = (url: string): string =>
+  url.endsWith("/api") ? url : `${url}/api`;
+
+const STATIC_API_BASE = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+const DEFAULT_DEPLOY_BACKEND = sanitizeBaseUrl(
+  import.meta.env.VITE_DEPLOY_BACKEND_URL ?? "http://0.0.0.0:8010"
+);
 
 /**
  * Construye la URL completa para una llamada a la API.
@@ -47,22 +63,22 @@ const API_PREFIX = API_BASE ? "" : "/api";
  *
  * Notes:
  *     - Usa backend_url del store si está configurado
- *     - Fallback a VITE_API_BASE_URL si está configurado (producción)
- *     - Fallback final a '/api' prefix para desarrollo local
- *     - Remueve trailing slash de la base URL
+ *     - Fallback a VITE_API_BASE_URL para builds configurados explícitamente
+ *     - Fallback adicional a VITE_DEPLOY_BACKEND_URL (default http://0.0.0.0:8010)
+ *     - Fallback final a '/api' prefix para desarrollo local con proxy
+ *     - Remueve trailing slash de la base URL y añade '/api' automáticamente
  */
 const buildUrl = (path: string): string => {
-  // Prioridad: Runtime store > Env var > /api prefix
-  const runtimeUrl = useBackendStore.getState().backendUrl;
+  // Prioridad: Runtime store > Env var > fallback deployment URL > proxy /api
+  const runtimeUrl = sanitizeBaseUrl(useBackendStore.getState().backendUrl);
+  const baseUrl = runtimeUrl ?? STATIC_API_BASE ?? DEFAULT_DEPLOY_BACKEND;
 
-  if (runtimeUrl) {
-    // URL configurada en runtime (desde settings)
-    const cleanedUrl = runtimeUrl.replace(/\/$/, "");
-    return `${cleanedUrl}/api${path}`;
+  if (baseUrl) {
+    return `${withApiSuffix(baseUrl)}${path}`;
   }
 
-  // Fallback a comportamiento original
-  return `${API_BASE ?? ""}${API_PREFIX}${path}`;
+  // Fallback a comportamiento original (usar proxy local /api)
+  return `/api${path}`;
 };
 
 /**

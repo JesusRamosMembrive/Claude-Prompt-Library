@@ -14,6 +14,7 @@ import { useStatusQuery } from "../hooks/useStatusQuery";
 
 const HISTORY_LIMIT = 50;
 const DEFAULT_PROMPT = "Briefly summarize the purpose of the current repository.";
+const QUICK_TEST_PROMPT = "responde solo pong";
 
 const INSIGHT_FOCUS_OPTIONS = [
   {
@@ -90,12 +91,18 @@ function OllamaStatusCard({
   onStart,
   isStarting,
   startError,
+  onTestConnection,
+  isTestingConnection = false,
+  canTestConnection = true,
 }: {
   status: OllamaStatus | undefined;
   lastChecked: string | undefined;
   onStart: () => void;
   isStarting: boolean;
   startError: string | null;
+  onTestConnection?: () => void;
+  isTestingConnection?: boolean;
+  canTestConnection?: boolean;
 }): JSX.Element {
   if (!status) {
     return (
@@ -111,6 +118,7 @@ function OllamaStatusCard({
   const runningBadgeClass = status.running ? "stage-badge success" : "stage-badge warn";
   const runningLabel = status.running ? "Running" : "Stopped";
   const canStart = status.installed && !status.running;
+  const canRunQuickTest = Boolean(status.running && onTestConnection && canTestConnection);
 
   return (
     <article className="stage-card">
@@ -159,12 +167,29 @@ function OllamaStatusCard({
       </section>
       {status.warning ? <p className="stage-info">Warning: {status.warning}</p> : null}
       {status.error ? <p className="stage-error">Error: {status.error}</p> : null}
-      {canStart ? (
+      {(canStart || onTestConnection) ? (
         <div className="stage-form-actions">
-          <button className="secondary-btn" type="button" onClick={onStart} disabled={isStarting}>
-            {isStarting ? "Starting…" : "Start Ollama"}
-          </button>
+          {canStart ? (
+            <button className="secondary-btn" type="button" onClick={onStart} disabled={isStarting}>
+              {isStarting ? "Starting…" : "Start Ollama"}
+            </button>
+          ) : null}
+          {onTestConnection ? (
+            <button
+              className="secondary-btn"
+              type="button"
+              onClick={onTestConnection}
+              disabled={!canRunQuickTest || isTestingConnection}
+            >
+              {isTestingConnection ? "Testing…" : "Test connection"}
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {onTestConnection ? (
+        <p className="stage-hint">
+          Sends "{QUICK_TEST_PROMPT}" to confirm the local endpoint responds correctly.
+        </p>
       ) : null}
       {startError ? <p className="stage-error">{startError}</p> : null}
     </article>
@@ -422,6 +447,23 @@ export function OllamaInsightsView(): JSX.Element {
     );
   };
 
+  const quickTestModel = (selectedOllamaModel.trim() || availableOllamaModels[0] || "").trim();
+  const canQuickTest = Boolean(quickTestModel) && isOllamaRunning;
+
+  const handleQuickOllamaTest = () => {
+    if (!canQuickTest || isTestingOllama || !quickTestModel) {
+      return;
+    }
+    const endpointValue = ollamaEndpoint.trim() || undefined;
+    const payload = {
+      model: quickTestModel,
+      prompt: QUICK_TEST_PROMPT,
+      endpoint: endpointValue,
+      timeout_seconds: parsedTimeout,
+    };
+    ollamaTestMutation.mutate(payload);
+  };
+
   const handleOllamaTestSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmitOllamaTest) {
@@ -471,6 +513,9 @@ export function OllamaInsightsView(): JSX.Element {
               onStart={handleOllamaStart}
               isStarting={isStartingOllama}
               startError={ollamaStartError}
+              onTestConnection={handleQuickOllamaTest}
+              isTestingConnection={isTestingOllama}
+              canTestConnection={canQuickTest}
             />
             {ollamaStartResult ? (
               <p className="stage-meta">
@@ -678,9 +723,9 @@ export function OllamaInsightsView(): JSX.Element {
       <section className="stage-section">
         <header className="stage-section-header">
           <div>
-            <h2>Ping a Ollama</h2>
+            <h2>Manual message</h2>
             <p>
-              Send a short prompt to the local model to confirm the service is responding and measure latency.
+              Send any ad-hoc prompt to the local model, review the response, and inspect latency or errors.
             </p>
           </div>
         </header>
@@ -780,7 +825,7 @@ export function OllamaInsightsView(): JSX.Element {
           </label>
 
           <label className="stage-form-field">
-            <span>Prompt</span>
+            <span>Message</span>
             <textarea
               className="stage-textarea"
               value={ollamaPrompt}
@@ -790,13 +835,13 @@ export function OllamaInsightsView(): JSX.Element {
               required
             />
             <p className="stage-hint">
-              Use a short prompt to check latency. For full analyses, run automated or manual insights.
+              Great for manual debugging or quick follow-up prompts. Automated insights remain available above.
             </p>
           </label>
 
           <div className="stage-form-actions">
             <button className="primary-btn" type="submit" disabled={!canSubmitOllamaTest || isTestingOllama}>
-              {isTestingOllama ? "Sending…" : "Test model"}
+              {isTestingOllama ? "Sending…" : "Send message"}
             </button>
             <button
               className="secondary-btn"

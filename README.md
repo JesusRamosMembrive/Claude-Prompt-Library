@@ -81,7 +81,7 @@ python -m code_map.cli run --root /path/to/your/project
 # Or using short form
 python -m code_map --root /path/to/your/project
 
-# Access API docs at: http://localhost:8000/docs
+# Access API docs at: http://localhost:8010/docs
 ```
 
 **Frontend (React UI):**
@@ -96,7 +96,7 @@ npm run dev
 ```bash
 # API server
 export CODE_MAP_HOST=0.0.0.0      # Default: 127.0.0.1
-export CODE_MAP_PORT=8080          # Default: 8000
+export CODE_MAP_PORT=8080          # Default: 8010
 
 # Ollama integration (optional)
 export OLLAMA_HOST=http://localhost:11434
@@ -306,7 +306,7 @@ python -m code_map.cli run --root . --reload
 - `POST /api/linters/run` - Execute linter pipeline
 - `POST /api/stage/assess` - Assess project stage
 - `GET /api/analysis/summary` - Code analysis summary
-- Interactive docs: `http://localhost:8000/docs`
+- Interactive docs: `http://localhost:8010/docs`
 
 **→ Full documentation:** [USAGE.md](./USAGE.md) | [CLAUDE.md](./CLAUDE.md)
 
@@ -331,7 +331,7 @@ python -m code_map.cli run --root . --reload
 **API Server:**
 ```bash
 CODE_MAP_HOST=0.0.0.0              # Default: 127.0.0.1
-CODE_MAP_PORT=8080                 # Default: 8000
+CODE_MAP_PORT=8080                 # Default: 8010
 ```
 
 **Linter Pipeline:**
