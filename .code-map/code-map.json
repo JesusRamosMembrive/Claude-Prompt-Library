@@ -2,7 +2,7 @@
   {
     "path": "assess_stage.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677833+00:00",
+    "modified_at": "2025-11-05T18:58:38.445552+00:00",
     "symbols": [
       {
         "name": "assess_stage",
@@ -45,28 +45,28 @@
   {
     "path": "claude_assess.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-05T20:52:42.964128+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-05T18:44:38.492822+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/__main__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-04T11:07:41.221364+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-05T18:53:35.650786+00:00",
     "symbols": [
       {
         "name": "get_modified_time",
@@ -137,7 +137,7 @@
   {
     "path": "code_map/analyzer_registry.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-05T18:58:38.513552+00:00",
     "symbols": [
       {
         "name": "AnalyzerCapability",
@@ -250,54 +250,117 @@
   {
     "path": "code_map/api/analysis.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-18T18:49:22.073442+00:00",
     "symbols": [
+      {
+        "name": "_get_git_history",
+        "kind": "function",
+        "lineno": 42,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_build_change_map",
+        "kind": "function",
+        "lineno": 49,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_serialize_change_entries",
+        "kind": "function",
+        "lineno": 66,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_attach_missing_change_nodes",
+        "kind": "function",
+        "lineno": 82,
+        "parent": null,
+        "docstring": "Inserta nodos sint\u00e9ticos para archivos con cambios no presentes en el \u00edndice."
+      },
+      {
+        "name": "_change_payload_for_path",
+        "kind": "function",
+        "lineno": 114,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "_create_generic_summary_for_file",
+        "kind": "function",
+        "lineno": 129,
+        "parent": null,
+        "docstring": "Construye un FileSummary sin s\u00edmbolos para archivos no indexados."
+      },
       {
         "name": "health",
         "kind": "function",
-        "lineno": 34,
+        "lineno": 142,
         "parent": null,
         "docstring": "Comprueba el estado de la API."
       },
       {
         "name": "get_tree",
         "kind": "function",
-        "lineno": 40,
+        "lineno": 148,
         "parent": null,
         "docstring": "Obtiene el \u00e1rbol de archivos del proyecto."
       },
       {
         "name": "get_file",
         "kind": "function",
-        "lineno": 54,
+        "lineno": 166,
         "parent": null,
         "docstring": "Obtiene el resumen de un archivo espec\u00edfico."
       },
       {
+        "name": "get_working_tree_diff",
+        "kind": "function",
+        "lineno": 191,
+        "parent": null,
+        "docstring": "Devuelve el diff del working tree frente al \u00faltimo commit para un archivo."
+      },
+      {
+        "name": "list_working_tree_changes",
+        "kind": "function",
+        "lineno": 227,
+        "parent": null,
+        "docstring": "Lista todos los archivos con cambios detectados desde el \u00faltimo commit."
+      },
+      {
+        "name": "list_docs_directory",
+        "kind": "function",
+        "lineno": 242,
+        "parent": null,
+        "docstring": "Lista los archivos markdown en docs/."
+      },
+      {
         "name": "search",
         "kind": "function",
-        "lineno": 73,
+        "lineno": 285,
         "parent": null,
         "docstring": "Busca s\u00edmbolos en el proyecto."
       },
       {
         "name": "_event_stream",
         "kind": "function",
-        "lineno": 84,
+        "lineno": 296,
         "parent": null,
         "docstring": "Genera un flujo de eventos de cambio."
       },
       {
         "name": "events",
         "kind": "function",
-        "lineno": 98,
+        "lineno": 310,
         "parent": null,
         "docstring": "Suscribe al flujo de eventos de cambio."
       },
       {
         "name": "rescan",
         "kind": "function",
-        "lineno": 104,
+        "lineno": 316,
         "parent": null,
         "docstring": "Dispara un escaneo completo del proyecto."
       }
@@ -307,7 +370,7 @@
   {
     "path": "code_map/api/deps.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-10-31T12:37:21.627631+00:00",
     "symbols": [
       {
         "name": "get_app_state",
@@ -322,7 +385,7 @@
   {
     "path": "code_map/api/graph.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.073442+00:00",
     "symbols": [
       {
         "name": "get_class_graph",
@@ -358,7 +421,7 @@
   {
     "path": "code_map/api/integrations.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-05T18:56:25.837424+00:00",
     "symbols": [
       {
         "name": "get_ollama_status",
@@ -408,7 +471,7 @@
   {
     "path": "code_map/api/linters.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.073442+00:00",
     "symbols": [
       {
         "name": "get_linters_discovery",
@@ -486,33 +549,33 @@
   {
     "path": "code_map/api/preview.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "preview_file",
         "kind": "function",
-        "lineno": 30,
+        "lineno": 48,
         "parent": null,
         "docstring": "Obtiene el contenido de un archivo para previsualizaci\u00f3n."
       },
       {
         "name": "_guess_media_type",
         "kind": "function",
-        "lineno": 76,
+        "lineno": 94,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_is_previewable_media",
         "kind": "function",
-        "lineno": 83,
+        "lineno": 105,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_stream_text_file",
         "kind": "function",
-        "lineno": 89,
+        "lineno": 111,
         "parent": null,
         "docstring": null
       }
@@ -522,14 +585,14 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -560,422 +623,471 @@
         "docstring": "Esquema para el resumen de un archivo."
       },
       {
+        "name": "FileDiffResponse",
+        "kind": "class",
+        "lineno": 55,
+        "parent": null,
+        "docstring": "Respuesta b\u00e1sica con el diff del working tree versus HEAD."
+      },
+      {
+        "name": "DocFileSchema",
+        "kind": "class",
+        "lineno": 65,
+        "parent": null,
+        "docstring": "Representa un archivo markdown dentro del directorio docs/."
+      },
+      {
+        "name": "DocsListResponse",
+        "kind": "class",
+        "lineno": 74,
+        "parent": null,
+        "docstring": "Respuesta para la lista de archivos de documentaci\u00f3n."
+      },
+      {
+        "name": "WorkingTreeChangeSchema",
+        "kind": "class",
+        "lineno": 83,
+        "parent": null,
+        "docstring": "Representa un archivo con cambios pendientes respecto a HEAD."
+      },
+      {
+        "name": "ChangesResponse",
+        "kind": "class",
+        "lineno": 91,
+        "parent": null,
+        "docstring": "Respuesta con la lista completa de cambios detectados."
+      },
+      {
         "name": "TreeNodeSchema",
         "kind": "class",
-        "lineno": 53,
+        "lineno": 97,
         "parent": null,
         "docstring": "Esquema para un nodo del \u00e1rbol de archivos."
       },
       {
         "name": "SearchResultsSchema",
         "kind": "class",
-        "lineno": 68,
+        "lineno": 114,
         "parent": null,
         "docstring": "Esquema para los resultados de una b\u00fasqueda."
       },
       {
         "name": "RescanResponse",
         "kind": "class",
-        "lineno": 74,
+        "lineno": 120,
         "parent": null,
         "docstring": "Respuesta del endpoint de rescan."
       },
       {
         "name": "ChangeNotification",
         "kind": "class",
-        "lineno": 80,
+        "lineno": 126,
         "parent": null,
         "docstring": "Notificaci\u00f3n de cambios en el sistema de archivos."
       },
       {
         "name": "SettingsResponse",
         "kind": "class",
-        "lineno": 87,
+        "lineno": 133,
         "parent": null,
         "docstring": "Respuesta del endpoint de settings."
       },
       {
         "name": "SettingsUpdateRequest",
         "kind": "class",
-        "lineno": 102,
+        "lineno": 148,
         "parent": null,
         "docstring": "Petici\u00f3n para actualizar los settings."
       },
       {
         "name": "SettingsUpdateResponse",
         "kind": "class",
-        "lineno": 130,
+        "lineno": 176,
         "parent": null,
         "docstring": "Respuesta de la actualizaci\u00f3n de settings."
       },
       {
         "name": "AnalyzerCapabilitySchema",
         "kind": "class",
-        "lineno": 137,
+        "lineno": 183,
         "parent": null,
         "docstring": "Esquema para una capacidad del analizador."
       },
       {
         "name": "StatusResponse",
         "kind": "class",
-        "lineno": 149,
+        "lineno": 195,
         "parent": null,
         "docstring": "Respuesta del endpoint de status."
       },
       {
         "name": "PreviewResponse",
         "kind": "class",
-        "lineno": 170,
+        "lineno": 216,
         "parent": null,
         "docstring": "Respuesta del endpoint de preview."
       },
       {
         "name": "OptionalFilesStatus",
         "kind": "class",
-        "lineno": 177,
+        "lineno": 223,
         "parent": null,
         "docstring": "Estado opcional (archivos recomendados pero no obligatorios)."
       },
       {
         "name": "AgentInstallStatus",
         "kind": "class",
-        "lineno": 185,
+        "lineno": 231,
         "parent": null,
         "docstring": "Estado de instalaci\u00f3n para un agente (Claude o Codex)."
       },
       {
         "name": "DocsStatus",
         "kind": "class",
-        "lineno": 195,
+        "lineno": 241,
         "parent": null,
         "docstring": "Estado de los documentos de referencia."
       },
       {
         "name": "StageDetectionStatus",
         "kind": "class",
-        "lineno": 204,
+        "lineno": 250,
         "parent": null,
         "docstring": "Resultado de la detecci\u00f3n autom\u00e1tica de etapa."
       },
       {
         "name": "StageStatusResponse",
         "kind": "class",
-        "lineno": 216,
+        "lineno": 262,
         "parent": null,
         "docstring": "Payload completo con el estado stage-aware del proyecto."
       },
       {
         "name": "OllamaModelSchema",
         "kind": "class",
-        "lineno": 226,
+        "lineno": 272,
         "parent": null,
         "docstring": "Modelo disponible en Ollama."
       },
       {
         "name": "OllamaStatusSchema",
         "kind": "class",
-        "lineno": 237,
+        "lineno": 283,
         "parent": null,
         "docstring": "Estado detectado para Ollama."
       },
       {
         "name": "OllamaStatusResponse",
         "kind": "class",
-        "lineno": 250,
+        "lineno": 296,
         "parent": null,
         "docstring": "Respuesta con el estado actual de Ollama."
       },
       {
         "name": "OllamaStartRequest",
         "kind": "class",
-        "lineno": 257,
+        "lineno": 303,
         "parent": null,
         "docstring": "Petici\u00f3n para iniciar el servidor Ollama."
       },
       {
         "name": "OllamaStartResponse",
         "kind": "class",
-        "lineno": 263,
+        "lineno": 309,
         "parent": null,
         "docstring": "Respuesta tras intentar iniciar Ollama."
       },
       {
         "name": "OllamaTestRequest",
         "kind": "class",
-        "lineno": 274,
+        "lineno": 320,
         "parent": null,
         "docstring": "Petici\u00f3n para realizar un chat de prueba con Ollama."
       },
       {
         "name": "OllamaTestResponse",
         "kind": "class",
-        "lineno": 284,
+        "lineno": 330,
         "parent": null,
         "docstring": "Respuesta tras ejecutar una prueba de chat contra Ollama."
       },
       {
         "name": "OllamaInsightsRequest",
         "kind": "class",
-        "lineno": 295,
+        "lineno": 341,
         "parent": null,
         "docstring": "Petici\u00f3n para generar insights manualmente."
       },
       {
         "name": "OllamaInsightsResponse",
         "kind": "class",
-        "lineno": 312,
+        "lineno": 358,
         "parent": null,
         "docstring": "Respuesta tras generar insights manualmente."
       },
       {
         "name": "OllamaInsightEntry",
         "kind": "class",
-        "lineno": 320,
+        "lineno": 366,
         "parent": null,
         "docstring": "Elemento individual dentro del historial de insights."
       },
       {
         "name": "OllamaInsightsClearResponse",
         "kind": "class",
-        "lineno": 329,
+        "lineno": 375,
         "parent": null,
         "docstring": "Respuesta tras limpiar el historial de insights."
       },
       {
         "name": "StageInitRequest",
         "kind": "class",
-        "lineno": 335,
+        "lineno": 381,
         "parent": null,
         "docstring": "Petici\u00f3n para inicializar los assets stage-aware."
       },
       {
         "name": "StageInitResponse",
         "kind": "class",
-        "lineno": 341,
+        "lineno": 387,
         "parent": null,
         "docstring": "Respuesta tras ejecutar init_project.py."
       },
       {
+        "name": "SuperClaudeLogEntry",
+        "kind": "class",
+        "lineno": 398,
+        "parent": null,
+        "docstring": "Salida detallada de cada comando ejecutado por el instalador."
+      },
+      {
+        "name": "SuperClaudeInstallResponse",
+        "kind": "class",
+        "lineno": 407,
+        "parent": null,
+        "docstring": "Resultado de sincronizar el framework SuperClaude."
+      },
+      {
         "name": "LinterToolSchema",
         "kind": "class",
-        "lineno": 352,
+        "lineno": 420,
         "parent": null,
         "docstring": "Estado de una herramienta est\u00e1ndar de linters."
       },
       {
         "name": "LinterCustomRuleSchema",
         "kind": "class",
-        "lineno": 365,
+        "lineno": 433,
         "parent": null,
         "docstring": "Descripci\u00f3n de una regla de calidad personalizada."
       },
       {
         "name": "NotificationChannelSchema",
         "kind": "class",
-        "lineno": 376,
+        "lineno": 444,
         "parent": null,
         "docstring": "Canal disponible para notificaciones de escritorio."
       },
       {
         "name": "LintersDiscoveryResponse",
         "kind": "class",
-        "lineno": 386,
+        "lineno": 454,
         "parent": null,
         "docstring": "Payload con el resultado del discovery de linters."
       },
       {
         "name": "LinterIssueDetailSchema",
         "kind": "class",
-        "lineno": 396,
+        "lineno": 464,
         "parent": null,
         "docstring": "Detalle de incidencias registradas por un linter."
       },
       {
         "name": "LinterToolRunSchema",
         "kind": "class",
-        "lineno": 410,
+        "lineno": 478,
         "parent": null,
         "docstring": "Resultado de ejecutar una herramienta est\u00e1ndar."
       },
       {
         "name": "LinterRunCustomRuleSchema",
         "kind": "class",
-        "lineno": 428,
+        "lineno": 496,
         "parent": null,
         "docstring": "Estado de una regla personalizada ejecutada."
       },
       {
         "name": "LinterCoverageSchema",
         "kind": "class",
-        "lineno": 441,
+        "lineno": 509,
         "parent": null,
         "docstring": "Instant\u00e1nea de cobertura de tests."
       },
       {
         "name": "LinterReportSummarySchema",
         "kind": "class",
-        "lineno": 449,
+        "lineno": 517,
         "parent": null,
         "docstring": "Resumen de un reporte de linters."
       },
       {
         "name": "LinterChartDataSchema",
         "kind": "class",
-        "lineno": 466,
+        "lineno": 534,
         "parent": null,
         "docstring": "Datos agregados para visualizaciones."
       },
       {
         "name": "LintersReportSchema",
         "kind": "class",
-        "lineno": 474,
+        "lineno": 542,
         "parent": null,
         "docstring": "Payload completo de un reporte de linters."
       },
       {
         "name": "LintersReportListItemSchema",
         "kind": "class",
-        "lineno": 490,
+        "lineno": 558,
         "parent": null,
         "docstring": "Elemento resumido para listados de reportes."
       },
       {
         "name": "LintersReportRecordSchema",
         "kind": "class",
-        "lineno": 503,
+        "lineno": 571,
         "parent": null,
         "docstring": "Registro completo con el payload detallado."
       },
       {
         "name": "NotificationEntrySchema",
         "kind": "class",
-        "lineno": 509,
+        "lineno": 577,
         "parent": null,
         "docstring": "Notificaci\u00f3n almacenada en la base de datos."
       },
       {
         "name": "BrowseDirectoryResponse",
         "kind": "class",
-        "lineno": 525,
+        "lineno": 593,
         "parent": null,
         "docstring": "Respuesta al seleccionar un directorio en el servidor."
       },
       {
         "name": "DirectoryItem",
         "kind": "class",
-        "lineno": 531,
+        "lineno": 599,
         "parent": null,
         "docstring": "Representa un directorio en el listado."
       },
       {
         "name": "ListDirectoriesResponse",
         "kind": "class",
-        "lineno": 541,
+        "lineno": 609,
         "parent": null,
         "docstring": "Respuesta al listar directorios disponibles."
       },
       {
         "name": "ClassGraphNode",
         "kind": "class",
-        "lineno": 550,
+        "lineno": 618,
         "parent": null,
         "docstring": "Nodo del grafo de clases."
       },
       {
         "name": "ClassGraphEdge",
         "kind": "class",
-        "lineno": 559,
+        "lineno": 627,
         "parent": null,
         "docstring": "Arista del grafo de clases."
       },
       {
         "name": "ClassGraphStats",
         "kind": "class",
-        "lineno": 569,
+        "lineno": 637,
         "parent": null,
         "docstring": "M\u00e9tricas del grafo generado."
       },
       {
         "name": "ClassGraphResponse",
         "kind": "class",
-        "lineno": 577,
+        "lineno": 645,
         "parent": null,
         "docstring": "Respuesta completa del grafo de clases."
       },
       {
         "name": "UMLAttribute",
         "kind": "class",
-        "lineno": 585,
+        "lineno": 653,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLMethod",
         "kind": "class",
-        "lineno": 591,
+        "lineno": 659,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLClass",
         "kind": "class",
-        "lineno": 597,
+        "lineno": 665,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLDiagramResponse",
         "kind": "class",
-        "lineno": 608,
+        "lineno": 676,
         "parent": null,
         "docstring": null
       },
       {
         "name": "serialize_symbol",
         "kind": "function",
-        "lineno": 613,
+        "lineno": 681,
         "parent": null,
         "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
       },
       {
         "name": "serialize_error",
         "kind": "function",
-        "lineno": 628,
+        "lineno": 696,
         "parent": null,
         "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
       },
       {
         "name": "serialize_summary",
         "kind": "function",
-        "lineno": 637,
+        "lineno": 705,
         "parent": null,
         "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
       },
       {
         "name": "serialize_tree",
         "kind": "function",
-        "lineno": 652,
+        "lineno": 728,
         "parent": null,
         "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
       },
       {
         "name": "serialize_search_results",
         "kind": "function",
-        "lineno": 681,
+        "lineno": 775,
         "parent": null,
         "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
       },
       {
         "name": "serialize_settings",
         "kind": "function",
-        "lineno": 690,
+        "lineno": 784,
         "parent": null,
         "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
       },
       {
         "name": "serialize_status",
         "kind": "function",
-        "lineno": 696,
+        "lineno": 790,
         "parent": null,
         "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
       }
@@ -985,7 +1097,7 @@
   {
     "path": "code_map/api/settings.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "get_settings",
@@ -1028,21 +1140,28 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.678853+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
         "kind": "function",
-        "lineno": 20,
+        "lineno": 30,
         "parent": null,
         "docstring": "Devuelve el estado actual de los archivos Stage-Aware del proyecto."
       },
       {
         "name": "initialize_stage_assets",
         "kind": "function",
-        "lineno": 29,
+        "lineno": 39,
         "parent": null,
         "docstring": "Ejecuta init_project.py sobre el root actual para instalar instrucciones."
+      },
+      {
+        "name": "install_superclaude",
+        "kind": "function",
+        "lineno": 50,
+        "parent": null,
+        "docstring": "Sincroniza los activos del framework SuperClaude en el workspace."
       }
     ],
     "errors": []
@@ -1050,7 +1169,7 @@
   {
     "path": "code_map/api/timeline.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "CommitInfoSchema",
@@ -1135,7 +1254,7 @@
   {
     "path": "code_map/api/tracer.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "AnalyzeFileRequest",
@@ -1255,7 +1374,7 @@
   {
     "path": "code_map/ast_utils.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.678853+00:00",
+    "modified_at": "2025-11-05T18:44:38.528441+00:00",
     "symbols": [
       {
         "name": "ImportResolver",
@@ -1277,7 +1396,7 @@
   {
     "path": "code_map/cache.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327461+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "SnapshotStore",
@@ -1355,7 +1474,7 @@
   {
     "path": "code_map/call_tracer_v2.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327922+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "CrossFileCallGraphExtractor",
@@ -1468,7 +1587,7 @@
   {
     "path": "code_map/class_graph.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680315+00:00",
+    "modified_at": "2025-11-05T18:44:40.745807+00:00",
     "symbols": [
       {
         "name": "ClassInfo",
@@ -1700,7 +1819,7 @@
   {
     "path": "code_map/cli.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327922+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "_validate_root",
@@ -1757,14 +1876,14 @@
   {
     "path": "code_map/constants.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680315+00:00",
+    "modified_at": "2025-10-31T12:37:21.630605+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/dependencies.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680315+00:00",
+    "modified_at": "2025-10-31T12:37:21.630631+00:00",
     "symbols": [
       {
         "name": "DependencySpec",
@@ -1828,7 +1947,7 @@
   {
     "path": "code_map/events.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T18:44:38.880390+00:00",
     "symbols": [
       {
         "name": "ChangeEventType",
@@ -1885,110 +2004,173 @@
   {
     "path": "code_map/git_history.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327922+00:00",
+    "modified_at": "2025-11-18T18:49:22.074440+00:00",
     "symbols": [
       {
         "name": "GitHistoryError",
         "kind": "class",
-        "lineno": 14,
+        "lineno": 11,
         "parent": null,
         "docstring": "Raised when git operations fail."
       },
       {
         "name": "CommitInfo",
         "kind": "class",
-        "lineno": 20,
+        "lineno": 17,
         "parent": null,
         "docstring": "Information about a single git commit."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 23,
+        "lineno": 20,
         "parent": "CommitInfo",
         "docstring": null
       },
       {
         "name": "to_dict",
         "kind": "method",
-        "lineno": 37,
+        "lineno": 34,
         "parent": "CommitInfo",
         "docstring": "Convert to dictionary for JSON serialization."
       },
       {
+        "name": "WorkingTreeChange",
+        "kind": "class",
+        "lineno": 46,
+        "parent": null,
+        "docstring": "Represents a single file change in the working tree vs HEAD."
+      },
+      {
+        "name": "status_label",
+        "kind": "method",
+        "lineno": 55,
+        "parent": "WorkingTreeChange",
+        "docstring": "Return a normalized status label (modified, added, etc.)."
+      },
+      {
+        "name": "summary",
+        "kind": "method",
+        "lineno": 78,
+        "parent": "WorkingTreeChange",
+        "docstring": "Provide a short human description of the change."
+      },
+      {
+        "name": "payload",
+        "kind": "method",
+        "lineno": 98,
+        "parent": "WorkingTreeChange",
+        "docstring": "Serialize change metadata for API responses."
+      },
+      {
+        "name": "_format_scope",
+        "kind": "method",
+        "lineno": 106,
+        "parent": "WorkingTreeChange",
+        "docstring": null
+      },
+      {
         "name": "GitHistory",
         "kind": "class",
-        "lineno": 48,
+        "lineno": 123,
         "parent": null,
         "docstring": "Git history analyzer for timeline visualization.\n\nStage 1 MVP:\n- Parse git log with file changes\n- Filter by date range, author, file path\n- Extract commit metadata"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 58,
+        "lineno": 133,
         "parent": "GitHistory",
         "docstring": "Initialize git history analyzer.\n\nArgs:\n    repo_path: Path to git repository root"
       },
       {
         "name": "_validate_git_repo",
         "kind": "method",
-        "lineno": 68,
+        "lineno": 143,
         "parent": "GitHistory",
         "docstring": "Validate that repo_path is a git repository."
       },
       {
         "name": "_run_git_command",
         "kind": "method",
-        "lineno": 74,
+        "lineno": 149,
         "parent": "GitHistory",
         "docstring": "Run a git command and return output.\n\nArgs:\n    args: Git command arguments (without 'git')\n\nReturns:\n    Command output as string\n\nRaises:\n    GitHistoryError: If command fails"
       },
       {
         "name": "get_commits",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 174,
         "parent": "GitHistory",
         "docstring": "Get commit history with optional filters.\n\nArgs:\n    since: Only commits after this date\n    until: Only commits before this date\n    author: Filter by author name/email\n    file_path: Only commits that modified this file\n    limit: Maximum number of commits to return\n\nReturns:\n    List of CommitInfo objects"
       },
       {
         "name": "_parse_commit_log",
         "kind": "method",
-        "lineno": 144,
+        "lineno": 219,
         "parent": "GitHistory",
         "docstring": "Parse git log output into CommitInfo objects.\n\nFormat:\nhash|author|date|message\nfile1.py\nfile2.py\n\nhash2|author2|date2|message2\nfile3.py"
       },
       {
         "name": "get_file_history",
         "kind": "method",
-        "lineno": 204,
+        "lineno": 279,
         "parent": "GitHistory",
         "docstring": "Get commit history for a specific file.\n\nArgs:\n    file_path: Path to file (relative to repo root)\n    limit: Maximum number of commits\n\nReturns:\n    Dictionary with file_path, commits, and total_changes"
       },
       {
         "name": "get_commit_details",
         "kind": "method",
-        "lineno": 223,
+        "lineno": 298,
         "parent": "GitHistory",
         "docstring": "Get detailed information about a specific commit.\n\nArgs:\n    commit_hash: Git commit hash (full or short)\n\nReturns:\n    CommitInfo object or None if commit not found"
       },
       {
         "name": "get_all_files",
         "kind": "method",
-        "lineno": 243,
+        "lineno": 318,
         "parent": "GitHistory",
         "docstring": "Get list of all files currently tracked by git.\n\nReturns:\n    List of file paths (relative to repo root)"
       },
       {
         "name": "get_timeline_matrix",
         "kind": "method",
-        "lineno": 256,
+        "lineno": 331,
         "parent": "GitHistory",
         "docstring": "Get timeline data structured for DAW-style visualization.\n\nReturns a matrix where:\n- Rows: Files\n- Columns: Commits (chronological)\n- Cells: True if file changed in that commit\n\nArgs:\n    limit: Maximum number of commits\n    file_pattern: Optional regex pattern to filter files\n\nReturns:\n    Dictionary with:\n    - commits: List of commit metadata\n    - files: List of file paths\n    - matrix: 2D array of booleans (file_index, commit_index)"
       },
       {
+        "name": "get_working_tree_changes",
+        "kind": "method",
+        "lineno": 382,
+        "parent": "GitHistory",
+        "docstring": "Return a list of files changed since the last commit (HEAD)."
+      },
+      {
+        "name": "get_working_tree_change_map",
+        "kind": "method",
+        "lineno": 439,
+        "parent": "GitHistory",
+        "docstring": "Return working tree changes keyed by relative path."
+      },
+      {
+        "name": "get_working_tree_change_for_path",
+        "kind": "method",
+        "lineno": 444,
+        "parent": "GitHistory",
+        "docstring": "Fetch working tree change info for a specific file."
+      },
+      {
+        "name": "get_working_tree_diff",
+        "kind": "method",
+        "lineno": 452,
+        "parent": "GitHistory",
+        "docstring": "Return diff between working tree and HEAD for the given file."
+      },
+      {
         "name": "get_file_diff",
         "kind": "method",
-        "lineno": 307,
+        "lineno": 472,
         "parent": "GitHistory",
         "docstring": "Get the diff for a specific file in a commit.\n\nArgs:\n    commit_hash: Git commit hash\n    file_path: Path to file (relative to repo root)\n\nReturns:\n    Diff string or None if file not in commit"
       }
@@ -1998,7 +2180,7 @@
   {
     "path": "code_map/html_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T18:44:38.913895+00:00",
     "symbols": [
       {
         "name": "HtmlAnalyzer",
@@ -2027,7 +2209,7 @@
   {
     "path": "code_map/import_resolver.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327922+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "ImportResolver",
@@ -2091,7 +2273,7 @@
   {
     "path": "code_map/index.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T18:44:38.971989+00:00",
     "symbols": [
       {
         "name": "SymbolIndex",
@@ -2183,14 +2365,14 @@
   {
     "path": "code_map/insights/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T17:52:28.496490+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/insights/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T18:44:38.984987+00:00",
     "symbols": [
       {
         "name": "_resolve_focus",
@@ -2226,7 +2408,7 @@
   {
     "path": "code_map/insights/storage.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-05T20:52:36.307153+00:00",
     "symbols": [
       {
         "name": "StoredInsight",
@@ -2276,14 +2458,14 @@
   {
     "path": "code_map/integrations/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680733+00:00",
+    "modified_at": "2025-11-02T18:58:20.069413+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
@@ -2473,7 +2655,7 @@
   {
     "path": "code_map/js_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680853+00:00",
+    "modified_at": "2025-11-05T18:44:39.772335+00:00",
     "symbols": [
       {
         "name": "_node_get",
@@ -2558,7 +2740,7 @@
   {
     "path": "code_map/linters/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680853+00:00",
+    "modified_at": "2025-11-05T17:52:04.654519+00:00",
     "symbols": [
       {
         "name": "linters_discovery_payload",
@@ -2573,7 +2755,7 @@
   {
     "path": "code_map/linters/discovery.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.680853+00:00",
+    "modified_at": "2025-10-31T13:14:28.760294+00:00",
     "symbols": [
       {
         "name": "ToolDefinition",
@@ -2651,7 +2833,7 @@
   {
     "path": "code_map/linters/pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "LinterConfig",
@@ -2799,7 +2981,7 @@
   {
     "path": "code_map/linters/report_schema.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682154+00:00",
+    "modified_at": "2025-11-05T21:05:27.483462+00:00",
     "symbols": [
       {
         "name": "CheckStatus",
@@ -2954,7 +3136,7 @@
   {
     "path": "code_map/linters/storage.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682258+00:00",
+    "modified_at": "2025-11-05T21:04:59.781403+00:00",
     "symbols": [
       {
         "name": "_normalize_root",
@@ -3081,7 +3263,7 @@
   {
     "path": "code_map/models.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682345+00:00",
+    "modified_at": "2025-10-31T12:37:21.632070+00:00",
     "symbols": [
       {
         "name": "SymbolKind",
@@ -3145,7 +3327,7 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682442+00:00",
+    "modified_at": "2025-11-05T18:49:05.257378+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
@@ -3230,7 +3412,7 @@
   {
     "path": "code_map/scheduler.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682532+00:00",
+    "modified_at": "2025-11-05T18:45:33.759860+00:00",
     "symbols": [
       {
         "name": "_QueuedEvent",
@@ -3301,12 +3483,19 @@
   {
     "path": "code_map/server.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
+      {
+        "name": "_parse_allowed_origins",
+        "kind": "function",
+        "lineno": 24,
+        "parent": null,
+        "docstring": null
+      },
       {
         "name": "create_app",
         "kind": "function",
-        "lineno": 22,
+        "lineno": 33,
         "parent": null,
         "docstring": "Crea y configura la aplicaci\u00f3n FastAPI.\n\nArgs:\n    root: La ruta ra\u00edz del proyecto a escanear.\n\nReturns:\n    La instancia de la aplicaci\u00f3n FastAPI."
       }
@@ -3316,7 +3505,7 @@
   {
     "path": "code_map/settings.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "_normalize_exclusions",
@@ -3415,63 +3604,70 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.682725+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "FileStatus",
         "kind": "class",
-        "lineno": 58,
+        "lineno": 76,
         "parent": null,
         "docstring": "Representa el estado de un conjunto de archivos esperados."
       },
       {
         "name": "complete",
         "kind": "method",
-        "lineno": 66,
+        "lineno": 84,
         "parent": "FileStatus",
         "docstring": null
       },
       {
         "name": "_collect_file_status",
         "kind": "function",
-        "lineno": 70,
+        "lineno": 88,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_agent_payload",
         "kind": "function",
-        "lineno": 82,
+        "lineno": 100,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_detect_stage",
         "kind": "function",
-        "lineno": 104,
+        "lineno": 122,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_compute_status",
         "kind": "function",
-        "lineno": 155,
+        "lineno": 173,
         "parent": null,
         "docstring": null
       },
       {
         "name": "stage_status",
         "kind": "function",
-        "lineno": 179,
+        "lineno": 197,
         "parent": null,
         "docstring": "Obtiene el estado actual de los archivos stage-aware para un root dado."
       },
       {
         "name": "run_initializer",
         "kind": "function",
-        "lineno": 189,
+        "lineno": 207,
         "parent": null,
         "docstring": "Ejecuta init_project.py contra el root indicado para instalar instrucciones."
+      },
+      {
+        "name": "install_superclaude_framework",
+        "kind": "function",
+        "lineno": 248,
+        "parent": null,
+        "docstring": "Clona o actualiza SuperClaude Framework y sincroniza sus assets principales."
       }
     ],
     "errors": []
@@ -3479,7 +3675,7 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "_parse_enabled_tools_env",
@@ -3512,77 +3708,77 @@
       {
         "name": "startup",
         "kind": "method",
-        "lineno": 130,
+        "lineno": 131,
         "parent": "AppState",
         "docstring": "Inicializa el estado de la aplicaci\u00f3n."
       },
       {
         "name": "shutdown",
         "kind": "method",
-        "lineno": 154,
+        "lineno": 155,
         "parent": "AppState",
         "docstring": "Detiene el estado de la aplicaci\u00f3n."
       },
       {
         "name": "_scheduler_loop",
         "kind": "method",
-        "lineno": 180,
+        "lineno": 181,
         "parent": "AppState",
         "docstring": "Bucle principal del programador de cambios."
       },
       {
         "name": "_serialize_changes",
         "kind": "method",
-        "lineno": 200,
+        "lineno": 201,
         "parent": "AppState",
         "docstring": "Serializa los cambios para la notificaci\u00f3n de eventos."
       },
       {
         "name": "perform_full_scan",
         "kind": "method",
-        "lineno": 211,
+        "lineno": 212,
         "parent": "AppState",
         "docstring": "Realiza un escaneo completo del proyecto."
       },
       {
         "name": "_schedule_linters_pipeline",
         "kind": "method",
-        "lineno": 233,
+        "lineno": 234,
         "parent": "AppState",
         "docstring": "Programa la ejecuci\u00f3n del pipeline de linters."
       },
       {
         "name": "_run_linters_pipeline",
         "kind": "method",
-        "lineno": 261,
+        "lineno": 262,
         "parent": "AppState",
         "docstring": "Ejecuta el pipeline de linters y persiste el resultado."
       },
       {
         "name": "_schedule_linters_pipeline_later",
         "kind": "method",
-        "lineno": 321,
+        "lineno": 322,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "_insights_settings_valid",
         "kind": "method",
-        "lineno": 332,
+        "lineno": 333,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "_insights_interval_seconds",
         "kind": "method",
-        "lineno": 338,
+        "lineno": 339,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "_compute_insights_next_run",
         "kind": "method",
-        "lineno": 345,
+        "lineno": 346,
         "parent": "AppState",
         "docstring": null
       },
@@ -3603,7 +3799,7 @@
       {
         "name": "_run_insights_pipeline",
         "kind": "method",
-        "lineno": 450,
+        "lineno": 449,
         "parent": "AppState",
         "docstring": "Ejecuta el pipeline de insights basado en Ollama."
       },
@@ -3683,7 +3879,7 @@
   {
     "path": "code_map/state_reporter.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.075437+00:00",
     "symbols": [
       {
         "name": "_serialize_capability",
@@ -3719,7 +3915,7 @@
   {
     "path": "code_map/ts_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.683010+00:00",
+    "modified_at": "2025-11-05T18:44:39.976822+00:00",
     "symbols": [
       {
         "name": "_TsParser",
@@ -3797,7 +3993,7 @@
   {
     "path": "code_map/uml_graph.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.076435+00:00",
     "symbols": [
       {
         "name": "AttributeInfo",
@@ -4106,7 +4302,7 @@
   {
     "path": "code_map/watcher.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.683358+00:00",
+    "modified_at": "2025-11-05T18:53:52.953749+00:00",
     "symbols": [
       {
         "name": "_EventHandler",
@@ -4219,7 +4415,7 @@
   {
     "path": "docs/ui_mockup.html",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.685321+00:00",
+    "modified_at": "2025-10-31T12:37:21.639631+00:00",
     "symbols": [
       {
         "name": "dashboard",
@@ -4290,7 +4486,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-10T17:06:30.637790+00:00",
+    "modified_at": "2025-11-04T17:33:31.753177+00:00",
     "symbols": [
       {
         "name": "root",
@@ -4305,7 +4501,7 @@
   {
     "path": "frontend/index.html",
     "relative": true,
-    "modified_at": "2025-11-10T16:42:39.488675+00:00",
+    "modified_at": "2025-11-18T18:49:22.081422+00:00",
     "symbols": [
       {
         "name": "root",
@@ -4320,19 +4516,19 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.082420+00:00",
     "symbols": [
       {
         "name": "App",
         "kind": "function",
-        "lineno": 20,
+        "lineno": 21,
         "parent": null,
         "docstring": null
       },
       {
         "name": "withLayout",
         "kind": "function",
-        "lineno": 43,
+        "lineno": 44,
         "parent": null,
         "docstring": null
       }
@@ -4342,222 +4538,264 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.082420+00:00",
     "symbols": [
+      {
+        "name": "sanitizeBaseUrl",
+        "kind": "function",
+        "lineno": 34,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "withApiSuffix",
+        "kind": "function",
+        "lineno": 47,
+        "parent": null,
+        "docstring": null
+      },
       {
         "name": "buildUrl",
         "kind": "function",
-        "lineno": 50,
+        "lineno": 71,
         "parent": null,
         "docstring": null
       },
       {
         "name": "fetchJson",
         "kind": "function",
-        "lineno": 87,
+        "lineno": 107,
         "parent": null,
         "docstring": null
       },
       {
         "name": "fetchJsonNullable",
         "kind": "function",
-        "lineno": 106,
+        "lineno": 126,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OllamaTestError",
         "kind": "class",
-        "lineno": 136,
+        "lineno": 156,
         "parent": null,
         "docstring": null
       },
       {
         "name": "constructor",
         "kind": "method",
-        "lineno": 140,
+        "lineno": 160,
         "parent": "OllamaTestError",
         "docstring": null
       },
       {
         "name": "getTree",
         "kind": "function",
-        "lineno": 158,
+        "lineno": 178,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getFileSummary",
         "kind": "function",
-        "lineno": 176,
+        "lineno": 196,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getWorkingTreeDiff",
+        "kind": "function",
+        "lineno": 201,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getWorkingTreeChanges",
+        "kind": "function",
+        "lineno": 206,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getDocsListing",
+        "kind": "function",
+        "lineno": 210,
         "parent": null,
         "docstring": null
       },
       {
         "name": "searchSymbols",
         "kind": "function",
-        "lineno": 195,
+        "lineno": 228,
         "parent": null,
         "docstring": null
       },
       {
         "name": "triggerRescan",
         "kind": "function",
-        "lineno": 211,
+        "lineno": 244,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getEventsUrl",
         "kind": "function",
-        "lineno": 228,
+        "lineno": 261,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getSettings",
         "kind": "function",
-        "lineno": 245,
+        "lineno": 278,
         "parent": null,
         "docstring": null
       },
       {
         "name": "updateSettings",
         "kind": "function",
-        "lineno": 264,
+        "lineno": 297,
         "parent": null,
         "docstring": null
       },
       {
         "name": "browseForRoot",
         "kind": "function",
-        "lineno": 277,
+        "lineno": 310,
         "parent": null,
         "docstring": null
       },
       {
         "name": "listDirectories",
         "kind": "function",
-        "lineno": 283,
+        "lineno": 316,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStageStatus",
         "kind": "function",
-        "lineno": 293,
+        "lineno": 326,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getOllamaStatus",
         "kind": "function",
-        "lineno": 300,
+        "lineno": 333,
         "parent": null,
         "docstring": null
       },
       {
         "name": "startOllama",
         "kind": "function",
-        "lineno": 307,
+        "lineno": 340,
         "parent": null,
         "docstring": null
       },
       {
         "name": "testOllamaChat",
         "kind": "function",
-        "lineno": 339,
+        "lineno": 372,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getOllamaInsights",
         "kind": "function",
-        "lineno": 386,
+        "lineno": 419,
         "parent": null,
         "docstring": null
       },
       {
         "name": "triggerOllamaInsights",
         "kind": "function",
-        "lineno": 391,
+        "lineno": 424,
         "parent": null,
         "docstring": null
       },
       {
         "name": "clearOllamaInsights",
         "kind": "function",
-        "lineno": 414,
+        "lineno": 447,
         "parent": null,
         "docstring": null
       },
       {
         "name": "initializeStageToolkit",
         "kind": "function",
-        "lineno": 423,
+        "lineno": 456,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "installSuperClaudeFramework",
+        "kind": "function",
+        "lineno": 463,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getClassUml",
         "kind": "function",
-        "lineno": 430,
+        "lineno": 469,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getClassUmlSvg",
         "kind": "function",
-        "lineno": 457,
+        "lineno": 496,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getStatus",
         "kind": "function",
-        "lineno": 501,
+        "lineno": 540,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getPreview",
         "kind": "function",
-        "lineno": 505,
+        "lineno": 544,
         "parent": null,
         "docstring": null
       },
       {
         "name": "appendGraphvizParams",
         "kind": "function",
-        "lineno": 556,
+        "lineno": 595,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersLatestReport",
         "kind": "function",
-        "lineno": 572,
+        "lineno": 611,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersReports",
         "kind": "function",
-        "lineno": 576,
+        "lineno": 615,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getLintersNotifications",
         "kind": "function",
-        "lineno": 587,
+        "lineno": 626,
         "parent": null,
         "docstring": null
       },
       {
         "name": "markNotificationAsRead",
         "kind": "function",
-        "lineno": 600,
+        "lineno": 639,
         "parent": null,
         "docstring": null
       }
@@ -4567,21 +4805,21 @@
   {
     "path": "frontend/src/api/queryKeys.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.688792+00:00",
+    "modified_at": "2025-11-18T18:49:22.082420+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-18T18:49:22.082420+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/components/ActivityFeed.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.688792+00:00",
+    "modified_at": "2025-11-05T16:16:29.520462+00:00",
     "symbols": [
       {
         "name": "formatTimeAgo",
@@ -4603,12 +4841,34 @@
   {
     "path": "frontend/src/components/AppLayout.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.689026+00:00",
+    "modified_at": "2025-11-01T21:13:42.574162+00:00",
     "symbols": [
       {
         "name": "AppLayout",
         "kind": "function",
         "lineno": 9,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/ChangeListPanel.tsx",
+    "relative": true,
+    "modified_at": "2025-11-18T18:49:22.082420+00:00",
+    "symbols": [
+      {
+        "name": "ChangeListPanel",
+        "kind": "function",
+        "lineno": 14,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ChangeListItem",
+        "kind": "function",
+        "lineno": 62,
         "parent": null,
         "docstring": null
       }
@@ -4661,7 +4921,7 @@
   {
     "path": "frontend/src/components/ClassUMLView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "ClassUMLView",
@@ -4732,12 +4992,26 @@
   {
     "path": "frontend/src/components/CodeMapDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.689263+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "CodeMapDashboard",
         "kind": "function",
-        "lineno": 10,
+        "lineno": 13,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleShowDiff",
+        "kind": "function",
+        "lineno": 20,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "closeDiff",
+        "kind": "function",
+        "lineno": 24,
         "parent": null,
         "docstring": null
       }
@@ -4747,7 +5021,7 @@
   {
     "path": "frontend/src/components/CodeTimelineView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "DiffModal",
@@ -4832,7 +5106,7 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.689475+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
@@ -4844,7 +5118,79 @@
       {
         "name": "formatDocstring",
         "kind": "function",
-        "lineno": 315,
+        "lineno": 354,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatChangeStatus",
+        "kind": "function",
+        "lineno": 358,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "shouldShowSymbolPlaceholder",
+        "kind": "function",
+        "lineno": 396,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/DocsLibraryView.tsx",
+    "relative": true,
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
+    "symbols": [
+      {
+        "name": "DocsLibraryView",
+        "kind": "function",
+        "lineno": 11,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatFileSize",
+        "kind": "function",
+        "lineno": 147,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatDate",
+        "kind": "function",
+        "lineno": 162,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/FileDiffModal.tsx",
+    "relative": true,
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
+    "symbols": [
+      {
+        "name": "FileDiffModal",
+        "kind": "function",
+        "lineno": 12,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatLineClass",
+        "kind": "function",
+        "lineno": 26,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatStatus",
+        "kind": "function",
+        "lineno": 97,
         "parent": null,
         "docstring": null
       }
@@ -4854,7 +5200,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T17:02:06.236962+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -4869,7 +5215,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -4891,7 +5237,7 @@
   {
     "path": "frontend/src/components/LintersView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "formatDate",
@@ -4955,61 +5301,68 @@
   {
     "path": "frontend/src/components/OllamaInsightsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-18T18:49:22.083417+00:00",
     "symbols": [
       {
         "name": "normalizeFocus",
         "kind": "function",
-        "lineno": 56,
+        "lineno": 57,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatLatency",
         "kind": "function",
-        "lineno": 69,
+        "lineno": 70,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatModelDetails",
         "kind": "function",
-        "lineno": 76,
+        "lineno": 77,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OllamaStatusCard",
         "kind": "function",
-        "lineno": 87,
+        "lineno": 88,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OllamaInsightsView",
         "kind": "function",
-        "lineno": 174,
+        "lineno": 199,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleInsightsSave",
         "kind": "function",
-        "lineno": 403,
+        "lineno": 428,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleOllamaStart",
         "kind": "function",
-        "lineno": 411,
+        "lineno": 436,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleQuickOllamaTest",
+        "kind": "function",
+        "lineno": 453,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleOllamaTestSubmit",
         "kind": "function",
-        "lineno": 425,
+        "lineno": 467,
         "parent": null,
         "docstring": null
       }
@@ -5019,54 +5372,47 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
         "kind": "function",
-        "lineno": 35,
+        "lineno": 32,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatDuration",
         "kind": "function",
-        "lineno": 46,
+        "lineno": 43,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 62,
+        "lineno": 59,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parseTimestamp",
         "kind": "function",
-        "lineno": 66,
+        "lineno": 63,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatRelativeTime",
         "kind": "function",
-        "lineno": 74,
+        "lineno": 71,
         "parent": null,
         "docstring": null
       },
       {
         "name": "OverviewDashboard",
         "kind": "function",
-        "lineno": 114,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "dismissNotification",
-        "kind": "function",
-        "lineno": 461,
+        "lineno": 111,
         "parent": null,
         "docstring": null
       }
@@ -5076,7 +5422,7 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "getFileExtension",
@@ -5119,7 +5465,7 @@
   {
     "path": "frontend/src/components/PromptLibraryView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-05T16:17:27.779301+00:00",
     "symbols": [
       {
         "name": "parseTagsInput",
@@ -5176,7 +5522,7 @@
   {
     "path": "frontend/src/components/RescanButton.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-06T09:25:32.255509+00:00",
     "symbols": [
       {
         "name": "RescanButton",
@@ -5191,7 +5537,7 @@
   {
     "path": "frontend/src/components/SearchPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-05T16:09:32.248560+00:00",
     "symbols": [
       {
         "name": "SearchPanel",
@@ -5206,7 +5552,7 @@
   {
     "path": "frontend/src/components/SettingsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "extractCustomExcludes",
@@ -5263,7 +5609,7 @@
   {
     "path": "frontend/src/components/Sidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "Sidebar",
@@ -5275,35 +5621,42 @@
       {
         "name": "TreeNodeItem",
         "kind": "function",
-        "lineno": 80,
+        "lineno": 89,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleClick",
         "kind": "function",
-        "lineno": 95,
+        "lineno": 107,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatChangeLabel",
+        "kind": "function",
+        "lineno": 194,
         "parent": null,
         "docstring": null
       },
       {
         "name": "filterTree",
         "kind": "function",
-        "lineno": 145,
+        "lineno": 214,
         "parent": null,
         "docstring": null
       },
       {
         "name": "matcher",
         "kind": "function",
-        "lineno": 146,
+        "lineno": 215,
         "parent": null,
         "docstring": null
       },
       {
         "name": "walk",
         "kind": "function",
-        "lineno": 148,
+        "lineno": 217,
         "parent": null,
         "docstring": null
       }
@@ -5313,47 +5666,54 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "formatList",
         "kind": "function",
-        "lineno": 19,
+        "lineno": 36,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentStatusCard",
         "kind": "function",
-        "lineno": 33,
+        "lineno": 50,
         "parent": null,
         "docstring": null
       },
       {
         "name": "DocsStatusCard",
         "kind": "function",
-        "lineno": 87,
+        "lineno": 104,
         "parent": null,
         "docstring": null
       },
       {
         "name": "StageDetectionCard",
         "kind": "function",
-        "lineno": 119,
+        "lineno": 136,
         "parent": null,
         "docstring": null
       },
       {
         "name": "StageToolkitView",
         "kind": "function",
-        "lineno": 169,
+        "lineno": 186,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleStageInit",
         "kind": "function",
-        "lineno": 188,
+        "lineno": 219,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleSuperClaudeInstall",
+        "kind": "function",
+        "lineno": 223,
         "parent": null,
         "docstring": null
       }
@@ -5363,7 +5723,7 @@
   {
     "path": "frontend/src/components/StatusPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.691058+00:00",
+    "modified_at": "2025-11-05T16:10:55.906349+00:00",
     "symbols": [
       {
         "name": "formatRelative",
@@ -5392,7 +5752,7 @@
   {
     "path": "frontend/src/components/TraceModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "TraceModal",
@@ -5407,7 +5767,7 @@
   {
     "path": "frontend/src/components/__tests__/PreviewPane.test.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692277+00:00",
+    "modified_at": "2025-11-05T16:17:13.889340+00:00",
     "symbols": [
       {
         "name": "createWrapper",
@@ -5422,7 +5782,7 @@
   {
     "path": "frontend/src/components/settings/BackendUrlSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.330923+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "BackendUrlSection",
@@ -5444,7 +5804,7 @@
   {
     "path": "frontend/src/components/settings/DirectoryBrowserModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.330923+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "DirectoryBrowserModal",
@@ -5473,7 +5833,7 @@
   {
     "path": "frontend/src/components/settings/DocstringsSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692434+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "DocstringsSection",
@@ -5488,7 +5848,7 @@
   {
     "path": "frontend/src/components/settings/ExcludeDirsSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692539+00:00",
+    "modified_at": "2025-11-05T16:08:39.597689+00:00",
     "symbols": [
       {
         "name": "ExcludeDirsSection",
@@ -5510,7 +5870,7 @@
   {
     "path": "frontend/src/components/settings/RootPathSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692613+00:00",
+    "modified_at": "2025-11-05T16:09:15.647601+00:00",
     "symbols": [
       {
         "name": "RootPathSection",
@@ -5525,7 +5885,7 @@
   {
     "path": "frontend/src/config/defaultExcludes.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692695+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [],
     "errors": []
   },
@@ -5547,7 +5907,7 @@
   {
     "path": "frontend/src/hooks/useClassUmlQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692759+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "useClassUmlQuery",
@@ -5569,7 +5929,7 @@
   {
     "path": "frontend/src/hooks/useEventStream.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692808+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useEventStream",
@@ -5591,7 +5951,7 @@
   {
     "path": "frontend/src/hooks/useLintersLatestReport.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T16:43:46.380928+00:00",
     "symbols": [
       {
         "name": "useLintersLatestReport",
@@ -5606,7 +5966,7 @@
   {
     "path": "frontend/src/hooks/useLintersNotifications.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T16:43:57.878807+00:00",
     "symbols": [
       {
         "name": "useLintersNotifications",
@@ -5621,7 +5981,7 @@
   {
     "path": "frontend/src/hooks/useLintersReports.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T16:43:52.184782+00:00",
     "symbols": [
       {
         "name": "useLintersReports",
@@ -5636,7 +5996,7 @@
   {
     "path": "frontend/src/hooks/useMarkNotificationRead.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T16:44:04.798838+00:00",
     "symbols": [
       {
         "name": "useMarkNotificationRead",
@@ -5651,7 +6011,7 @@
   {
     "path": "frontend/src/hooks/useOllamaInsightsQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-11-04T09:36:42.948126+00:00",
     "symbols": [
       {
         "name": "useOllamaInsightsQuery",
@@ -5666,7 +6026,7 @@
   {
     "path": "frontend/src/hooks/useOllamaStartMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-11-02T19:00:23.721866+00:00",
     "symbols": [
       {
         "name": "useOllamaStartMutation",
@@ -5681,7 +6041,7 @@
   {
     "path": "frontend/src/hooks/useOllamaStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-11-02T19:00:18.947848+00:00",
     "symbols": [
       {
         "name": "useOllamaStatusQuery",
@@ -5696,7 +6056,7 @@
   {
     "path": "frontend/src/hooks/useOllamaTestMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-11-04T09:36:42.948126+00:00",
     "symbols": [
       {
         "name": "useOllamaTestMutation",
@@ -5711,7 +6071,7 @@
   {
     "path": "frontend/src/hooks/useSettingsQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T12:37:21.646112+00:00",
     "symbols": [
       {
         "name": "useSettingsQuery",
@@ -5726,7 +6086,7 @@
   {
     "path": "frontend/src/hooks/useStageInitMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStageInitMutation",
@@ -5741,7 +6101,7 @@
   {
     "path": "frontend/src/hooks/useStageStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStageStatusQuery",
@@ -5756,7 +6116,7 @@
   {
     "path": "frontend/src/hooks/useStatusQuery.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "useStatusQuery",
@@ -5769,9 +6129,24 @@
     "errors": []
   },
   {
+    "path": "frontend/src/hooks/useSuperClaudeInstallMutation.ts",
+    "relative": true,
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
+    "symbols": [
+      {
+        "name": "useSuperClaudeInstallMutation",
+        "kind": "function",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/hooks/useTimelineSummary.ts",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.330923+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "useTimelineSummary",
@@ -5786,21 +6161,21 @@
   {
     "path": "frontend/src/main.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-29T11:39:17.509197+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/setupTests.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/state/useActivityStore.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.694396+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [
       {
         "name": "push",
@@ -5822,7 +6197,7 @@
   {
     "path": "frontend/src/state/useBackendStore.ts",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.330923+00:00",
+    "modified_at": "2025-11-18T18:49:22.084414+00:00",
     "symbols": [
       {
         "name": "setBackendUrl",
@@ -5837,7 +6212,7 @@
   {
     "path": "frontend/src/state/usePromptLibrary.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.694531+00:00",
+    "modified_at": "2025-11-01T07:07:31.737072+00:00",
     "symbols": [
       {
         "name": "normalizeTags",
@@ -5901,35 +6276,64 @@
   {
     "path": "frontend/src/state/useSelectionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.694531+00:00",
+    "modified_at": "2025-10-31T12:37:21.646631+00:00",
     "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/utils/changeStatus.ts",
+    "relative": true,
+    "modified_at": "2025-11-18T18:49:22.086409+00:00",
+    "symbols": [
+      {
+        "name": "getChangeLabel",
+        "kind": "function",
+        "lineno": 3,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getChangeVariant",
+        "kind": "function",
+        "lineno": 22,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "isNewFileStatus",
+        "kind": "function",
+        "lineno": 41,
+        "parent": null,
+        "docstring": null
+      }
+    ],
     "errors": []
   },
   {
     "path": "frontend/src/vite-env.d.ts",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.696021+00:00",
+    "modified_at": "2025-10-29T11:39:17.509524+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/vite.config.ts",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.330923+00:00",
+    "modified_at": "2025-11-18T18:49:22.086409+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "init_project.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.706854+00:00",
+    "modified_at": "2025-11-01T08:13:59.728611+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-18T18:49:22.086409+00:00",
     "symbols": [
       {
         "name": "StageThresholds",
@@ -6039,14 +6443,14 @@
       {
         "name": "_determine_confidence",
         "kind": "function",
-        "lineno": 449,
+        "lineno": 464,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_append_substage_hint",
         "kind": "function",
-        "lineno": 480,
+        "lineno": 495,
         "parent": null,
         "docstring": null
       }
@@ -6056,14 +6460,14 @@
   {
     "path": "stage_init/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-01T08:11:38.625754+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "stage_init/cli.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-06T16:17:40.506579+00:00",
     "symbols": [
       {
         "name": "build_parser",
@@ -6099,7 +6503,7 @@
   {
     "path": "stage_init/initializer.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-18T18:49:22.086409+00:00",
     "symbols": [
       {
         "name": "InitializationConfig",
@@ -6198,7 +6602,7 @@
   {
     "path": "stage_init/stage_update.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-18T18:49:22.086409+00:00",
     "symbols": [
       {
         "name": "StageUpdateResult",
@@ -6241,7 +6645,7 @@
   {
     "path": "stage_init/templates.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-11-05T18:43:46.027115+00:00",
     "symbols": [
       {
         "name": "TemplateSummary",
@@ -6319,7 +6723,7 @@
   {
     "path": "testZone/example.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710127+00:00",
+    "modified_at": "2025-11-05T18:44:40.167986+00:00",
     "symbols": [
       {
         "name": "sum",
@@ -6341,21 +6745,21 @@
   {
     "path": "testZone/index.html",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-10-31T12:37:21.651740+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "tests/conftest.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-10-31T12:37:21.651740+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "tests/test_analysis_engine.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-05T18:57:44.889257+00:00",
     "symbols": [
       {
         "name": "write_module",
@@ -6496,7 +6900,7 @@
   {
     "path": "tests/test_api.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-05T18:57:18.400313+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -6756,7 +7160,7 @@
   {
     "path": "tests/test_insights_scheduler.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-05T19:02:46.982627+00:00",
     "symbols": [
       {
         "name": "_DummyWatcher",
@@ -6827,7 +7231,7 @@
   {
     "path": "tests/test_linters_pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-10-31T15:51:28.829543+00:00",
     "symbols": [
       {
         "name": "test_run_linters_pipeline_generates_report",
@@ -6842,7 +7246,7 @@
   {
     "path": "tests/test_linters_pipeline_options.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-01T08:29:59.703521+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -6871,7 +7275,7 @@
   {
     "path": "tests/test_stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-05T18:44:40.399017+00:00",
     "symbols": [
       {
         "name": "write_module",
@@ -6914,7 +7318,7 @@
   {
     "path": "tests/test_stage_initializer.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.332673+00:00",
+    "modified_at": "2025-11-18T18:49:22.088003+00:00",
     "symbols": [
       {
         "name": "_silence_logs",
@@ -6943,7 +7347,7 @@
   {
     "path": "tools/debug_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-05T21:09:09.326592+00:00",
     "symbols": [
       {
         "name": "HttpResponse",
@@ -6986,7 +7390,7 @@
   {
     "path": "tools/test_backend_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.710177+00:00",
+    "modified_at": "2025-11-18T18:49:22.088003+00:00",
     "symbols": [
       {
         "name": "parse_args",
@@ -7008,7 +7412,7 @@
   {
     "path": "tracerTesting/driverExample.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.332673+00:00",
+    "modified_at": "2025-11-18T18:49:22.088646+00:00",
     "symbols": [
       {
         "name": "driverExampleClass",
@@ -7037,7 +7441,7 @@
   {
     "path": "tracerTesting/endpointExample.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.332673+00:00",
+    "modified_at": "2025-11-18T18:49:22.088682+00:00",
     "symbols": [
       {
         "name": "endpointExampleClass",
@@ -7066,7 +7470,7 @@
   {
     "path": "tracerTesting/middlewareExample.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.332673+00:00",
+    "modified_at": "2025-11-18T18:49:22.088682+00:00",
     "symbols": [
       {
         "name": "middlewareAPI",
