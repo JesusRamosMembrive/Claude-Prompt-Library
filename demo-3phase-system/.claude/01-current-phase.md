@@ -55,3 +55,21 @@ Ninguno aún - script funciona bien.
 - Necesito buscar/filtrar prompts fácilmente
 
 **Si no hay dolor → Phase 1 es suficiente. No seguir.**
+
+## 🎯 Detected Stage: Stage 1 (High Confidence)
+
+**Auto-detected on:** 2025-11-18 17:55
+
+**Detection reasoning:**
+- Very small codebase (0 files, ~0 LOC)
+- Appropriate for prototyping stage
+
+**Metrics:**
+- Files: 0
+- LOC: ~0
+- Patterns: None
+
+**Recommended actions:**
+- Follow rules in `.claude/02-stage1-rules.md`
+- Use stage-aware agents for guidance
+- Re-assess stage after significant changes

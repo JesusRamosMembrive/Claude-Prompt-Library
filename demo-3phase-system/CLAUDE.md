@@ -1,3 +1,25 @@
+# demo-3phase-system
+
+This file contains project context and instructions for Claude Code.
+
+## Project Overview
+
+*Add project description here*
+
+## Tech Stack
+
+*Add technologies used here*
+
+## Getting Started
+
+*Add setup instructions here*
+
+---
+
+# Custom Workflow Instructions
+
+<!-- Added by stage-aware initializer -->
+
 ## 🎯 PROJECT CONTEXT
 
 Before ANY work, read in this order:
@@ -11,7 +33,7 @@ Before ANY work, read in this order:
 
 1. **ALWAYS read these files first** (use Read tool in parallel):
    - .claude/00-project-brief.md - Project scope and constraints
-   - .claude/01-current-phase.md - Current state and next steps (COMPACT)
+   - .claude/01-current-phase.md - Current state and progress
    - .claude/02-stage[X]-rules.md - Rules for current stage
 
 2. **ALWAYS confirm to user** you've read the context:
@@ -24,8 +46,6 @@ Before ANY work, read in this order:
 **This applies EVEN IF the user's first message is a simple question.**
 Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
 
-**Need deep context?** Read `.claude/01-session-history.md` for full session details.
-
 During WORK:
 - Follow stage-specific rules strictly
 - Propose plans before implementing
@@ -33,11 +53,11 @@ During WORK:
 
 At END of session:
 - Update .claude/01-current-phase.md with:
-  * Brief summary of what was implemented
-  * Key decisions (1-2 sentences each)
-  * Next immediate steps
-- Move detailed session notes to .claude/01-session-history.md
-- **CRITICAL**: Keep 01-current-phase.md under 150 lines (compact for context efficiency)
+  * What was implemented (with file names)
+  * Decisions made and why
+  * What was NOT done (deferred)
+  * Next steps for next session
+- Keep 01-current-phase.md concise and scannable
 
 ## 🔄 3-PHASE DEVELOPMENT WORKFLOW
 

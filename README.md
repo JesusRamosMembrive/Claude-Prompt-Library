@@ -25,8 +25,29 @@ Automatically detects your project's maturity and provides deep insights into yo
 Enforces evolutionary development through:
 1. **Automatic Stage Detection** - Analyzes codebase and recommends Stage 1/2/3
 2. **Stage-Specific Rules** - Prevents complexity until justified
-3. **Specialized Subagents** - Architect, implementer, reviewer that understand stage context
-4. **Session Continuity** - Tracking files preserve decisions and progress
+3. **3-Phase Development Workflow** - Separates planning, implementation, and validation
+4. **Specialized Subagents** - Architect, implementer, reviewer that understand stage context
+5. **Session Continuity** - Tracking files preserve decisions and progress
+
+#### 3-Phase Development Workflow
+
+Projects initialized with ATLAS follow a structured workflow:
+
+**Phase 1: Planning** (@architect, @stage-keeper)
+- Design stage-appropriate architecture
+- Select technology stack with rationale
+- Create implementation roadmap
+- **Output**: `.claude/doc/{feature}/architecture.md`
+
+**Phase 2: Implementation** (@implementer)
+- Execute architectural plan
+- Track progress and document blockers
+- **Output**: Code + `.claude/doc/{feature}/implementation.md`
+
+**Phase 3: Validation** (@code-reviewer, @stage-keeper)
+- Validate against plan
+- Check security, correctness, stage compliance
+- **Output**: `.claude/doc/{feature}/qa-report.md`
 
 ### ATLAS Backend
 Provides deep code analysis via REST API:
